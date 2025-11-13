@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the following metadata."
+title: "DataExcept"
+version: "0.1.0"
+authors:
+  - family-names: "Ribeiro"
+    given-names: "Diogo"
+    email: "dfr@esmad.ipp.pt"
+    orcid: "https://orcid.org/0009-0001-2022-7072"
+    affiliation: "ESMAD - Instituto Politécnico do Porto"
+type: software
+url: "https://github.com/DiogoRibeiro7/DataExcept"
+repository-code: "https://github.com/DiogoRibeiro7/DataExcept"
+date-released: "2025-06-16"

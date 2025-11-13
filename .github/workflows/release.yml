@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: abatilo/actions-poetry@v2
+      - name: Bump version
+        id: bump
+        run: |
+          poetry version patch
+          NEW_VERSION=$(poetry version -s)
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          sed -i "s/^version: \".*\"/version: \"$NEW_VERSION\"/" CITATION.cff
+          sed -i "s/^date-released: \".*\"/date-released: \"$(date +%Y-%m-%d)\"/" CITATION.cff
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "Bump version to $NEW_VERSION"
+          git tag "v$NEW_VERSION"
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tags: true
+      - name: Build
+        run: poetry build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}

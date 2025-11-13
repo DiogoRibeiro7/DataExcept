@@ -1,0 +1,71 @@
+[tool.poetry]
+name = "DataExcept"
+version = "0.1.0"
+description = "A Python package providing structured, easily-extendable custom exception types."
+authors = ["Diogo Ribeiro <dfr@esmad.ipp.pt>"]
+maintainers = ["Diogo Ribeiro <diogo.debastos.ribeiro@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/DiogoRibeiro7/DataExcept"
+repository = "https://github.com/DiogoRibeiro7/DataExcept"
+documentation = "https://dataexcept.readthedocs.io"
+packages = [{ include = "dataexcept" }]
+keywords = ["exceptions", "errors", "logging"]
+include = [
+    "CITATION.cff",
+    "LICENSE",
+    "CHANGELOG.md",
+]
+
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[tool.poetry.urls]
+Changelog = "https://github.com/DiogoRibeiro7/DataExcept/releases"
+Issues = "https://github.com/DiogoRibeiro7/DataExcept/issues"
+
+[tool.poetry.scripts]
+dataexcept = "dataexcept.__main__:main"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.14"
+tomli = { version = "*", python = "<3.11" }
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "*"
+pytest = "*"
+coverage = "*"
+sphinx = "*"
+myst-parser = "*"
+furo = "*"
+ruff = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = []
+
