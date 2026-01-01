@@ -28,7 +28,7 @@ jobs:
         run: |
           coverage run -m pytest -q
           coverage xml -o coverage.xml
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: coverage-${{ matrix.python-version }}
           path: |
@@ -60,7 +60,7 @@ jobs:
           commit_user_name: github-actions
           commit_user_email: github-actions@github.com
           file_pattern: coverage.svg
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: coverage-report
           path: |
@@ -82,7 +82,7 @@ jobs:
           pip install sphinx myst-parser furo
       - name: Build documentation
         run: sphinx-build -b html docs docs/_build/html
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: docs-html
           path: docs/_build/html
