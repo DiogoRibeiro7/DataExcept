@@ -24,7 +24,7 @@ Public, and covered by the versioning policy:
   `dataexcept.pandas_exceptions`, `dataexcept.pipeline_exceptions`,
   `dataexcept.security_exceptions` and `dataexcept.logging_helpers`.
 - For each public exception: its name, its position in the inheritance chain,
-  and the constructor signature.
+  and the constructor signature. Everything derives from `DataExceptError`.
 - That a class imported from the top level and from its domain module is the
   same object, so `except` behaves identically whichever import you used.
 - The `dataexcept` command-line entry point.
@@ -56,16 +56,24 @@ The hierarchy is the API. Catch the narrowest class that describes what you
 want to handle, and rely on the base classes to keep working:
 
 ```python
-from dataexcept import JobError
-from dataexcept.exceptions import ValidationError
+from dataexcept import DataExceptError, JobError, ValidationError
 
 try:
     run_pipeline()
 except ValidationError:
-    ...          # exactly this failure
+    ...              # exactly this failure
 except JobError:
-    ...          # anything else this library raises for a job
+    ...              # any other job error -- not data science or pipeline ones
+except DataExceptError:
+    ...              # anything else this library raises
 ```
+
+Every exception derives from `DataExceptError`, so one clause catches the whole
+library. Beneath it sit the domain roots — `JobError`, `DataScienceError`,
+`PipelineError`, `DataEngineeringError`, `DatabaseError`, `NetworkError`,
+`PandasError`, `CustomIOError` and `SecurityError` — and each catches only its
+own domain. `except JobError:` does **not** catch `ModelTrainingError`; that is
+a `DataScienceError`.
 
 New subclasses may be introduced under an existing base in a minor release, so
 an `except JobError:` may start catching failures it did not catch before. That
@@ -155,3 +163,13 @@ The classes are unchanged, so this is a find-and-replace on import lines:
 
 Run your suite with `python -W error::DeprecationWarning -m pytest` to find
 every remaining use.
+
+## Serialization
+
+Every exception can be pickled and comes back with the same type, the same
+`args`, the same message and the same attributes, so it can cross a process
+boundary — a `ProcessPoolExecutor`, a task queue, a distributed worker.
+
+`DataExceptError.__reduce__` restores state directly rather than replaying
+`__init__`, because most of these constructors take several arguments while
+`args` holds only the rendered message. This is covered by a test per class.

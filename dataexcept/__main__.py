@@ -21,11 +21,17 @@ _DEPRECATED_MODULES = frozenset({"dataexcept.job_exceptions"})
 def _iter_exception_modules() -> Iterable[ModuleType]:
     """Yield every non-deprecated submodule that explicitly defines ``__all__``."""
     allowed_suffixes = ("exceptions", "_exceptions")
+    # dataexcept.base holds DataExceptError, the root of the hierarchy, and
+    # does not match the suffix rule.
+    always_include = {"dataexcept.base"}
 
     for module_info in pkgutil.walk_packages(
         _PKG_PATH, prefix="dataexcept.", onerror=lambda name: None
     ):
-        if not module_info.name.endswith(allowed_suffixes):
+        if (
+            not module_info.name.endswith(allowed_suffixes)
+            and module_info.name not in always_include
+        ):
             continue
         if module_info.name in _DEPRECATED_MODULES:
             continue

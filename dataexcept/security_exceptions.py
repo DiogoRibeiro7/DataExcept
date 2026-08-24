@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from .base import DataExceptError
 
-class SecurityError(Exception):
+
+class SecurityError(DataExceptError):
     """Base exception for security errors."""
 
     pass

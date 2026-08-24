@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`DataExceptError`, the root of the hierarchy.** Every exception the package
+  raises now derives from it, so one clause catches the whole library:
+
+  ```python
+  except DataExceptError:
+      ...
+  ```
+
+  The nine domain roots (`JobError`, `DataScienceError`, `PipelineError` and
+  the rest) sit beneath it and still catch only their own domain, so granular
+  handling is unchanged.
+
+### Fixed
+
+- **Exceptions can now cross a process boundary.** They could not be pickled:
+  most constructors take several arguments while `Exception.args` holds only
+  the rendered message, and the default protocol replays `args` through
+  `__init__`. Of 98 classes, 39 raised `TypeError` on unpickling and a further
+  47 came back with different state — only 10 round-tripped exactly. Raising
+  one inside a `ProcessPoolExecutor` killed the pool with `BrokenProcessPool`.
+
+  `DataExceptError.__reduce__` restores `args` and `__dict__` directly instead
+  of replaying `__init__`. All 97 constructible classes now round-trip with
+  identical type, message and attributes, covered by a test per class plus a
+  real process-pool test.
+- The stability policy and README both claimed `except JobError:` catches
+  "anything else this library raises". It did not — there were nine
+  disconnected trees under `Exception`, so `JobError` caught neither
+  `ModelTrainingError` nor `PipelineError` nor `DatabaseError`. The claim is
+  now true of `DataExceptError`, and the docs say which base covers what.
+
 ## [0.3.0] - 2026-08-24
 
 ### Added

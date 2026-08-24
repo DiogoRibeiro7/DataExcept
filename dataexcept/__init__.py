@@ -4,6 +4,12 @@ Every exception the package defines is importable straight from here::
 
     from dataexcept import ValidationError, ModelTrainingError
 
+They all derive from :class:`DataExceptError`, so one clause catches anything
+this package raises::
+
+    except DataExceptError:
+        ...
+
 The domain modules (``datascience_exceptions``, ``pipeline_exceptions`` and so
 on) remain importable and export the same objects, so both spellings work and
 refer to the same classes.
@@ -32,6 +38,7 @@ from . import (  # noqa: F401
     security_exceptions,
 )
 from ._deprecation import resolve_deprecated
+from .base import DataExceptError
 from .database_exceptions import (
     DatabaseConnectionError,
     DatabaseError,
@@ -156,6 +163,8 @@ from .security_exceptions import (
 )
 
 __all__ = [
+    # The root of the hierarchy: catches anything this package raises.
+    "DataExceptError",
     # Every exception class the package defines.
     "ApiError",
     "AuthenticationError",

@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from typing import Optional, Sequence
 
+from .base import DataExceptError
 
-class PandasError(Exception):
+
+class PandasError(DataExceptError):
     """Base exception for pandas-related errors."""
 
 

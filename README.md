@@ -15,10 +15,10 @@
 
 ## 🎯 Key Features
 
-- **🏗️ Hierarchical Structure**: Catch specific errors or broad categories
+- **🏗️ Hierarchical Structure**: Catch one specific error, a whole domain, or everything via `DataExceptError`
 - **📦 One Import**: Every exception is available from `dataexcept` directly, or from its domain module — same objects either way
-- **📊 Data Science Focused**: 98 exception classes covering ML pipelines, feature engineering, model training
-- **🔧 Production Ready**: Comprehensive logging helpers and error context
+- **📊 Data Science Focused**: 99 exception classes covering ML pipelines, feature engineering, model training
+- **🔧 Production Ready**: Logging helpers, error context, and exceptions that survive a process boundary intact
 - **📚 Academic Quality**: Proper documentation, type hints, and citation support
 - **🐍 Python 3.10+**: Modern Python with full type safety
 - **🧪 Well Tested**: Broad test suite with comprehensive edge case handling (see the coverage badge above)
@@ -79,8 +79,7 @@ def load_dataset(file_path: str) -> pd.DataFrame:
 ### Exception Hierarchies
 
 ```python
-from dataexcept import JobError
-from dataexcept.datascience_exceptions import ModelTrainingError, ConvergenceError
+from dataexcept import ConvergenceError, DataExceptError, ModelTrainingError
 
 try:
     # Your ML pipeline
@@ -93,8 +92,8 @@ except ModelTrainingError:
     # Handle any training-related error
     logger.error("Training failed, falling back to simpler model")
     train_simple_model()
-except JobError:
-    # Handle any job-related error
+except DataExceptError:
+    # Handle anything else DataExcept raised
     logger.error("Job failed, notifying administrators")
     send_alert()
 ```
@@ -188,7 +187,7 @@ except Exception as exc:
 ### Command Line Interface
 
 ```bash
-# List every exception class the package exports (98 of them, alphabetically)
+# List every exception class the package exports (99 of them, alphabetically)
 $ dataexcept list
 ApiError
 AuthenticationError

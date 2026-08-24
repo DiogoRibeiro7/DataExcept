@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from .base import DataExceptError
 
-class CustomIOError(Exception):
+
+class CustomIOError(DataExceptError):
     """Base exception for I/O errors."""
 
     pass
