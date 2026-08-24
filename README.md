@@ -21,7 +21,7 @@
 - **🔧 Production Ready**: Logging helpers, error context, and exceptions that pickle — so they cross a process boundary with their message, attributes and cause intact
 - **📚 Academic Quality**: Proper documentation, type hints, and citation support
 - **🐍 Python 3.10 – 3.14**: Every supported version tested in CI, with full type safety
-- **🧪 Well Tested**: 690+ tests at 92% branch coverage of the package, gated in CI
+- **🧪 Well Tested**: Full branch coverage of the package gated in CI, with contract tests over every exception class
 
 ## 📦 Quick Installation
 

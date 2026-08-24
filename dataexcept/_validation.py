@@ -15,8 +15,14 @@ def is_number(value: object) -> bool:
     science. ``numbers.Real`` accepts them because NumPy registers its scalar
     types with the ABC, and it needs no dependency on NumPy to do so.
 
+    Booleans are excluded: ``bool`` subclasses ``int``, so ``numbers.Real``
+    would accept ``True`` as a metric.
+
     This is a function rather than an inline ``isinstance`` because narrowing a
     value to ``numbers.Real`` defeats mypy's inference for the rest of the
     enclosing class.
     """
-    return isinstance(value, numbers.Real)
+    # bool subclasses int, so numbers.Real accepts True and False. A boolean
+    # is never a meaningful metric, threshold or ratio, and accepting one hides
+    # a caller passing the wrong variable.
+    return not isinstance(value, bool) and isinstance(value, numbers.Real)

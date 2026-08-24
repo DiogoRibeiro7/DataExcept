@@ -1,7 +1,7 @@
 # Package Quality Checklist
 
 An audit of this repository against a general Python packaging checklist,
-current as of 0.3.0 (2026-08-24). Unticked boxes are genuinely not done, not
+current as of 0.4.0 (2026-08-25). Unticked boxes are genuinely not done, not
 oversights.
 
 ---
@@ -58,7 +58,8 @@ oversights.
 
 ## 7. Testing
 
-- [x] Unit tests implemented — 685 tests
+- [x] Unit tests implemented — the count is asserted in CI rather than
+      written here, so it cannot go stale
 - [x] Coverage above 80% — 92% of the package, measured with branch coverage and
       gated at 91% in CI. Until 0.4.0 the figure was measured without
       restricting the source, so tests and examples counted toward it: the
@@ -111,7 +112,7 @@ oversights.
       recognised; `SECURITY.md` says so
 - [x] Wrapped exceptions are chained, so a traceback shows the underlying cause
 
-## 12. Security & Supply Chain
+## 13. Security & Supply Chain
 
 - [x] CodeQL static analysis on push, pull request, and weekly
 - [x] Dependency vulnerability scanning (pip-audit) and dependency review on PRs

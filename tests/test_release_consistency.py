@@ -1,0 +1,96 @@
+"""Facts stated in more than one file must be derived, not copied.
+
+0.4.0 claimed to have eliminated documentation drift, and drift reappeared in
+the same release: SECURITY.md named an old supported version, CHECKLIST.md was
+dated to the previous release, two of its sections were numbered 12, and the
+README quoted a test count that no longer matched. Copying a fact into several
+files guarantees this. These tests derive each fact from its source.
+"""
+
+from __future__ import annotations
+
+import re
+import tomllib
+from pathlib import Path
+
+import pytest
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _project_version() -> str:
+    data = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    return str(data["project"]["version"])
+
+
+def _read(name: str) -> str:
+    return (PROJECT_ROOT / name).read_text(encoding="utf-8")
+
+
+def test_citation_matches_the_project_version():
+    citation = _read("CITATION.cff")
+    stated = re.search(r'^version: "([^"]+)"', citation, re.MULTILINE)
+    assert stated, "CITATION.cff states no version"
+    assert stated.group(1) == _project_version()
+
+
+def test_security_policy_supports_the_current_minor():
+    """SECURITY.md named 0.1.x at 0.3.0, and 0.3.x at 0.4.0."""
+    major, minor, _ = _project_version().split(".", 2)
+    supported = f"{major}.{minor}.x"
+    assert supported in _read(
+        "SECURITY.md"
+    ), f"SECURITY.md does not list {supported} as supported"
+
+
+def test_the_changelog_documents_the_current_version():
+    assert f"## [{_project_version()}]" in _read(
+        "CHANGELOG.md"
+    ), "the version in pyproject.toml has no changelog section"
+
+
+def test_the_checklist_audit_names_the_current_version():
+    checklist = _read("CHECKLIST.md")
+    stated = re.search(r"current as of ([0-9]+\.[0-9]+\.[0-9]+)", checklist)
+    assert stated, "CHECKLIST.md does not say which version it audits"
+    assert (
+        stated.group(1) == _project_version()
+    ), f"CHECKLIST.md audits {stated.group(1)}, project is {_project_version()}"
+
+
+def test_the_checklist_sections_are_numbered_uniquely():
+    numbers = re.findall(r"^## (\d+)\.", _read("CHECKLIST.md"), re.MULTILINE)
+    duplicates = sorted({n for n in numbers if numbers.count(n) > 1})
+    assert not duplicates, f"CHECKLIST.md reuses section numbers: {duplicates}"
+
+
+@pytest.mark.parametrize("document", ["README.md", "CHECKLIST.md", "ROADMAP.md"])
+def test_documents_do_not_quote_a_test_count(document):
+    """A hand-written count is stale the moment a test is added."""
+    offenders = re.findall(r"\b\d{2,}\+?\s+tests\b", _read(document))
+    assert not offenders, (
+        f"{document} quotes a test count ({offenders}); it will drift. Refer to "
+        f"CI instead."
+    )
+
+
+def test_the_supported_python_range_is_stated_consistently():
+    data = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    requires = data["project"]["requires-python"]
+    floor = re.search(r">=(\d+\.\d+)", requires).group(1)
+    ceiling = re.search(r"<(\d+\.\d+)", requires).group(1)
+    highest = f"{ceiling.split('.')[0]}.{int(ceiling.split('.')[1]) - 1}"
+
+    classifiers = data["project"]["classifiers"]
+    for minor in range(int(floor.split(".")[1]), int(highest.split(".")[1]) + 1):
+        expected = f"Programming Language :: Python :: 3.{minor}"
+        assert expected in classifiers, f"missing classifier: {expected}"
+
+    workflow = _read(".github/workflows/ci.yml")
+    matrix = re.search(r"python-version: \[([^\]]+)\]", workflow).group(1)
+    assert (
+        f"'{highest}'" in matrix
+    ), f"CI does not test {highest}, the newest version requires-python allows"
+    assert f"test ({highest})" in _read(
+        ".github/workflows/release.yml"
+    ), f"the release gate does not require test ({highest})"

@@ -99,10 +99,11 @@ class MergeKeyError(PandasError):
     """
 
     def __init__(self, left_keys: Sequence[str], right_keys: Sequence[str]) -> None:
-        if not all(isinstance(k, str) for k in left_keys):
-            raise TypeError("left_keys must be a sequence of strings")
-        if not all(isinstance(k, str) for k in right_keys):
-            raise TypeError("right_keys must be a sequence of strings")
+        # A bare string is a sequence of strings, so "id" would silently become
+        # ['i', 'd']. Reject it, as DtypeMismatchError already does.
+        for name, keys in (("left_keys", left_keys), ("right_keys", right_keys)):
+            if isinstance(keys, str) or not all(isinstance(k, str) for k in keys):
+                raise TypeError(f"{name} must be a sequence of strings, not a string")
         self.left_keys = list(left_keys)
         self.right_keys = list(right_keys)
         msg = f"Failed to merge on keys {self.left_keys} and {self.right_keys}"

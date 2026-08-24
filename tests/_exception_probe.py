@@ -17,13 +17,22 @@ import dataexcept
 #: double-count and emit a DeprecationWarning.
 DEPRECATED_MODULES = {"dataexcept.job_exceptions"}
 
+#: Public classes the probe cannot build from annotations alone, each with a
+#: reviewed reason. Empty by design: an entry here means a class sits outside
+#: the whole-hierarchy contracts -- pickling, message integrity, inheritance --
+#: so it must be a deliberate, argued decision rather than a silent skip.
+UNCONSTRUCTIBLE: dict[str, str] = {}
+
 #: Matched against a parameter's annotation, in order; first hit wins.
 _SAMPLES: tuple[tuple[tuple[str, ...], object], ...] = (
     (("Exception",), ValueError("underlying cause")),
     (("float",), 1.0),
     (("int",), 1),
     (("bytes",), b"payload"),
-    (("List", "list"), ["a"]),
+    # Sequence[str] must not be satisfied by a bare string: the classes that
+    # take one correctly reject "id", and a probe that fed them a string was
+    # skipping itself rather than testing them.
+    (("Sequence", "Iterable", "List", "list", "Tuple", "tuple"), ["alpha", "beta"]),
     (("Dict", "dict"), {"a": "b"}),
 )
 

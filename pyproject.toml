@@ -67,6 +67,10 @@ profile = "black"
 
 [tool.black]
 line-length = 88
+# Pinned rather than inferred from requires-python: inference picks the highest
+# supported version, and black then refuses to verify its own output when run
+# on an older interpreter -- which is what CI does.
+target-version = ["py310"]
 
 [tool.ruff]
 line-length = 88

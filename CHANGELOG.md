@@ -9,6 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Tests that derive the facts stated in more than one file, instead of trusting
+  them to be copied correctly: the citation, security policy, changelog and
+  checklist must all name the current version, checklist sections must be
+  numbered uniquely, no document may quote a test count, and the supported
+  Python range must agree across `requires-python`, the classifiers, the CI
+  matrix and the release gate.
+- A contract-coverage test. The whole-hierarchy suites called `pytest.skip()`
+  when they could not build a class, so a class could sit outside the pickling,
+  message and inheritance guarantees with CI still green — and two were doing
+  exactly that. Skipping now requires an explicit, reasoned entry in an
+  exclusion table, which is empty.
+
+### Fixed
+
+- The test probe fed a bare string to `Sequence[str]` parameters, so
+  `DataFormatError` and `DtypeMismatchError` correctly rejected it and were
+  silently skipped. The probe builds them properly now; nothing is skipped.
+- `is_number` accepted booleans, because `bool` subclasses `int` and so
+  satisfies `numbers.Real`. A boolean is never a meaningful metric, threshold
+  or ratio, and accepting one hid a caller passing the wrong variable.
+- `MergeKeyError("id", "cust_id")` silently became `['i', 'd']` — a bare string
+  is a sequence of strings. It now raises `TypeError`, matching
+  `DtypeMismatchError`, which already rejected this.
+- `SECURITY.md` named 0.3.x as supported at 0.4.0, `CHECKLIST.md` was dated to
+  the previous release and numbered two sections 12, and the README quoted a
+  test count that no longer matched. `scripts/bump_version.py` now writes every
+  file that states the version, so they cannot drift apart by hand again.
+- `black`'s target version is pinned rather than inferred from
+  `requires-python`. Adding 3.14 made inference pick `py314`, and black then
+  refused to verify its own output when run on an older interpreter — which is
+  what CI does.
+
+### Added
+
 - **Python 3.14 support.** `requires-python` capped at `<3.14`, so the package
   refused to install on the current stable interpreter — 3.14 was released in
   October 2025 and is no longer upcoming. The range is now `>=3.10,<3.15`, 3.14
