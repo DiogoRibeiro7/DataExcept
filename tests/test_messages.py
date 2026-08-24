@@ -8,66 +8,19 @@ a reader needs never reached the log.
 
 from __future__ import annotations
 
-import importlib
-import inspect
-import pkgutil
-
 import pytest
+from _exception_probe import all_exception_classes, plausible_instance
 
 import dataexcept
 
-DEPRECATED_MODULES = {"dataexcept.job_exceptions"}
-
-_SAMPLES = (
-    (("Exception",), ValueError("underlying cause")),
-    (("float",), 1.0),
-    (("int",), 1),
-    (("bytes",), b"payload"),
-    (("List", "list"), ["a"]),
-    (("Dict", "dict"), {"a": "b"}),
-)
-
-
-def _sample_for(annotation: str) -> object:
-    for needles, value in _SAMPLES:
-        if any(needle in annotation for needle in needles):
-            return value
-    return "value"
-
-
-def _all_classes() -> dict[str, type]:
-    found: dict[str, type] = {}
-    for info in pkgutil.walk_packages(dataexcept.__path__, "dataexcept."):
-        if info.name in DEPRECATED_MODULES:
-            continue
-        module = importlib.import_module(info.name)
-        for name, obj in vars(module).items():
-            if (
-                inspect.isclass(obj)
-                and issubclass(obj, BaseException)
-                and obj.__module__ == info.name
-            ):
-                found[name] = obj
-    return found
-
-
-CLASSES = _all_classes()
+CLASSES = all_exception_classes()
 
 
 @pytest.mark.parametrize("name", sorted(CLASSES))
 def test_str_contains_the_full_message(name):
-    cls = CLASSES[name]
-    parameters = list(inspect.signature(cls.__init__).parameters.values())[1:]
-    args = [
-        _sample_for(str(p.annotation))
-        for p in parameters
-        if p.default is inspect.Parameter.empty
-    ]
-    try:
-        instance = cls(*args)
-    except Exception:
+    instance = plausible_instance(CLASSES[name])
+    if instance is None:
         pytest.skip(f"cannot construct {name} from its annotations alone")
-
     if not instance.args:
         pytest.skip(f"{name} carries no message")
     assert str(instance.args[0]) in str(instance)

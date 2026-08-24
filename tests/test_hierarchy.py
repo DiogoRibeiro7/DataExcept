@@ -7,34 +7,12 @@ so ``except JobError:`` caught neither ``ModelTrainingError`` nor
 
 from __future__ import annotations
 
-import importlib
-import inspect
-import pkgutil
-
 import pytest
+from _exception_probe import all_exception_classes
 
 import dataexcept
 
-DEPRECATED_MODULES = {"dataexcept.job_exceptions"}
-
-
-def _all_exception_classes() -> dict[str, type]:
-    found: dict[str, type] = {}
-    for info in pkgutil.walk_packages(dataexcept.__path__, "dataexcept."):
-        if info.name in DEPRECATED_MODULES:
-            continue
-        module = importlib.import_module(info.name)
-        for name, obj in vars(module).items():
-            if (
-                inspect.isclass(obj)
-                and issubclass(obj, BaseException)
-                and obj.__module__ == info.name
-            ):
-                found[name] = obj
-    return found
-
-
-CLASSES = _all_exception_classes()
+CLASSES = all_exception_classes()
 
 
 @pytest.mark.parametrize("name", sorted(CLASSES))
