@@ -1,18 +1,20 @@
 import os
 import sys
+
 import pytest
 
 EXAMPLES = os.path.join(os.path.dirname(__file__), "..", "examples")
 sys.path.insert(0, EXAMPLES)  # noqa: E402
 
 import dataengineering_demo as de_demo  # noqa: E402
+
 from dataexcept.dataengineering_exceptions import (  # noqa: E402
-    ETLJobError,
-    SchemaEvolutionError,
-    DataTransformationError,
     BatchProcessingError,
+    DataTransformationError,
     DataWarehouseConnectionError,
+    ETLJobError,
     MissingPartitionError,
+    SchemaEvolutionError,
 )
 
 

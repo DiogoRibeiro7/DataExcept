@@ -1,12 +1,12 @@
-from dataexcept.network_exceptions import (
-    HostUnreachableError,
-    ConnectionTimeoutError,
-    ProtocolError,
-)
 from dataexcept.io_exceptions import (
+    FileLockError,
     FileReadError,
     FileWriteError,
-    FileLockError,
+)
+from dataexcept.network_exceptions import (
+    ConnectionTimeoutError,
+    HostUnreachableError,
+    ProtocolError,
 )
 
 

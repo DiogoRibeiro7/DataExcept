@@ -9,9 +9,7 @@ import dataexcept
 
 def _expected_exception_names() -> Set[str]:
     names: Set[str] = set()
-    for module_info in pkgutil.walk_packages(
-        dataexcept.__path__, prefix="dataexcept."
-    ):
+    for module_info in pkgutil.walk_packages(dataexcept.__path__, prefix="dataexcept."):
         module = importlib.import_module(module_info.name)
         exported = getattr(module, "__all__", None)
         if not exported:

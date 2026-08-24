@@ -1,7 +1,8 @@
 # main.py
 
-from dataexcept import JobError
 from example_usage import perform_operation
+
+from dataexcept import JobError
 
 
 def main():

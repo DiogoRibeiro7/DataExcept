@@ -47,6 +47,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for example usage
                 }
             ]
 
+
 try:  # pragma: no cover - demo dependency not installed by default
     from ds_api.s3 import S3Query  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover - fallback for example usage
@@ -61,6 +62,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for example usage
 
         def put_object(self, key: str, payload: str) -> None:
             self.objects.append(f"{self.env}:{key}={payload}")
+
 
 try:  # pragma: no cover - demo dependency not installed by default
     from ds_api.iceberg import IcebergQuery  # type: ignore
@@ -86,13 +88,12 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for example usage
             self.merge_cols = merge_cols
 
         def merge_from_s3(self, s3_location: str) -> str:
-            return (
-                "MERGE INTO {table} USING '{s3}' ON {cols}".format(
-                    table=self.table,
-                    s3=s3_location,
-                    cols=",".join(self.merge_cols),
-                )
+            return "MERGE INTO {table} USING '{s3}' ON {cols}".format(
+                table=self.table,
+                s3=s3_location,
+                cols=",".join(self.merge_cols),
             )
+
 
 # Paths used when running ``python -m examples.lambda_main``.
 _ENV_SAMPLE_PATH = Path(__file__).resolve().parents[1] / ".env.example"

@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
-from typing import Any, Mapping, Optional
+from typing import Any, Iterator, Mapping, Optional
 
 Context = Mapping[str, Any]
 
@@ -51,7 +51,7 @@ def log_and_raise(
     logger: Optional[logging.Logger] = None,
     level: int = logging.ERROR,
     context: Context | None = None,
-) -> None:
+) -> Iterator[None]:
     """Context manager that logs and re-raises exceptions preserving traceback."""
     try:
         yield
