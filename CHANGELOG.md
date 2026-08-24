@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Security scanning: CodeQL static analysis, and pip-audit against both the
+  runtime and documentation dependency sets, on every push and pull request
+  plus a weekly schedule so new advisories surface against unchanged code.
+  Pull requests also get a dependency review that fails on moderate or higher
+  severity.
+- Complexity and security linting through ruff's mccabe (`C90`) and
+  flake8-bandit (`S`) rule sets, so neither needs a separate tool. Complexity
+  is capped at 8; the most complex function currently scores 6.
+
 ### Changed
 
 - Project metadata moved from Poetry's `[tool.poetry]` table to the standard

@@ -1,0 +1,66 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Monday 06:17 UTC. New advisories are published against code that has not
+    # changed, so this needs to run on a clock and not only on push.
+    - cron: '17 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: python
+          queries: security-and-quality
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:python
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit
+      # Scoped to the project's own dependency sets rather than the whole
+      # environment: a bare `pip-audit` also audits pip and setuptools, so an
+      # advisory against the runner's toolchain would fail a build that has
+      # nothing to do with it.
+      - name: Audit the runtime dependencies
+        run: pip-audit --strict --progress-spinner off .
+      - name: Audit the documentation dependencies
+        run: pip-audit --strict --progress-spinner off -r docs/requirements.txt
+
+  dependency-review:
+    name: Dependency review
+    # Only meaningful on a pull request, where there is a base to diff against.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/dependency-review-action@v5
+        with:
+          comment-summary-in-pr: on-failure
+          fail-on-severity: moderate
