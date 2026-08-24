@@ -1,7 +1,7 @@
 # Package Quality Checklist
 
 An audit of this repository against a general Python packaging checklist,
-current as of 0.2.0 (2026-08-24). Unticked boxes are genuinely not done, not
+current as of 0.3.0 (2026-08-24). Unticked boxes are genuinely not done, not
 oversights.
 
 ---
@@ -26,8 +26,8 @@ oversights.
 - [x] All dependencies declared in `pyproject.toml`
 - [x] Development dependencies separated into `dev` and `docs` groups
 - [x] Minimal: one conditional runtime dependency (`tomli`, on Python < 3.11)
-- [ ] Lockfile committed — `poetry.lock` is not tracked, so CI installs are not
-      byte-reproducible
+- [x] Lockfile committed — `poetry.lock` is tracked and CI installs from it, so
+      a new release of a linter cannot turn a build red on its own
 
 ## 4. Code Quality
 
@@ -45,8 +45,8 @@ oversights.
 - [x] Global state avoided in the package (the Lambda *example* uses module
       globals deliberately, to mirror real handler patterns)
 - [x] Public API defined explicitly via `__all__` in every public module
-- [ ] Public API surface settled — 30 of 96 classes are importable from the top
-      level and the rest are not; see the roadmap
+- [x] Public API surface settled — all 99 exception classes are importable from
+      the top level, and a test fails if a new one is not exported
 
 ## 6. Documentation
 
@@ -58,14 +58,16 @@ oversights.
 
 ## 7. Testing
 
-- [x] Unit tests implemented — 109 tests
+- [x] Unit tests implemented — 685 tests
 - [x] Coverage above 80% — 92% of the package, measured with branch coverage and
       gated at 91% in CI. Until 0.4.0 the figure was measured without
       restricting the source, so tests and examples counted toward it: the
       reported 86% was really 79%.
 - [x] Tests are fast and deterministic — full suite under two seconds
 - [x] CI runs tests on every push and pull request
-- [ ] Property-based tests over the exception hierarchy; see the roadmap
+- [x] Every exception is covered by generated tests over the whole hierarchy:
+      pickle round trip, message integrity, and inheritance from the root
+- [ ] Property-based tests over constructor inputs; see the roadmap
 
 ## 8. Versioning & Releases
 
@@ -94,6 +96,14 @@ oversights.
 
 ---
 
+## 12. Runtime Behaviour
+
+- [x] Exceptions survive a process boundary — every class pickles and comes back
+      with the same type, message and attributes
+- [x] One base class (`DataExceptError`) catches everything the library raises
+- [x] Credentials in tokens and URLs are redacted before they reach a message
+- [x] Wrapped exceptions are chained, so a traceback shows the underlying cause
+
 ## 12. Security & Supply Chain
 
 - [x] CodeQL static analysis on push, pull request, and weekly
@@ -101,3 +111,5 @@ oversights.
 - [x] Private vulnerability reporting enabled, with `SECURITY.md` describing the process
 - [x] Releases publish without a long-lived credential
 - [x] `main` protected: required status checks, no force pushes, no deletion
+- [x] A release must come from a commit on `main` that passed CI, and the built
+      wheel is tested before it is published

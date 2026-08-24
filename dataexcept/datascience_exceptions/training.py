@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from .._validation import is_number
 from .base import DataScienceError
 
 
@@ -79,7 +80,7 @@ class TrainingTimeoutError(ModelTrainingError):
     """Raised when model training exceeds a time limit."""
 
     def __init__(self, model_type: str, timeout: float) -> None:
-        if not isinstance(timeout, (int, float)):
+        if not is_number(timeout):
             raise TypeError(f"timeout must be a number, got {type(timeout).__name__}")
         message = f"Training '{model_type}' exceeded timeout of {timeout} seconds"
         self.timeout = float(timeout)
@@ -127,7 +128,7 @@ class ModelEvaluationError(DataScienceError):
     ) -> None:
         if not isinstance(metric, str):
             raise TypeError(f"metric must be str, got {type(metric).__name__}")
-        if not isinstance(value, (int, float)):
+        if not is_number(value):
             raise TypeError(f"value must be number, got {type(value).__name__}")
 
         if message is None:
@@ -330,11 +331,11 @@ class OverfittingError(DataScienceError):
     """
 
     def __init__(self, train_metric: float, val_metric: float) -> None:
-        if not isinstance(train_metric, (int, float)):
+        if not is_number(train_metric):
             raise TypeError(
                 ("train_metric must be numeric, got " f"{type(train_metric).__name__}")
             )
-        if not isinstance(val_metric, (int, float)):
+        if not is_number(val_metric):
             raise TypeError(
                 f"val_metric must be numeric, got {type(val_metric).__name__}"
             )
@@ -360,11 +361,11 @@ class UnderfittingError(DataScienceError):
     """
 
     def __init__(self, train_metric: float, threshold: float) -> None:
-        if not isinstance(train_metric, (int, float)):
+        if not is_number(train_metric):
             raise TypeError(
                 ("train_metric must be numeric, got " f"{type(train_metric).__name__}")
             )
-        if not isinstance(threshold, (int, float)):
+        if not is_number(threshold):
             raise TypeError(
                 f"threshold must be numeric, got {type(threshold).__name__}"
             )
@@ -426,11 +427,11 @@ class BiasDetectionError(DataScienceError):
     ) -> None:
         if not isinstance(feature, str):
             raise TypeError(f"feature must be str, got {type(feature).__name__}")
-        if not isinstance(bias_score, (int, float)):
+        if not is_number(bias_score):
             raise TypeError(
                 f"bias_score must be numeric, got {type(bias_score).__name__}"
             )
-        if not isinstance(threshold, (int, float)):
+        if not is_number(threshold):
             raise TypeError(
                 f"threshold must be numeric, got {type(threshold).__name__}"
             )

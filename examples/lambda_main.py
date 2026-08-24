@@ -192,7 +192,8 @@ def bootstrap(config: Dict[str, str] | None = None) -> None:
 
 def _ensure_clients() -> Tuple[DynamoQuery, S3Query, IcebergQuery]:
     """Initialize clients on demand."""
-    global dynamo_query, s3_query, iceberg_query
+    # No `global` declaration: this only reads the module-level handles.
+    # bootstrap() is what assigns them.
     if dynamo_query is None or s3_query is None or iceberg_query is None:
         bootstrap()
     assert dynamo_query is not None

@@ -25,6 +25,10 @@ from typing import Any, Dict, Tuple, Type
 
 __all__ = ["DataExceptError"]
 
+#: Attribute names used across the package to hold the exception that caused
+#: this one. Checked in order; the first that holds an exception wins.
+_CAUSE_ATTRIBUTES = ("original", "original_exception", "cause")
+
 
 def _rebuild(
     cls: Type["DataExceptError"], args: Tuple[Any, ...], state: Dict[str, Any]
@@ -44,6 +48,18 @@ def _rebuild(
 
 class DataExceptError(Exception):
     """Base class for every exception DataExcept raises."""
+
+    def __init__(self, *args: Any) -> None:
+        super().__init__(*args)
+        # Constructors that wrap another exception record it on an attribute.
+        # Mirroring it into __cause__ is what makes a traceback print the
+        # underlying failure, exactly as `raise ... from exc` would; assigning
+        # __cause__ also sets __suppress_context__, as `raise from` does.
+        for attribute in _CAUSE_ATTRIBUTES:
+            candidate = getattr(self, attribute, None)
+            if isinstance(candidate, BaseException):
+                self.__cause__ = candidate
+                break
 
     def __reduce__(
         self,

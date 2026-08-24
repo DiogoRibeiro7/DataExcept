@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **NumPy scalars are accepted where a number is expected.** Eleven validations
+  used `isinstance(value, (int, float))`, which rejects `numpy.float32` and
+  `numpy.int64` — a poor answer from a library aimed at data science. They now
+  use `numbers.Real`, which NumPy registers its scalar types with, so this needs
+  no dependency on NumPy. Arrays and non-numbers are still rejected.
+- **A wrapped exception is now chained.** Constructors that take an underlying
+  exception recorded it on an attribute but never set `__cause__`, so a
+  traceback did not show what actually failed. `DataExceptError` now mirrors it,
+  and Python prints "The above exception was the direct cause of the following
+  exception" as if `raise ... from` had been used.
+- `from dataexcept import *` failed under `-W error::DeprecationWarning`,
+  because `__all__` listed the deprecated `job_exceptions` module. It is no
+  longer advertised there; it remains importable until 1.0.0.
+- A redundant `global` declaration in `examples/lambda_main.py` raised three
+  `F824` warnings. CI linted only `dataexcept` and `tests` with flake8 while the
+  formatters covered `examples` and `scripts`; flake8 now covers all four.
+
+### Changed
+
+- `SECURITY.md` claimed 0.1.x was the supported version, and `CHECKLIST.md`
+  still described an uncommitted lockfile, 30 of 96 top-level exports, 109 tests
+  and 85% coverage. Both now match the project.
+
 ### Security
 
 - **A release now has to prove where it came from.** The release workflow

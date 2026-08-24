@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Optional, Sequence
 
+from .._validation import is_number
 from .base import DataScienceError
 
 
@@ -227,9 +228,9 @@ class DataImbalanceError(DataScienceError):
     def __init__(
         self, ratio: float, threshold: float, message: Optional[str] = None
     ) -> None:
-        if not isinstance(ratio, (int, float)):
+        if not is_number(ratio):
             raise TypeError(f"ratio must be numeric, got {type(ratio).__name__}")
-        if not isinstance(threshold, (int, float)):
+        if not is_number(threshold):
             raise TypeError(
                 f"threshold must be numeric, got {type(threshold).__name__}"
             )
