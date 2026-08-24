@@ -120,3 +120,5 @@ oversights.
 - [x] `main` protected: required status checks, no force pushes, no deletion
 - [x] A release must come from a commit on `main` that passed CI, and the built
       wheel is tested before it is published
+- [x] Every GitHub Action is pinned to a full-length commit SHA, enforced by a
+      test and by the repository's own Actions policy
