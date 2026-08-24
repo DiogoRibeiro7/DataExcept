@@ -7,7 +7,7 @@ from typing import Any, Optional
 from .base import DataScienceError
 
 
-class SerializationError(DataScienceError):
+class ModelSerializationError(DataScienceError):
     """
     Raised when saving or loading a model fails.
 
@@ -30,7 +30,7 @@ class SerializationError(DataScienceError):
         super().__init__(message)
 
     def __str__(self) -> str:
-        return f"[SerializationError] {self.path}"
+        return f"[ModelSerializationError] {self.path}"
 
 
 class DeploymentError(DataScienceError):

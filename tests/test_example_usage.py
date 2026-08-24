@@ -15,8 +15,8 @@ from lambda_example import get_env_variable  # noqa: E402
 
 from dataexcept import (  # noqa: E402
     DependencyError,
+    OperationTimeoutError,
     ResourceNotFoundError,
-    TimeoutError,
     ValidationError,
 )
 
@@ -57,7 +57,7 @@ def test_perform_operation_timeout(monkeypatch):
         "dependency_satisfied",
         lambda name: True,
     )
-    with pytest.raises(TimeoutError):
+    with pytest.raises(OperationTimeoutError):
         perform_operation(data, config)
 
 

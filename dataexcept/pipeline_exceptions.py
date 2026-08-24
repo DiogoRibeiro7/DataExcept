@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from ._deprecation import resolve_deprecated
+
 
 class PipelineError(Exception):
     """Base exception for pipeline errors."""
@@ -22,7 +24,7 @@ class PreprocessingError(PipelineError):
         super().__init__(message)
 
 
-class FeatureEngineeringError(PreprocessingError):
+class FeaturePreprocessingError(PreprocessingError):
     """Raised when feature engineering fails."""
 
     def __init__(self, feature: str, reason: Optional[str] = None) -> None:
@@ -190,7 +192,7 @@ class DataFetchError(PipelineError):
 __all__ = [
     "PipelineError",
     "PreprocessingError",
-    "FeatureEngineeringError",
+    "FeaturePreprocessingError",
     "StorageError",
     "PipelineNotificationError",
     "RetryLimitExceededError",
@@ -203,3 +205,12 @@ __all__ = [
     "TypeCheckError",
     "DataFetchError",
 ]
+
+#: Renamed in 0.2.0: this named the same thing as
+#: ``dataexcept.datascience_exceptions.FeatureEngineeringError`` while being a
+#: different class, so catching one silently missed the other.
+_DEPRECATED_ALIASES = {"FeatureEngineeringError": FeaturePreprocessingError}
+
+
+def __getattr__(name: str) -> Any:
+    return resolve_deprecated(__name__, _DEPRECATED_ALIASES, name)

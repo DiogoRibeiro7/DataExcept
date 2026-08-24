@@ -20,7 +20,6 @@ from .exceptions import (
     AuthenticationError,
     AuthorizationError,
     ConfigurationError,
-    ConnectionError,
     CronExpressionError,
     DependencyError,
     DeserializationError,
@@ -28,14 +27,20 @@ from .exceptions import (
     JobCancellationError,
     JobError,
     NotificationError,
+    OperationTimeoutError,
     ParsingError,
     ResourceNotFoundError,
     ScheduleConflictError,
     SerializationError,
-    TimeoutError,
+    ServiceConnectionError,
     ValidationError,
     WebhookError,
 )
+
+# This module is itself deprecated, so it binds the pre-0.2.0 names directly
+# rather than going through the alias machinery and warning a second time.
+ConnectionError = ServiceConnectionError
+TimeoutError = OperationTimeoutError
 
 __all__ = [
     "JobError",

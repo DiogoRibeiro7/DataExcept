@@ -4,10 +4,10 @@ import time
 
 from dataexcept import (
     ConfigurationError,
-    ConnectionError,
     DependencyError,
+    OperationTimeoutError,
     ResourceNotFoundError,
-    TimeoutError,
+    ServiceConnectionError,
     ValidationError,
 )
 
@@ -41,9 +41,9 @@ def fetch_remote_data(service_name, config):
         # client.connect(...)
         # client.request(...)
         pass
-    except (ConnectionError, TimeoutError) as exc:
+    except (ServiceConnectionError, OperationTimeoutError) as exc:
         # Wrap any low-level error
-        raise ConnectionError(service_name, original_exception=exc)
+        raise ServiceConnectionError(service_name, original_exception=exc)
 
 
 def perform_operation(data, config):
@@ -57,7 +57,9 @@ def perform_operation(data, config):
     # ... do work ...
     elapsed = time.time() - start
     if elapsed > cfg["timeout"]:
-        raise TimeoutError(operation="perform_operation", timeout=cfg["timeout"])
+        raise OperationTimeoutError(
+            operation="perform_operation", timeout=cfg["timeout"]
+        )
 
     # Suppose we depend on some file or resource
     resource_id = data.get("template_id")

@@ -1,7 +1,7 @@
 from .base import JobError
 
 
-class ConnectionError(JobError):
+class ServiceConnectionError(JobError):
     """Raised when a connection to an external service fails."""
 
     def __init__(self, service_name: str, original_exception: Exception | None = None):
@@ -13,7 +13,7 @@ class ConnectionError(JobError):
         super().__init__(msg)
 
 
-class TimeoutError(JobError):
+class OperationTimeoutError(JobError):
     """Raised when an operation exceeds its time limit."""
 
     def __init__(self, operation: str, timeout: float):
