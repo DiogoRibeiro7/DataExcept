@@ -68,8 +68,10 @@ except DataExceptError:
     ...              # anything else this library raises
 ```
 
-Every exception derives from `DataExceptError`, so one clause catches the whole
-library. Beneath it sit the domain roots — `JobError`, `DataScienceError`,
+Every *operational* exception derives from `DataExceptError`, so one clause
+catches the whole library. Constructors also raise plain `TypeError` when given
+invalid arguments; those are programming errors and deliberately sit outside
+this hierarchy. Beneath it sit the domain roots — `JobError`, `DataScienceError`,
 `PipelineError`, `DataEngineeringError`, `DatabaseError`, `NetworkError`,
 `PandasError`, `CustomIOError` and `SecurityError` — and each catches only its
 own domain. `except JobError:` does **not** catch `ModelTrainingError`; that is
@@ -166,10 +168,35 @@ every remaining use.
 
 ## Serialization
 
-Every exception can be pickled and comes back with the same type, the same
-`args`, the same message and the same attributes, so it can cross a process
-boundary — a `ProcessPoolExecutor`, a task queue, a distributed worker.
+Every exception pickles, and comes back with the same type, `args`, message,
+attributes **and cause**, so it can cross a process boundary — a
+`ProcessPoolExecutor`, a task queue, a distributed worker.
 
 `DataExceptError.__reduce__` restores state directly rather than replaying
-`__init__`, because most of these constructors take several arguments while
-`args` holds only the rendered message. This is covered by a test per class.
+`__init__`, because most constructors take several arguments while `args` holds
+only the rendered message. It also restores `__cause__`, `__context__` and
+`__suppress_context__` explicitly: those are special exception state rather than
+`__dict__` entries, so restoring `__dict__` alone silently loses the chain and a
+traceback rebuilt elsewhere stops showing what actually failed.
+
+### State that cannot be pickled
+
+Some exceptions accept arbitrary caller state — `DataValidationError` takes any
+`value`, `PredictionError` takes any `inputs`. If you attach a lambda, an open
+file, a lock or a locally defined class, that value cannot be serialized.
+
+The exception still survives. The unpickleable value is replaced by an
+`UnpicklableValue` carrying a description of what it was, and the message and
+every other attribute are unchanged:
+
+```python
+>>> restored.value
+<unpicklable: function: <function <lambda> at 0x...>>
+```
+
+An unpickleable `__cause__` becomes an `UnpicklableCause` carrying the original
+type and message, so the chain is degraded rather than dropped.
+
+This is deliberate: an exception that refuses to serialize replaces your actual
+failure with a serialization error about your failure, which is strictly worse
+than a slightly lossy report of the real one.

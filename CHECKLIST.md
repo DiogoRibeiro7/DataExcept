@@ -99,8 +99,12 @@ oversights.
 ## 12. Runtime Behaviour
 
 - [x] Exceptions survive a process boundary — every class pickles and comes back
-      with the same type, message and attributes
-- [x] One base class (`DataExceptError`) catches everything the library raises
+      with the same type, message, attributes and cause. Caller-supplied state
+      that is not itself pickleable is replaced by a description of it rather
+      than failing the whole exception
+- [x] One base class (`DataExceptError`) catches every operational exception
+      the library raises (constructors still raise plain `TypeError` for
+      invalid arguments, deliberately)
 - [x] Credentials in tokens and URLs are redacted before they reach a message
 - [x] Wrapped exceptions are chained, so a traceback shows the underlying cause
 

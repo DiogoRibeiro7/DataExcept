@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exception chaining was lost on a pickle round trip.** `__reduce__` saved
+  `args` and `__dict__`, but `__cause__`, `__context__` and
+  `__suppress_context__` are special exception state rather than `__dict__`
+  entries — so a wrapped exception rebuilt in another process no longer showed
+  what actually failed. All three are now restored explicitly. The 0.4.0 tests
+  did not catch this because they compared `args`, rendered text and `__dict__`
+  and never the chain; they now check it.
+- **An exception carrying unpickleable state could not cross a process
+  boundary at all.** Several classes accept arbitrary caller state, so a
+  lambda, generator, open file or locally defined class made the whole
+  exception unserializable — replacing the real failure with a serialization
+  error about it. Such values are now replaced by an `UnpicklableValue`
+  describing what was there, and an unpickleable cause by an
+  `UnpicklableCause`, so the exception still arrives.
+
+### Changed
+
+- The serialization and hierarchy guarantees are stated more precisely.
+  "Survives a process boundary intact" now says what happens to state that
+  cannot be serialized, and "catches anything this package raises" is now
+  "every operational exception" — constructors deliberately raise plain
+  `TypeError` for invalid arguments, which sits outside the hierarchy.
+
 ## [0.4.0] - 2026-08-24
 
 ### Added

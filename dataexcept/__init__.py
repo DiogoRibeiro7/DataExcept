@@ -38,7 +38,7 @@ from . import (  # noqa: F401
     security_exceptions,
 )
 from ._deprecation import resolve_deprecated
-from .base import DataExceptError
+from .base import DataExceptError, UnpicklableCause, UnpicklableValue
 from .database_exceptions import (
     DatabaseConnectionError,
     DatabaseError,
@@ -163,8 +163,12 @@ from .security_exceptions import (
 )
 
 __all__ = [
-    # The root of the hierarchy: catches anything this package raises.
+    # The root of the hierarchy: catches every operational exception the
+    # package raises.
     "DataExceptError",
+    # Placeholders for state that could not survive serialization.
+    "UnpicklableCause",
+    "UnpicklableValue",
     # Every exception class the package defines.
     "ApiError",
     "AuthenticationError",

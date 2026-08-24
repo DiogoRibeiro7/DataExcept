@@ -1,8 +1,8 @@
 """The root of the DataExcept exception hierarchy.
 
-Every exception this package raises derives from :class:`DataExceptError`, so a
-caller can catch everything the library can raise with a single clause while
-still catching narrowly where it matters::
+Every operational exception this package defines derives from
+:class:`DataExceptError`, so a caller can catch the whole library with one
+clause while still catching narrowly where it matters::
 
     try:
         run_pipeline()
@@ -11,43 +11,119 @@ still catching narrowly where it matters::
     except DataExceptError:
         ...              # anything else DataExcept raised
 
-The base also gives the whole hierarchy a working serialization contract. Many
-of these exceptions take several constructor arguments while ``Exception.args``
-holds only the rendered message, so the default pickling protocol -- which
-replays ``args`` through ``__init__`` -- could not rebuild them. That made them
-unusable across a process boundary, which is where a data pipeline most needs
-them.
+(Constructors also raise plain ``TypeError`` when given invalid arguments.
+Those are programming errors, not operational ones, and are deliberately not
+part of this hierarchy.)
+
+The base also carries the serialization contract for the hierarchy. Two
+problems make that necessary:
+
+* Most constructors take several arguments while ``Exception.args`` holds only
+  the rendered message, so the default protocol -- which replays ``args``
+  through ``__init__`` -- cannot rebuild them.
+* Several exceptions accept arbitrary caller state (``DataValidationError``
+  takes any ``value``), and that state may not be pickleable at all.
+
+An exception that cannot cross a process boundary is useless exactly where a
+data pipeline needs it most, so rather than fail, unpickleable state is
+replaced by a description of what was there.
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, Tuple, Type
+import pickle
+from typing import Any, Dict, Optional, Tuple, Type
 
-__all__ = ["DataExceptError"]
+__all__ = ["DataExceptError", "UnpicklableCause", "UnpicklableValue"]
 
 #: Attribute names used across the package to hold the exception that caused
 #: this one. Checked in order; the first that holds an exception wins.
 _CAUSE_ATTRIBUTES = ("original", "original_exception", "cause")
 
 
+class UnpicklableValue:
+    """Stands in for state that could not survive serialization.
+
+    An exception carrying a lambda, an open file or a lock would otherwise be
+    unraisable across a process boundary. Keeping a description preserves what
+    the value was for debugging, which is the reason it was attached.
+    """
+
+    __slots__ = ("description",)
+
+    def __init__(self, description: str) -> None:
+        self.description = description
+
+    def __repr__(self) -> str:
+        return f"<unpicklable: {self.description}>"
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, UnpicklableValue)
+            and other.description == self.description
+        )
+
+    def __hash__(self) -> int:
+        return hash(self.description)
+
+
+def _safe(value: Any) -> Any:
+    """Return *value*, or a placeholder if it cannot be pickled."""
+    try:
+        pickle.dumps(value)
+    except Exception:
+        try:
+            description = f"{type(value).__name__}: {value!r}"
+        except Exception:  # pragma: no cover - a repr that itself raises
+            description = type(value).__name__
+        return UnpicklableValue(description[:200])
+    return value
+
+
+def _safe_exception(exc: Optional[BaseException]) -> Optional[BaseException]:
+    """Return *exc*, or an exception describing it if it cannot be pickled."""
+    if exc is None:
+        return None
+    try:
+        pickle.dumps(exc)
+    except Exception:
+        return UnpicklableCause(f"{type(exc).__name__}: {exc}")
+    return exc
+
+
 def _rebuild(
-    cls: Type["DataExceptError"], args: Tuple[Any, ...], state: Dict[str, Any]
+    cls: Type["DataExceptError"],
+    args: Tuple[Any, ...],
+    state: Dict[str, Any],
+    cause: Optional[BaseException],
+    context: Optional[BaseException],
+    suppress_context: bool,
 ) -> "DataExceptError":
     """Recreate *cls* without replaying its ``__init__``.
 
-    Constructors here validate and render a message from their arguments;
-    replaying them would need the original arguments, which ``args`` does not
-    carry. Restoring ``args`` and ``__dict__` directly reproduces the exception
-    exactly, including its message and every attribute it recorded.
+    Constructors validate and render a message from their arguments; replaying
+    them would need those arguments, which ``args`` does not carry. Restoring
+    ``args`` and ``__dict__`` directly reproduces the exception exactly.
+
+    ``__cause__``, ``__context__`` and ``__suppress_context__`` live outside
+    ``__dict__`` -- they are special exception state -- so they are restored
+    explicitly. Without this the chain is silently lost, and a traceback
+    rebuilt in another process no longer shows what actually failed.
     """
     exc = cls.__new__(cls)
     Exception.__init__(exc, *args)
     exc.__dict__.update(state)
+    exc.__cause__ = cause
+    exc.__context__ = context
+    exc.__suppress_context__ = suppress_context
     return exc
 
 
 class DataExceptError(Exception):
-    """Base class for every exception DataExcept raises."""
+    """Base class for every operational exception DataExcept raises."""
 
     def __init__(self, *args: Any) -> None:
         super().__init__(*args)
@@ -61,7 +137,26 @@ class DataExceptError(Exception):
                 self.__cause__ = candidate
                 break
 
-    def __reduce__(
-        self,
-    ) -> Tuple[Any, Tuple[Type["DataExceptError"], Tuple[Any, ...], Dict[str, Any]]]:
-        return (_rebuild, (type(self), self.args, self.__dict__.copy()))
+    def __reduce__(self) -> Tuple[Any, Tuple[Any, ...]]:
+        args = tuple(_safe(arg) for arg in self.args)
+        state = {key: _safe(value) for key, value in self.__dict__.items()}
+        return (
+            _rebuild,
+            (
+                type(self),
+                args,
+                state,
+                _safe_exception(self.__cause__),
+                _safe_exception(self.__context__),
+                self.__suppress_context__,
+            ),
+        )
+
+
+class UnpicklableCause(DataExceptError):
+    """Stands in for a cause that could not be serialized.
+
+    ``__cause__`` and ``__context__`` must be exceptions, so the placeholder
+    used for ordinary attributes will not do here. Dropping the chain instead
+    would silently lose the reason for the failure.
+    """
