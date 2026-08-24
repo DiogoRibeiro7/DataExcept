@@ -10,5 +10,5 @@ import dataexcept
 def test_version_matches_pyproject():
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     with open(pyproject, "rb") as f:
-        version = tomllib.load(f)["tool"]["poetry"]["version"]
+        version = tomllib.load(f)["project"]["version"]
     assert dataexcept.__version__ == version

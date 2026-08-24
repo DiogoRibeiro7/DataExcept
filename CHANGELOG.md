@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Project metadata moved from Poetry's `[tool.poetry]` table to the standard
+  PEP 621 `[project]` table, clearing every `poetry check` deprecation. The
+  license is now declared as an SPDX expression (PEP 639), so the built
+  metadata carries `License-Expression: MIT` instead of `License: MIT` and the
+  redundant license classifier is gone. Wheel and sdist contents are otherwise
+  unchanged.
+
+### Fixed
+
+- `dataexcept.__version__` and `tests/test_version.py` read the version out of
+  `pyproject.toml` when the package is not installed, and were still looking in
+  `[tool.poetry]`. They now read `[project]`.
+
 ## [0.1.0] - 2026-08-24
 
 First public release.

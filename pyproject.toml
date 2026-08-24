@@ -1,24 +1,15 @@
-[tool.poetry]
+[project]
 name = "DataExcept"
 version = "0.1.0"
 description = "A Python package providing structured, easily-extendable custom exception types."
-authors = ["Diogo Ribeiro <dfr@esmad.ipp.pt>"]
-maintainers = ["Diogo Ribeiro <diogo.debastos.ribeiro@gmail.com>"]
-license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/DiogoRibeiro7/DataExcept"
-repository = "https://github.com/DiogoRibeiro7/DataExcept"
-documentation = "https://diogoribeiro7.github.io/DataExcept/"
-packages = [{ include = "dataexcept" }]
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10,<3.14"
+authors = [{ name = "Diogo Ribeiro", email = "dfr@esmad.ipp.pt" }]
+maintainers = [{ name = "Diogo Ribeiro", email = "diogo.debastos.ribeiro@gmail.com" }]
 keywords = ["exceptions", "errors", "logging"]
-include = [
-    "CITATION.cff",
-    "LICENSE",
-    "CHANGELOG.md",
-]
-
 classifiers = [
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
@@ -26,17 +17,26 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
+dependencies = [
+    "tomli ; python_version < '3.11'",
+]
 
-[tool.poetry.urls]
+[project.urls]
+Homepage = "https://github.com/DiogoRibeiro7/DataExcept"
+Repository = "https://github.com/DiogoRibeiro7/DataExcept"
+Documentation = "https://diogoribeiro7.github.io/DataExcept/"
 Changelog = "https://github.com/DiogoRibeiro7/DataExcept/releases"
 Issues = "https://github.com/DiogoRibeiro7/DataExcept/issues"
 
-[tool.poetry.scripts]
+[project.scripts]
 dataexcept = "dataexcept.__main__:main"
 
-[tool.poetry.dependencies]
-python = ">=3.10,<3.14"
-tomli = { version = "*", python = "<3.11" }
+[tool.poetry]
+packages = [{ include = "dataexcept" }]
+include = [
+    "CITATION.cff",
+    "CHANGELOG.md",
+]
 
 [tool.poetry.group.dev.dependencies]
 black = "*"
@@ -54,7 +54,7 @@ mkdocs-material = ">=9.5,<10"
 mkdocstrings = { extras = ["python"], version = ">=0.26" }
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.flake8]

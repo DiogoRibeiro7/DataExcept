@@ -55,7 +55,7 @@ try:
 except metadata.PackageNotFoundError:  # pragma: no cover - fallback during dev
     _root = Path(__file__).resolve().parents[1]
     with open(_root / "pyproject.toml", "rb") as _f:
-        __version__ = tomllib.load(_f)["tool"]["poetry"]["version"]
+        __version__ = tomllib.load(_f)["project"]["version"]
 
 __all__ = list(_exceptions.__all__) + [
     "datascience_exceptions",
