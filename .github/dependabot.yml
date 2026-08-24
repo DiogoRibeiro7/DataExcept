@@ -6,19 +6,30 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
-    reviewers:
-      - "diogoribeiro7"
     labels:
       - "dependencies"
       - "python"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    groups:
+      python-development:
+        dependency-type: "development"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
-    reviewers:
-      - "diogoribeiro7"
     labels:
       - "dependencies"
       - "github-actions"
+    commit-message:
+      prefix: "chore(deps)"
+    # One pull request for all action bumps. Separate per-action pull requests
+    # edit adjacent lines of the same workflow and conflict with each other as
+    # soon as one of them merges.
+    groups:
+      github-actions:
+        patterns:
+          - "*"
