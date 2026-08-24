@@ -7,7 +7,11 @@ name: Release
 #   # commit, open a PR, merge it, then on main:
 #   git tag "v$(poetry version -s)" && git push origin "v$(poetry version -s)"
 #
-# Nothing here writes to main, so this works with branch protection.
+# Nothing here writes to main, so this works with branch protection. A tag by
+# itself proves nothing, so before anything is published the build job checks
+# that the tagged commit is on main, that CI passed on that exact commit, and
+# that the tag matches the version; then verify-wheel runs the suite against
+# the built artifact rather than the source tree.
 on:
   push:
     tags:
@@ -18,12 +22,56 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      checks: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Needed to prove the tagged commit is reachable from main.
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: '3.x'
       - uses: abatilo/actions-poetry@v4
+
+      - name: Verify the tag points at a commit on main
+        run: |
+          git fetch --quiet origin main
+          if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
+            echo "::error::${GITHUB_REF_NAME} does not point at a commit on main."
+            echo "::error::Only reviewed, merged code may be released."
+            exit 1
+          fi
+          echo "${GITHUB_REF_NAME} is on main."
+
+      - name: Verify CI passed on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Require exactly what branch protection requires, green, on this
+          # commit -- a tag can otherwise be pushed to unreviewed code.
+          gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs" \
+            --jq '.check_runs[] | [.name, .conclusion] | @tsv' > checks.tsv
+          failed=0
+          while IFS= read -r required; do
+            conclusion="$(awk -F'\t' -v n="$required" '$1 == n {print $2; exit}' checks.tsv)"
+            if [ "$conclusion" != "success" ]; then
+              echo "::error::Required check '${required}' is '${conclusion:-missing}'."
+              failed=1
+            fi
+          done <<'REQUIRED'
+          quality
+          test (3.10)
+          test (3.11)
+          test (3.12)
+          test (3.13)
+          coverage
+          docs
+          REQUIRED
+          rm -f checks.tsv
+          [ "$failed" -eq 0 ] || exit 1
+          echo "All required checks passed on ${GITHUB_SHA}."
+
       - name: Verify the tag matches the project version
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
@@ -34,6 +82,7 @@ jobs:
             exit 1
           fi
           echo "Releasing ${PROJECT_VERSION}"
+
       - name: Build
         run: poetry build
       - uses: actions/upload-artifact@v7
@@ -42,8 +91,34 @@ jobs:
           path: dist/
           if-no-files-found: error
 
-  publish:
+  verify-wheel:
     needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - name: Run the test suite against the installed wheel
+        run: |
+          python -m pip install --upgrade pip
+          pip install dist/*.whl pytest
+          # Delete the source package so the tests can only import the wheel.
+          # The rest of the checkout stays: some tests read pyproject, README
+          # and docs.
+          rm -rf dataexcept
+          python -m pytest -q
+      - name: Check the wheel ships what it should
+        run: python scripts/check_wheel.py
+
+  publish:
+    needs: [build, verify-wheel]
     runs-on: ubuntu-latest
     environment:
       name: pypi
