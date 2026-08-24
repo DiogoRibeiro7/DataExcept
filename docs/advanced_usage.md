@@ -7,7 +7,7 @@ This guide demonstrates advanced ways to extend and integrate the `dataexcept` p
 You can derive your own exceptions from the provided base classes. This allows you to keep error handling consistent across different modules.
 
 ```python
-from dataexcept.job_exceptions import JobError
+from dataexcept.exceptions import JobError
 
 class MyCustomJobError(JobError):
     """Raised when a job in our application fails."""

@@ -42,7 +42,7 @@ Use the `--version` flag to check which build you have installed:
 
 ```bash
 $ dataexcept --version
-dataexcept 0.1.0
+dataexcept 0.2.0
 ```
 
 This is useful inside CI pipelines where you want to confirm that the workflow
