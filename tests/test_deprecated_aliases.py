@@ -10,20 +10,29 @@ existing ``except`` clause keeps catching what it always caught.
 from __future__ import annotations
 
 import builtins
+import subprocess
+import sys
 import warnings
 
 import pytest
 
 import dataexcept
-from dataexcept import datascience_exceptions, exceptions, pipeline_exceptions
 
 ALIASES = [
     (dataexcept, "ConnectionError", "ServiceConnectionError"),
     (dataexcept, "TimeoutError", "OperationTimeoutError"),
-    (exceptions, "ConnectionError", "ServiceConnectionError"),
-    (exceptions, "TimeoutError", "OperationTimeoutError"),
-    (datascience_exceptions, "SerializationError", "ModelSerializationError"),
-    (pipeline_exceptions, "FeatureEngineeringError", "FeaturePreprocessingError"),
+    (dataexcept.exceptions, "ConnectionError", "ServiceConnectionError"),
+    (dataexcept.exceptions, "TimeoutError", "OperationTimeoutError"),
+    (
+        dataexcept.datascience_exceptions,
+        "SerializationError",
+        "ModelSerializationError",
+    ),
+    (
+        dataexcept.pipeline_exceptions,
+        "FeatureEngineeringError",
+        "FeaturePreprocessingError",
+    ),
 ]
 
 
@@ -55,16 +64,29 @@ def test_old_name_still_catches_the_renamed_class():
 
 
 def test_importing_the_package_does_not_warn():
-    """Only touching a deprecated name should warn, never a plain import."""
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        import dataexcept as _reimported  # noqa: F401
+    """Only touching a deprecated name should warn, never a plain import.
 
-    assert [w for w in caught if issubclass(w.category, DeprecationWarning)] == []
+    Run in a subprocess because the package is already in ``sys.modules`` by
+    the time this file is collected, so an in-process ``import`` would be a
+    cache hit and would pass whether or not the import warns.
+    ``-W error::DeprecationWarning`` turns any warning into a non-zero exit.
+    """
+    result = subprocess.run(
+        [sys.executable, "-W", "error::DeprecationWarning", "-c", "import dataexcept"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 @pytest.mark.parametrize(
-    "module", [dataexcept, exceptions, datascience_exceptions, pipeline_exceptions]
+    "module",
+    [
+        dataexcept,
+        dataexcept.exceptions,
+        dataexcept.datascience_exceptions,
+        dataexcept.pipeline_exceptions,
+    ],
 )
 def test_unknown_attribute_still_raises_attribute_error(module):
     with pytest.raises(AttributeError):
@@ -72,7 +94,13 @@ def test_unknown_attribute_still_raises_attribute_error(module):
 
 
 @pytest.mark.parametrize(
-    "module", [dataexcept, exceptions, datascience_exceptions, pipeline_exceptions]
+    "module",
+    [
+        dataexcept,
+        dataexcept.exceptions,
+        dataexcept.datascience_exceptions,
+        dataexcept.pipeline_exceptions,
+    ],
 )
 def test_no_exported_name_shadows_a_builtin(module):
     """Regression guard for the hazard 0.2.0 fixed.
@@ -88,10 +116,10 @@ def test_no_exported_name_shadows_a_builtin(module):
 
 def test_the_two_duplicate_names_are_now_distinct():
     assert (
-        datascience_exceptions.ModelSerializationError
-        is not exceptions.SerializationError
+        dataexcept.datascience_exceptions.ModelSerializationError
+        is not dataexcept.exceptions.SerializationError
     )
     assert (
-        pipeline_exceptions.FeaturePreprocessingError
-        is not datascience_exceptions.FeatureEngineeringError
+        dataexcept.pipeline_exceptions.FeaturePreprocessingError
+        is not dataexcept.datascience_exceptions.FeatureEngineeringError
     )

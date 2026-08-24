@@ -35,15 +35,18 @@ def load_configuration(config):
     return config
 
 
+def _call_remote_service(service_name, timeout):
+    """Stand in for a real HTTP client, so the example has something to wrap."""
+    raise OperationTimeoutError(operation=f"fetch {service_name}", timeout=timeout)
+
+
 def fetch_remote_data(service_name, config):
-    # Imagine this uses some HTTP client...
+    """Wrap whatever the transport raises into a single, specific error."""
     try:
-        # client.connect(...)
-        # client.request(...)
-        pass
+        return _call_remote_service(service_name, config.get("timeout", 30))
     except (ServiceConnectionError, OperationTimeoutError) as exc:
-        # Wrap any low-level error
-        raise ServiceConnectionError(service_name, original_exception=exc)
+        # `from exc` keeps the original as __cause__ so the traceback shows both.
+        raise ServiceConnectionError(service_name, original_exception=exc) from exc
 
 
 def perform_operation(data, config):
