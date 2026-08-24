@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Credentials in a URL path are now redacted.** `redact_url` kept the whole
+  path, so `WebhookError` logged a Slack webhook URL — which Slack documents as
+  a secret in its entirety — unchanged. Where the path *is* the credential the
+  path is now dropped, keeping the host, which is what makes the error
+  actionable.
+- **Sensitive parameters are matched by substring, not an exact allowlist.**
+  `X-Amz-Signature`, `X-Amz-Credential`, `auth_token` and `refresh_token` all
+  passed through before. Fragments are covered too, so an OAuth
+  `#access_token=` no longer survives.
+- **A secret can no longer be reintroduced after redaction.** Redacting only
+  the structured argument left two open routes: a caller-supplied `message`,
+  and the text of a wrapped exception quoting the original URL. Every message
+  in the hierarchy now passes through one scrubbing boundary, so a URL is
+  redacted wherever it appears. Where the library was handed the secret
+  explicitly, that exact value is removed from the message as well.
+- **URL-bearing fields beyond the four patched classes are redacted.**
+  `DataLoadingError.source` documents itself as "file path, URL" and rendered
+  a presigned S3 URL verbatim. Nine such fields now use `redact_if_url`, which
+  leaves ordinary file paths untouched.
+
+### Changed
+
+- `SECURITY.md` states the boundary precisely, including what is **not**
+  covered: a bare non-URL secret written into free-form text cannot be
+  recognised. The previous wording claimed credentials "never appear ...
+  whatever you pass in", which was broader than the implementation.
+
 ### Fixed
 
 - **Exception chaining was lost on a pickle round trip.** `__reduce__` saved

@@ -41,9 +41,14 @@ class EmailError(NotificationError):
 class WebhookError(NotificationError):
     """Raised when a webhook POST fails."""
 
+    # Slack, Discord and others put the secret in the webhook path, so keeping
+    # the path would defeat the redaction. This also applies to the scrubbing
+    # of the whole message, which is how a wrapped HTTP exception quoting the
+    # original URL gets its path dropped too.
+    _keep_url_path = False
+
     def __init__(self, url: str, original_exception: Exception | None = None):
-        # Webhook URLs commonly authenticate through a query parameter.
-        self.url = redact_url(url)
+        self.url = redact_url(url, keep_path=False)
         # original_exception is set by NotificationError.__init__ below.
         msg = f"Webhook to URL '{self.url}' failed"
         if original_exception:

@@ -48,25 +48,47 @@ These exceptions embed the values that caused a failure, and
 
 ### What is redacted
 
-Values that are inherently credentials never appear in a message or on the
-exception, whatever you pass in:
+Values the library is *given* as credentials never appear in a message or on
+the exception:
 
 | Class | Redacted |
 | --- | --- |
 | `InvalidTokenError` | the token, replaced by a non-reversible fingerprint |
 | `DatabaseConnectionError` | any username and password in the URL |
-| `WebhookError` | userinfo and sensitive query parameters in the URL |
-| `ApiError` | userinfo and sensitive query parameters in the endpoint |
+| `WebhookError` | userinfo, sensitive parameters **and the path** |
+| `ApiError` | userinfo and sensitive parameters in the endpoint |
 
-A redacted secret is rendered as `***(1a2b3c4d)`. The fingerprint is a
-truncated SHA-256, so the *same* bad credential failing repeatedly stays
-recognisable in a log without the credential being in it. Host, port and path
-are preserved, because those are what make the error actionable.
+`WebhookError` drops the path because that *is* the credential for Slack,
+Discord and others, which document the whole webhook URL as a secret.
+
+Beyond those classes, **any URL is redacted wherever it appears**:
+
+- in a `message` you supplied yourself;
+- in the text of a wrapped exception that quotes the original URL;
+- in fields such as `DataLoadingError.source` that may hold a path *or* a URL —
+  ordinary file paths are left untouched.
+
+A URL keeps its scheme, host, port and non-sensitive parameters, because those
+are what make the error actionable. It loses userinfo, any query or fragment
+parameter whose name contains `token`, `secret`, `key`, `password`, `auth`,
+`credential`, `sig` or `session` — so `X-Amz-Signature`, `auth_token` and an
+OAuth `#access_token=` fragment are all covered.
+
+A redacted secret renders as `***(1a2b3c4d)`, a truncated SHA-256, so the
+*same* bad credential failing repeatedly stays recognisable in a log without
+the credential being in it.
 
 ### What is not redacted
 
-Everything else is echoed deliberately — a field name, a column, a file path, a
-model name — because that is the point of the library.
+**A bare, non-URL secret written into free-form text.** If you pass
+`message="the key is AKIAIOSFODNN7"`, the library has no way to know that
+string is a credential and it will be logged. The one exception is a value the
+library was explicitly handed as a secret — `InvalidTokenError`'s token is
+removed from your message too, provided it is at least 8 characters, below
+which substring replacement would corrupt ordinary words.
+
+Everything else is echoed deliberately — a field name, a column, a model name,
+a file path — because that is the point of the library.
 
 **`QueryExecutionError` embeds the SQL you give it**, including any literal
 values in it. It is not redacted, because a normalised query is often useless

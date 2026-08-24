@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .base import DataExceptError
+from .redaction import redact_if_url
 
 
 class CustomIOError(DataExceptError):
@@ -21,7 +22,7 @@ class FileReadError(CustomIOError):
             path: File path that could not be read.
             original: Optional underlying exception.
         """
-        self.path = path
+        self.path = redact_if_url(path)
         self.original = original
         msg = f"Failed to read file '{path}'"
         if original:
@@ -39,7 +40,7 @@ class FileWriteError(CustomIOError):
             path: File path that could not be written to.
             original: Optional underlying exception.
         """
-        self.path = path
+        self.path = redact_if_url(path)
         self.original = original
         msg = f"Failed to write file '{path}'"
         if original:
@@ -56,7 +57,7 @@ class FileLockError(CustomIOError):
         Args:
             path: Path of the lock file.
         """
-        self.path = path
+        self.path = redact_if_url(path)
         super().__init__(f"Unable to obtain lock for '{path}'")
 
 

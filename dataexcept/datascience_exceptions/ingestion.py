@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Optional, Sequence
 
 from .._validation import is_number
+from ..redaction import redact_if_url
 from .base import DataScienceError
 
 
@@ -26,7 +27,7 @@ class DataLoadingError(DataScienceError):
             )
 
         message = f"Failed to load data from {source!r}: {original}"
-        self.source = source
+        self.source = redact_if_url(source)
         self.original = original
         super().__init__(message)
 

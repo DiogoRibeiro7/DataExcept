@@ -105,7 +105,10 @@ oversights.
 - [x] One base class (`DataExceptError`) catches every operational exception
       the library raises (constructors still raise plain `TypeError` for
       invalid arguments, deliberately)
-- [x] Credentials in tokens and URLs are redacted before they reach a message
+- [x] Credentials the library is given, and URLs wherever they appear — in a
+      caller-supplied message or a wrapped exception's text — are redacted
+      before they reach a message. A bare non-URL secret in free text cannot be
+      recognised; `SECURITY.md` says so
 - [x] Wrapped exceptions are chained, so a traceback shows the underlying cause
 
 ## 12. Security & Supply Chain

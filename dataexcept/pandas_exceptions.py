@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Optional, Sequence
 
 from .base import DataExceptError
+from .redaction import redact_if_url
 
 
 class PandasError(DataExceptError):
@@ -126,7 +127,7 @@ class PandasIOError(PandasError):
             raise TypeError(
                 f"original must be Exception, got {type(original).__name__}"
             )
-        self.path = path
+        self.path = redact_if_url(path)
         self.original = original
         msg = f"Pandas I/O operation failed on {path!r}: {original}"
         super().__init__(msg)

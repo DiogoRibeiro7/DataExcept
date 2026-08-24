@@ -34,6 +34,8 @@ from __future__ import annotations
 import pickle
 from typing import Any, Dict, Optional, Tuple, Type
 
+from .redaction import redact_urls_in_text
+
 __all__ = ["DataExceptError", "UnpicklableCause", "UnpicklableValue"]
 
 #: Attribute names used across the package to hold the exception that caused
@@ -125,7 +127,28 @@ def _rebuild(
 class DataExceptError(Exception):
     """Base class for every operational exception DataExcept raises."""
 
+    #: Passed to redact_urls_in_text when scrubbing this class's message.
+    #: WebhookError sets it False, because a webhook URL's path *is* the
+    #: credential.
+    _keep_url_path = True
+
     def __init__(self, *args: Any) -> None:
+        # One boundary for the whole hierarchy: whatever built the message --
+        # a constructor, a caller-supplied `message`, or the text of a wrapped
+        # exception quoting the original URL -- it is scrubbed here. Redacting
+        # only the structured argument leaves all three of those routes open.
+        keep_path = type(self)._keep_url_path
+        if args and isinstance(args[0], str):
+            args = (redact_urls_in_text(args[0], keep_path=keep_path),) + args[1:]
+        # Many classes also store the message on self.message and render *that*
+        # in __str__, so scrubbing args alone would leave the rendered form
+        # untouched. Subclasses set it before calling up, so it is here to fix.
+        stored = self.__dict__.get("message")
+        if isinstance(stored, str):
+            # Written straight into __dict__, symmetric with the read above:
+            # this rewrites state a subclass already stored, rather than the
+            # base declaring an attribute of its own.
+            self.__dict__["message"] = redact_urls_in_text(stored, keep_path=keep_path)
         super().__init__(*args)
         # Constructors that wrap another exception record it on an attribute.
         # Mirroring it into __cause__ is what makes a traceback print the
