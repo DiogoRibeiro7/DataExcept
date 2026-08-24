@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-24
+
+### Added
+
+- **`DataExceptError`, the root of the hierarchy.** Every exception the package
+  raises now derives from it, so one clause catches the whole library:
+  ```python
+  except DataExceptError:
+      ...
+  ```
+  The nine domain roots (`JobError`, `DataScienceError`, `PipelineError` and
+  the rest) sit beneath it and still catch only their own domain, so granular
+  handling is unchanged.
+
+### Changed
+
+- `SECURITY.md` claimed 0.1.x was the supported version, and `CHECKLIST.md`
+  still described an uncommitted lockfile, 30 of 96 top-level exports, 109 tests
+  and 85% coverage. Both now match the project.
+- **Coverage is now measured honestly, and gated.** `coverage run -m pytest`
+  had no `source` setting, so it counted the tests and examples in the
+  denominator — and test files are by definition fully executed. The reported
+  figure was inflated: 86% when the package alone was at 79%.
+  `[tool.coverage.run]` now restricts measurement to `dataexcept` and enables
+  branch coverage, and `fail_under = 91` stops it regressing. The honest number
+  is **92%**; the README, checklist and roadmap now quote that rather than the
+  inflated one.
+- The CLI is exercised in-process as well as through a subprocess. The
+  subprocess tests verify real invocation but coverage cannot see inside them,
+  which left `__main__.py` reporting 23% despite being tested. It now reports
+  93%.
+
 ### Fixed
 
 - **NumPy scalars are accepted where a number is expected.** Eleven validations
@@ -25,12 +57,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A redundant `global` declaration in `examples/lambda_main.py` raised three
   `F824` warnings. CI linted only `dataexcept` and `tests` with flake8 while the
   formatters covered `examples` and `scripts`; flake8 now covers all four.
-
-### Changed
-
-- `SECURITY.md` claimed 0.1.x was the supported version, and `CHECKLIST.md`
-  still described an uncommitted lockfile, 30 of 96 top-level exports, 109 tests
-  and 85% coverage. Both now match the project.
+- **Four exceptions discarded the reason for the failure.**
+  `DataLoadingError`, `MissingDataError`, `ModelSerializationError` and
+  `DeploymentError` rendered only their identifying attribute —
+  `[DataLoadingError] orders.csv` — while "invalid utf-8", "disk full" or
+  "permission denied" sat unseen in `args[0]`. Since logging uses `str(exc)`,
+  the part a reader needs never reached the log. All four now render the full
+  message, and a test asserts no class drops it.
+- **Exceptions can now cross a process boundary.** They could not be pickled:
+  most constructors take several arguments while `Exception.args` holds only
+  the rendered message, and the default protocol replays `args` through
+  `__init__`. Of 98 classes, 39 raised `TypeError` on unpickling and a further
+  47 came back with different state — only 10 round-tripped exactly. Raising
+  one inside a `ProcessPoolExecutor` killed the pool with `BrokenProcessPool`.
+  `DataExceptError.__reduce__` restores `args` and `__dict__` directly instead
+  of replaying `__init__`. All 97 constructible classes now round-trip with
+  identical type, message and attributes, covered by a test per class plus a
+  real process-pool test.
+- The stability policy and README both claimed `except JobError:` catches
+  "anything else this library raises". It did not — there were nine
+  disconnected trees under `Exception`, so `JobError` caught neither
+  `ModelTrainingError` nor `PipelineError` nor `DatabaseError`. The claim is
+  now true of `DataExceptError`, and the docs say which base covers what.
 
 ### Security
 
@@ -45,83 +93,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `scripts/check_wheel.py` then asserts the distribution ships `py.typed` and a
   complete `__all__` — a file can be present in the repository and missing from
   the artifact.
-
-### Changed
-
-- **Coverage is now measured honestly, and gated.** `coverage run -m pytest`
-  had no `source` setting, so it counted the tests and examples in the
-  denominator — and test files are by definition fully executed. The reported
-  figure was inflated: 86% when the package alone was at 79%.
-
-  `[tool.coverage.run]` now restricts measurement to `dataexcept` and enables
-  branch coverage, and `fail_under = 91` stops it regressing. The honest number
-  is **92%**; the README, checklist and roadmap now quote that rather than the
-  inflated one.
-- The CLI is exercised in-process as well as through a subprocess. The
-  subprocess tests verify real invocation but coverage cannot see inside them,
-  which left `__main__.py` reporting 23% despite being tested. It now reports
-  93%.
-
-### Security
-
 - **Credentials are no longer written into exception messages.** `log_exception`
   logs `str(exc)`, so a failed connection put the database password in the log.
   `InvalidTokenError` embedded the whole token; `DatabaseConnectionError` the
   whole connection URL including username and password; `WebhookError` and
   `ApiError` the URL including any signing or key parameter.
-
   These are now redacted before being stored or rendered, so the raw value is
   absent from the message, the attributes and a pickle of the exception. A
   secret renders as `***(1a2b3c4d)` — a truncated SHA-256, so the same bad
   credential failing repeatedly stays correlatable in a log without appearing
   in it. Host, port and path survive, because those are what make the error
   actionable.
-
   `QueryExecutionError` still embeds the SQL it is given; SECURITY.md now says
   so explicitly rather than leaving it to be discovered.
-
-### Fixed
-
-- **Four exceptions discarded the reason for the failure.**
-  `DataLoadingError`, `MissingDataError`, `ModelSerializationError` and
-  `DeploymentError` rendered only their identifying attribute —
-  `[DataLoadingError] orders.csv` — while "invalid utf-8", "disk full" or
-  "permission denied" sat unseen in `args[0]`. Since logging uses `str(exc)`,
-  the part a reader needs never reached the log. All four now render the full
-  message, and a test asserts no class drops it.
-
-### Added
-
-- **`DataExceptError`, the root of the hierarchy.** Every exception the package
-  raises now derives from it, so one clause catches the whole library:
-
-  ```python
-  except DataExceptError:
-      ...
-  ```
-
-  The nine domain roots (`JobError`, `DataScienceError`, `PipelineError` and
-  the rest) sit beneath it and still catch only their own domain, so granular
-  handling is unchanged.
-
-### Fixed
-
-- **Exceptions can now cross a process boundary.** They could not be pickled:
-  most constructors take several arguments while `Exception.args` holds only
-  the rendered message, and the default protocol replays `args` through
-  `__init__`. Of 98 classes, 39 raised `TypeError` on unpickling and a further
-  47 came back with different state — only 10 round-tripped exactly. Raising
-  one inside a `ProcessPoolExecutor` killed the pool with `BrokenProcessPool`.
-
-  `DataExceptError.__reduce__` restores `args` and `__dict__` directly instead
-  of replaying `__init__`. All 97 constructible classes now round-trip with
-  identical type, message and attributes, covered by a test per class plus a
-  real process-pool test.
-- The stability policy and README both claimed `except JobError:` catches
-  "anything else this library raises". It did not — there were nine
-  disconnected trees under `Exception`, so `JobError` caught neither
-  `ModelTrainingError` nor `PipelineError` nor `DatabaseError`. The claim is
-  now true of `DataExceptError`, and the docs say which base covers what.
 
 ## [0.3.0] - 2026-08-24
 
@@ -284,7 +268,8 @@ First public release.
 - Published to PyPI via OIDC trusted publishing; no long-lived API token is
   involved in a release.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.1.0...v0.2.0
