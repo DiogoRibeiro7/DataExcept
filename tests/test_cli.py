@@ -4,6 +4,8 @@ import subprocess
 import sys
 from typing import Set
 
+import pytest
+
 import dataexcept
 
 #: Deprecated shims are excluded from `dataexcept list`, so they must be
@@ -86,3 +88,46 @@ def test_cli_list_does_not_warn():
         text=True,
     )
     assert result.returncode == 0, result.stderr
+
+
+# The tests above invoke the CLI as a subprocess, which is what a user does but
+# which coverage cannot see. These call the entry point directly, so the module
+# is measured and the argument handling is exercised in-process.
+
+
+def test_main_lists_exceptions_in_process(capsys):
+    from dataexcept.__main__ import main
+
+    main(["list"])
+
+    listed = set(capsys.readouterr().out.split())
+    assert "ValidationError" in listed
+    assert "DataExceptError" in listed
+    assert "ConnectionError" not in listed
+
+
+def test_main_without_a_command_prints_help(capsys):
+    from dataexcept.__main__ import main
+
+    main([])
+
+    assert "Utilities for DataExcept" in capsys.readouterr().out
+
+
+def test_main_version_exits_cleanly(capsys):
+    from dataexcept.__main__ import main
+
+    with pytest.raises(SystemExit) as exit_info:
+        main(["--version"])
+
+    assert exit_info.value.code == 0
+    assert capsys.readouterr().out.startswith("dataexcept ")
+
+
+def test_main_rejects_an_unknown_command(capsys):
+    from dataexcept.__main__ import main
+
+    with pytest.raises(SystemExit) as exit_info:
+        main(["nonsense"])
+
+    assert exit_info.value.code != 0
