@@ -1,4 +1,5 @@
 # notification.py
+from ..redaction import redact_url
 from .base import JobError
 
 
@@ -41,9 +42,10 @@ class WebhookError(NotificationError):
     """Raised when a webhook POST fails."""
 
     def __init__(self, url: str, original_exception: Exception | None = None):
-        self.url = url
+        # Webhook URLs commonly authenticate through a query parameter.
+        self.url = redact_url(url)
         self.original_exception = original_exception
-        msg = f"Webhook to URL '{url}' failed"
+        msg = f"Webhook to URL '{self.url}' failed"
         if original_exception:
             msg += f": {original_exception}"
         super().__init__("webhook", original_exception, message=msg)

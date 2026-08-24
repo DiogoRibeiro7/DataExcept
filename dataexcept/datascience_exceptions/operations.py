@@ -30,7 +30,7 @@ class ModelSerializationError(DataScienceError):
         super().__init__(message)
 
     def __str__(self) -> str:
-        return f"[ModelSerializationError] {self.path}"
+        return f"[ModelSerializationError:{self.path}] {self.message}"
 
 
 class DeploymentError(DataScienceError):
@@ -57,7 +57,7 @@ class DeploymentError(DataScienceError):
         super().__init__(msg)
 
     def __str__(self) -> str:
-        return f"[DeploymentError] {self.target}"
+        return f"[DeploymentError:{self.target}] {self.message}"
 
 
 class DataDriftError(DataScienceError):

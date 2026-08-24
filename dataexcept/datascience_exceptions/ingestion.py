@@ -30,7 +30,7 @@ class DataLoadingError(DataScienceError):
         super().__init__(message)
 
     def __str__(self) -> str:
-        return f"[DataLoadingError] {self.source}"
+        return f"[DataLoadingError:{self.source}] {self.message}"
 
 
 class DataFormatError(DataScienceError):
@@ -105,7 +105,7 @@ class MissingDataError(DataScienceError):
         super().__init__(message)
 
     def __str__(self) -> str:
-        return f"[MissingDataError] {self.feature}"
+        return f"[MissingDataError:{self.feature}] {self.message}"
 
 
 class OutlierDetectionError(DataScienceError):

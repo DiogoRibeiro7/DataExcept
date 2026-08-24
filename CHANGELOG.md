@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Credentials are no longer written into exception messages.** `log_exception`
+  logs `str(exc)`, so a failed connection put the database password in the log.
+  `InvalidTokenError` embedded the whole token; `DatabaseConnectionError` the
+  whole connection URL including username and password; `WebhookError` and
+  `ApiError` the URL including any signing or key parameter.
+
+  These are now redacted before being stored or rendered, so the raw value is
+  absent from the message, the attributes and a pickle of the exception. A
+  secret renders as `***(1a2b3c4d)` — a truncated SHA-256, so the same bad
+  credential failing repeatedly stays correlatable in a log without appearing
+  in it. Host, port and path survive, because those are what make the error
+  actionable.
+
+  `QueryExecutionError` still embeds the SQL it is given; SECURITY.md now says
+  so explicitly rather than leaving it to be discovered.
+
+### Fixed
+
+- **Four exceptions discarded the reason for the failure.**
+  `DataLoadingError`, `MissingDataError`, `ModelSerializationError` and
+  `DeploymentError` rendered only their identifying attribute —
+  `[DataLoadingError] orders.csv` — while "invalid utf-8", "disk full" or
+  "permission denied" sat unseen in `args[0]`. Since logging uses `str(exc)`,
+  the part a reader needs never reached the log. All four now render the full
+  message, and a test asserts no class drops it.
+
 ### Added
 
 - **`DataExceptError`, the root of the hierarchy.** Every exception the package

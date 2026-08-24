@@ -42,10 +42,38 @@ DataExcept is a library of exception classes and logging helpers. It performs
 no network or filesystem I/O and has one conditional runtime dependency
 (`tomli`, on Python < 3.11).
 
-The most likely realistic issue is **information disclosure through exception
-messages**: these exceptions embed the values that caused a failure, so a
-message may contain data from your inputs. If you log exceptions where
-untrusted parties can read them, or return exception text in an API response,
-review what those messages carry first. That behaviour is intentional and
-documented, not a vulnerability in itself — but a report showing DataExcept
-leaking something a caller could not reasonably expect is in scope.
+The realistic issue is **information disclosure through exception messages**.
+These exceptions embed the values that caused a failure, and
+`log_exception` logs `str(exc)`, so a message can reach a log.
+
+### What is redacted
+
+Values that are inherently credentials never appear in a message or on the
+exception, whatever you pass in:
+
+| Class | Redacted |
+| --- | --- |
+| `InvalidTokenError` | the token, replaced by a non-reversible fingerprint |
+| `DatabaseConnectionError` | any username and password in the URL |
+| `WebhookError` | userinfo and sensitive query parameters in the URL |
+| `ApiError` | userinfo and sensitive query parameters in the endpoint |
+
+A redacted secret is rendered as `***(1a2b3c4d)`. The fingerprint is a
+truncated SHA-256, so the *same* bad credential failing repeatedly stays
+recognisable in a log without the credential being in it. Host, port and path
+are preserved, because those are what make the error actionable.
+
+### What is not redacted
+
+Everything else is echoed deliberately — a field name, a column, a file path, a
+model name — because that is the point of the library.
+
+**`QueryExecutionError` embeds the SQL you give it**, including any literal
+values in it. It is not redacted, because a normalised query is often useless
+for debugging. If your queries carry personal data in literals, pass a
+parameterised or normalised statement rather than the interpolated one.
+
+Treat all of this as data you control: if you log exceptions where untrusted
+parties can read them, or return exception text in an API response, review what
+those messages carry. A report showing DataExcept disclosing something a caller
+could not reasonably expect — particularly a credential — is in scope.
