@@ -31,7 +31,7 @@ class EmailError(NotificationError):
     ):
         self.recipient = recipient
         self.subject = subject
-        self.original_exception = original_exception
+        # original_exception is set by NotificationError.__init__ below.
         msg = f"Email to '{recipient}' with subject '{subject}' failed"
         if original_exception:
             msg += f": {original_exception}"
@@ -44,7 +44,7 @@ class WebhookError(NotificationError):
     def __init__(self, url: str, original_exception: Exception | None = None):
         # Webhook URLs commonly authenticate through a query parameter.
         self.url = redact_url(url)
-        self.original_exception = original_exception
+        # original_exception is set by NotificationError.__init__ below.
         msg = f"Webhook to URL '{self.url}' failed"
         if original_exception:
             msg += f": {original_exception}"
