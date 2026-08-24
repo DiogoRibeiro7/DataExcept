@@ -65,10 +65,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `[tool.poetry]`. They now read `[project]`.
 - `examples/example_usage.py` raised `TimeoutError` with keyword arguments the
   builtin does not accept — a live instance of the shadowing hazard.
-
-## [0.1.0] - 2026-08-24
-
-First public release.
 - `python -m dataexcept --version` reported `__main__.py` as the program name
   instead of `dataexcept`, because argparse defaults `prog` to `sys.argv[0]`.
 - `dataexcept list` imported the deprecated `job_exceptions` shim to build its
@@ -86,6 +82,11 @@ First public release.
   output did not match the real alphabetical listing, its exception count and
   CLI version were stale, and its end-to-end example used `np.log` without
   importing numpy.
+
+
+## [0.1.0] - 2026-08-24
+
+First public release.
 
 ### Added
 
