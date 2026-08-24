@@ -1,8 +1,9 @@
 .DEFAULT_GOAL := help
 
 PYTHON ?= python
+PART ?= patch
 
-.PHONY: help install test coverage lint format format-check typecheck check docs docs-serve build clean lambda-demo
+.PHONY: help install test coverage lint format format-check typecheck check docs docs-serve build clean lambda-demo release-prep
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-16s", $$1; print $$2}'
@@ -23,12 +24,12 @@ lint:  ## Run ruff and flake8
 	$(PYTHON) -m flake8 dataexcept tests
 
 format:  ## Apply black and isort
-	$(PYTHON) -m black dataexcept tests examples
-	$(PYTHON) -m isort dataexcept tests examples
+	$(PYTHON) -m black dataexcept tests examples scripts
+	$(PYTHON) -m isort dataexcept tests examples scripts
 
 format-check:  ## Verify formatting without changing files
-	$(PYTHON) -m black --check --diff dataexcept tests examples
-	$(PYTHON) -m isort --check-only --diff dataexcept tests examples
+	$(PYTHON) -m black --check --diff dataexcept tests examples scripts
+	$(PYTHON) -m isort --check-only --diff dataexcept tests examples scripts
 
 typecheck:  ## Run mypy
 	$(PYTHON) -m mypy
@@ -43,6 +44,9 @@ docs-serve:  ## Serve the documentation with live reload
 
 build:  ## Build the sdist and wheel
 	poetry build
+
+release-prep:  ## Bump version and CITATION.cff (make release-prep PART=minor)
+	$(PYTHON) scripts/bump_version.py $(PART)
 
 clean:  ## Remove build, test and documentation artefacts
 	rm -rf dist site htmlcov .coverage .coverage.* coverage.xml .pytest_cache .mypy_cache .ruff_cache

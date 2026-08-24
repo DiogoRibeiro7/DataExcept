@@ -82,10 +82,30 @@ chore(deps): bump ruff from 0.16.3 to 0.16.4
 
 ## Releasing
 
-Maintainers only. The `Release` workflow is dispatched manually: it bumps the
-patch version, updates `CITATION.cff`, tags, builds, and publishes to PyPI via
-OIDC trusted publishing. Publishing waits on an approval in the `pypi`
-environment — no API token is involved.
+Maintainers only. `main` is protected, so nothing in CI pushes to it — releases
+are driven by tags instead.
+
+1. Bump the version and sync `CITATION.cff`:
+
+   ```bash
+   make release-prep PART=patch     # or minor / major
+   ```
+
+2. Move the `[Unreleased]` entries in `CHANGELOG.md` under the new version.
+3. Commit, open a pull request, and merge it once CI is green.
+4. Tag the merge commit on `main` and push the tag:
+
+   ```bash
+   git checkout main && git pull
+   git tag "v$(poetry version -s)"
+   git push origin "v$(poetry version -s)"
+   ```
+
+Pushing the tag runs the `Release` workflow. It refuses to continue if the tag
+does not match the version in `pyproject.toml`, then builds, publishes to PyPI
+via OIDC trusted publishing, and cuts a GitHub release with the artifacts
+attached. Publishing waits on an approval in the `pypi` environment — no API
+token is involved.
 
 ## Reporting bugs and asking questions
 
