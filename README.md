@@ -198,7 +198,7 @@ BiasDetectionError
 
 # Check version
 $ dataexcept --version
-dataexcept 0.3.0
+dataexcept 0.4.0
 ```
 
 ## 🎯 Use Cases
@@ -348,7 +348,7 @@ If you use DataExcept in your research, please cite it:
   author = {Ribeiro, Diogo},
   title = {DataExcept: Structured Exception Handling for Data Science},
   url = {https://github.com/DiogoRibeiro7/DataExcept},
-  version = {0.3.0},
+  version = {0.4.0},
   year = {2026},
   publisher = {GitHub}
 }
