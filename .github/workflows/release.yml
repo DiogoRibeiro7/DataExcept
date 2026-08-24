@@ -65,6 +65,7 @@ jobs:
           test (3.11)
           test (3.12)
           test (3.13)
+          test (3.14)
           coverage
           docs
           REQUIRED

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Python 3.14 support.** `requires-python` capped at `<3.14`, so the package
+  refused to install on the current stable interpreter — 3.14 was released in
+  October 2025 and is no longer upcoming. The range is now `>=3.10,<3.15`, 3.14
+  is in the classifiers and the CI matrix, and `test (3.14)` joins the checks
+  the release workflow requires before it will build.
+
 ### Security
 
 - **Every GitHub Action is pinned to a full-length commit SHA.** All 34
