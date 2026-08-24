@@ -10,8 +10,12 @@ files guarantees this. These tests derive each fact from its source.
 from __future__ import annotations
 
 import re
-import tomllib
 from pathlib import Path
+
+try:  # Python >=3.11
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - fallback for Python <3.11
+    import tomli as tomllib  # type: ignore[no-redef]
 
 import pytest
 
@@ -94,3 +98,23 @@ def test_the_supported_python_range_is_stated_consistently():
     assert f"test ({highest})" in _read(
         ".github/workflows/release.yml"
     ), f"the release gate does not require test ({highest})"
+
+
+def test_no_module_imports_tomllib_without_a_fallback():
+    """`tomllib` is 3.11+, and this package supports 3.10.
+
+    This has now been got wrong twice, in two different test modules, each time
+    surfacing only as a red `test (3.10)` job. A guard is cheaper than
+    remembering.
+    """
+    offenders = []
+    for path in sorted(PROJECT_ROOT.rglob("*.py")):
+        if any(part in {".venv", "site", "build", "dist"} for part in path.parts):
+            continue
+        text = path.read_text(encoding="utf-8")
+        if "import tomllib" in text and "import tomli as tomllib" not in text:
+            offenders.append(str(path.relative_to(PROJECT_ROOT)))
+    assert not offenders, (
+        f"these import tomllib with no tomli fallback, so they break on "
+        f"Python 3.10: {offenders}"
+    )
