@@ -34,7 +34,10 @@ def test_data_loading_error_str():
     err = DataLoadingError("data.csv", IOError("boom"))
     expected = "Failed to load data from 'data.csv': boom"
     assert err.message == expected
-    assert str(err) == "[DataLoadingError] data.csv"
+    assert (
+        str(err)
+        == "[DataLoadingError:data.csv] Failed to load data from 'data.csv': boom"
+    )
 
 
 def test_data_validation_error_default():

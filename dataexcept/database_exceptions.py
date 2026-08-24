@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .base import DataExceptError
+from .redaction import redact_url
 
 
 class DatabaseError(DataExceptError):
@@ -21,8 +22,9 @@ class DatabaseConnectionError(DatabaseError):
             db_url: Database connection URL.
             message: Optional custom error message.
         """
-        self.db_url = db_url
-        default = f"Failed to connect to database at '{db_url}'"
+        # A connection URL routinely carries a username and password.
+        self.db_url = redact_url(db_url)
+        default = f"Failed to connect to database at '{self.db_url}'"
         super().__init__(message or default)
 
 

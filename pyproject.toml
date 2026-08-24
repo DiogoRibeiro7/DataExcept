@@ -86,7 +86,8 @@ max-complexity = 8
 # assert is how a test asserts, and "/tmp/data" there is a string literal used
 # as fixture data rather than a path that is ever opened.
 # S301: the serialization tests unpickle data they created a line earlier.
-"tests/**" = ["S101", "S108", "S301", "S603"]
+# S105/S106: redaction tests need credential-shaped literals to redact.
+"tests/**" = ["S101", "S105", "S106", "S108", "S301", "S603"]
 # The lambda example asserts to narrow Optionals for the type checker.
 "examples/**" = ["S101"]
 # bump_version.py deliberately shells out to poetry, by name, on a maintainer's

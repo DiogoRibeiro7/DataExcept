@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .base import DataExceptError
+from .redaction import redact_secret
 
 
 class SecurityError(DataExceptError):
@@ -55,10 +56,12 @@ class InvalidTokenError(SecurityError):
             token: The problematic token.
             message: Optional custom error message.
         """
-        self.token = token
+        # The raw token is never stored or rendered: this exception is often
+        # logged, and the caller already holds the value it passed in.
+        self.token = redact_secret(token)
         default = "Invalid authentication token"
         if token:
-            default += f": {token}"
+            default += f": {self.token}"
         super().__init__(message or default)
 
 

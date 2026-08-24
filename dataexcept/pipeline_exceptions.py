@@ -6,6 +6,7 @@ from typing import Any, Optional
 
 from ._deprecation import resolve_deprecated
 from .base import DataExceptError
+from .redaction import redact_url
 
 
 class PipelineError(DataExceptError):
@@ -148,10 +149,11 @@ class ApiError(PipelineError):
         status_code: Optional[int] = None,
         message: Optional[str] = None,
     ) -> None:
-        default = f"API call failed: {endpoint}"
+        # An endpoint URL may authenticate through a query parameter.
+        self.endpoint = redact_url(endpoint)
+        default = f"API call failed: {self.endpoint}"
         if status_code is not None:
             default += f" (status {status_code})"
-        self.endpoint = endpoint
         self.status_code = status_code
         super().__init__(message or default)
 
