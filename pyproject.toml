@@ -41,7 +41,10 @@ include = [
 [tool.poetry.group.dev.dependencies]
 black = "*"
 coverage = "*"
+coverage-badge = "*"
 flake8 = "*"
+# coverage-badge still imports pkg_resources, which setuptools 81 removed.
+setuptools = "<81"
 isort = "*"
 mypy = "*"
 pre-commit = "*"

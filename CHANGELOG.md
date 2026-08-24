@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `poetry.lock` is committed, and CI installs from it. Every job previously ran
+  `pip install black flake8 isort mypy ruff` unpinned, so a new release of any
+  linter could turn the build red with no commit to point at. `poetry check
+  --lock` now fails the build if the lock and `pyproject.toml` disagree.
+- `coverage-badge` and the `setuptools<81` pin were being installed by CI
+  without being declared anywhere. Both are now dev dependencies, so the
+  constraint lives with the project rather than inside a workflow string.
+
+### Added
+
+- Tests that `poetry.lock` is committed, and that `docs/requirements.txt`
+  agrees with the Poetry `docs` group — the two list the same packages and
+  could drift apart silently.
+
 ## [0.3.0] - 2026-08-24
 
 ### Added
