@@ -27,20 +27,23 @@ jobs:
       - name: Test with coverage
         run: |
           coverage run -m pytest -q
-          coverage xml -o coverage.xml
+          mv .coverage .coverage.${{ matrix.python-version }}
       - uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ matrix.python-version }}
-          path: |
-            .coverage
-            coverage.xml
+          path: .coverage.${{ matrix.python-version }}
+          include-hidden-files: true
+          if-no-files-found: error
 
   coverage:
     needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v8
         with:
           pattern: coverage-*
           path: coverage_files
