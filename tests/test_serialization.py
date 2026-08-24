@@ -17,7 +17,7 @@ from __future__ import annotations
 import pickle
 
 import pytest
-from _exception_probe import all_exception_classes, plausible_instance
+from _exception_probe import UNCONSTRUCTIBLE, all_exception_classes, plausible_instance
 
 import dataexcept
 from dataexcept.base import UnpicklableValue
@@ -29,7 +29,10 @@ CLASSES = all_exception_classes()
 def test_exception_survives_a_pickle_round_trip(name):
     original = plausible_instance(CLASSES[name])
     if original is None:
-        pytest.skip(f"cannot construct {name} from its annotations alone")
+        # Never skip: an unconstructible class is silently outside this
+        # contract. test_contract_coverage.py fails on it separately.
+        assert name in UNCONSTRUCTIBLE, f"{name} is not covered by this contract"
+        pytest.skip(f"{name} is an explicitly reviewed exclusion")
 
     restored = pickle.loads(pickle.dumps(original))
 

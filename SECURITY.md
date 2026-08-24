@@ -7,8 +7,8 @@ version only.
 
 | Version | Supported |
 | --- | --- |
-| 0.3.x | ✅ |
-| < 0.3 | ❌ |
+| 0.4.x | ✅ |
+| < 0.4 | ❌ |
 
 ## Reporting a vulnerability
 

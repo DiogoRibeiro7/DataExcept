@@ -1,12 +1,12 @@
-"""Bump the project version and keep CITATION.cff in step.
+"""Bump the project version and keep every file that states it in step.
 
 Usage:
-    python scripts/bump_version.py [patch|minor|major|<explicit version>]
+    python scripts/bump_version.py [patch|minor|major]
 
-This used to live inline in the release workflow, which bumped the version and
-pushed the commit straight to main. main is a protected branch, so the version
-bump now goes through a pull request like any other change and the release is
-driven by the tag that follows it.
+Several files name the version. Hand-editing them is what let documentation
+drift reappear in 0.4.0 immediately after it had been fixed, so they are
+written here instead and tests/test_release_consistency.py fails the build if
+they ever disagree.
 """
 
 from __future__ import annotations
@@ -25,32 +25,45 @@ def _poetry(*args: str) -> str:
     return result.stdout.strip()
 
 
+def _rewrite(path: pathlib.Path, pattern: str, replacement: str, what: str) -> None:
+    """Rewrite the one place *path* states the version."""
+    text, count = re.subn(
+        pattern, replacement, path.read_text(encoding="utf-8"), flags=re.MULTILINE
+    )
+    if count != 1:
+        raise SystemExit(f"error: expected one {what} in {path}, found {count}")
+    path.write_text(text, encoding="utf-8", newline="\n")
+
+
 def main() -> int:
     part = sys.argv[1] if len(sys.argv) > 1 else "patch"
 
     _poetry("version", part)
     version = _poetry("version", "-s")
+    today = datetime.date.today().isoformat()
+    major, minor, _ = version.split(".", 2)
 
     citation = pathlib.Path("CITATION.cff")
-    text = citation.read_text(encoding="utf-8")
-    text, count = re.subn(
-        r'^version: ".*"', f'version: "{version}"', text, flags=re.MULTILINE
-    )
-    if count != 1:
-        print(f"error: expected one version line in {citation}, found {count}")
-        return 1
-    text, count = re.subn(
+    _rewrite(citation, r'^version: ".*"', f'version: "{version}"', "version line")
+    _rewrite(
+        citation,
         r'^date-released: ".*"',
-        f'date-released: "{datetime.date.today().isoformat()}"',
-        text,
-        flags=re.MULTILINE,
+        f'date-released: "{today}"',
+        "date-released line",
     )
-    if count != 1:
-        print(f"error: expected one date-released line in {citation}, found {count}")
-        return 1
-    citation.write_text(text, encoding="utf-8", newline="\n")
 
-    print(f"Bumped to {version}; CITATION.cff updated.")
+    _rewrite(
+        pathlib.Path("CHECKLIST.md"),
+        r"current as of \d+\.\d+\.\d+ \([\d-]+\)",
+        f"current as of {version} ({today})",
+        "audit line",
+    )
+
+    security = pathlib.Path("SECURITY.md")
+    _rewrite(security, r"\| \d+\.\d+\.x \|", f"| {major}.{minor}.x |", "supported row")
+    _rewrite(security, r"\| < \d+\.\d+ \|", f"| < {major}.{minor} |", "unsupported row")
+
+    print(f"Bumped to {version}; CITATION.cff, CHECKLIST.md and SECURITY.md updated.")
     print("Next:")
     print(f"  1. Move CHANGELOG.md's [Unreleased] entries under [{version}]")
     print("  2. Commit, open a pull request, and merge it")
