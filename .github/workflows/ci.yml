@@ -21,7 +21,7 @@ jobs:
       - name: Ruff
         run: poetry run ruff check .
       - name: Flake8
-        run: poetry run flake8 dataexcept tests
+        run: poetry run flake8 dataexcept tests examples scripts
       - name: Black
         run: poetry run black --check --diff dataexcept tests examples scripts
       - name: isort

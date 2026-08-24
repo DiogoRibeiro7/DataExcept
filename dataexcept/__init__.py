@@ -270,12 +270,14 @@ __all__ = [
     "log_exception",
     "log_then_raise",
     # Domain modules, for callers who prefer a qualified import.
+    # job_exceptions is deliberately absent: it is deprecated, and listing it
+    # makes `from dataexcept import *` emit a DeprecationWarning, which turns
+    # into an error under -W error::DeprecationWarning. It stays importable.
     "database_exceptions",
     "dataengineering_exceptions",
     "datascience_exceptions",
     "exceptions",
     "io_exceptions",
-    "job_exceptions",
     "logging_helpers",
     "network_exceptions",
     "pandas_exceptions",

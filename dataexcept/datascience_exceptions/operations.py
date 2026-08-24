@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from .._validation import is_number
 from .base import DataScienceError
 
 
@@ -74,7 +75,7 @@ class DataDriftError(DataScienceError):
     ) -> None:
         if not isinstance(feature, str):
             raise TypeError(f"feature must be str, got {type(feature).__name__}")
-        if not isinstance(drift_score, (int, float)):
+        if not is_number(drift_score):
             raise TypeError(
                 f"drift_score must be number, got {type(drift_score).__name__}"
             )

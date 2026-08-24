@@ -21,7 +21,7 @@ coverage:  ## Run the tests and write a coverage report
 
 lint:  ## Run ruff and flake8
 	$(PYTHON) -m ruff check .
-	$(PYTHON) -m flake8 dataexcept tests
+	$(PYTHON) -m flake8 dataexcept tests examples scripts
 
 format:  ## Apply black and isort
 	$(PYTHON) -m black dataexcept tests examples scripts
