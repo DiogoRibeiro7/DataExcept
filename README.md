@@ -16,7 +16,7 @@
 ## 🎯 Key Features
 
 - **🏗️ Hierarchical Structure**: Catch specific errors or broad categories
-- **📊 Data Science Focused**: 40+ exceptions covering ML pipelines, feature engineering, model training
+- **📊 Data Science Focused**: 96 exception classes covering ML pipelines, feature engineering, model training
 - **🔧 Production Ready**: Comprehensive logging helpers and error context
 - **📚 Academic Quality**: Proper documentation, type hints, and citation support
 - **🐍 Python 3.10+**: Modern Python with full type safety
@@ -333,6 +333,7 @@ through [SECURITY.md](SECURITY.md), not the public issue tracker.
 
 - **Full Documentation**: [diogoribeiro7.github.io/DataExcept](https://diogoribeiro7.github.io/DataExcept/)
 - **API Reference**: [API Docs](https://diogoribeiro7.github.io/DataExcept/api/)
+- **API Stability**: [What is public and what may change](https://diogoribeiro7.github.io/DataExcept/stability/)
 - **Advanced Usage**: [Advanced Guide](https://diogoribeiro7.github.io/DataExcept/advanced_usage/)
 - **CLI Reference**: [CLI Guide](https://diogoribeiro7.github.io/DataExcept/cli/)
 - **Changelog**: [CHANGELOG.md](CHANGELOG.md)

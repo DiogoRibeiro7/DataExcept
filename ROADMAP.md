@@ -1,36 +1,71 @@
 # Roadmap
 
-This roadmap outlines planned enhancements for the `dataexcept` package.
-It focuses on features, tooling, and documentation to ensure the library
-remains reliable and easy to use.
+Where DataExcept is going, and what has already landed. For what is guaranteed
+not to break, see the [stability policy](https://diogoribeiro7.github.io/DataExcept/stability/).
 
-## 0.2 - Packaging and Documentation
-- Publish to PyPI so it can be installed with `pip`.
-- Expand the README and examples with real-world usage patterns.
-- Provide complete type stubs for IDE support.
+## Shipped in 0.1.0
 
-## 0.3 - Logging and Monitoring
-- Build helper functions for standardized error logging.
-- Document recommended practices for custom exception hierarchies.
-- Explore integrations with error tracking services such as Sentry.
+The original 0.2–0.5 milestones are done:
 
-## 0.4 - Extended Exception Suites
-- Add network and I/O error classes alongside existing job and pipeline errors.
-- Include utilities for converting external exceptions into custom ones.
-- Increase test coverage around edge cases and failure scenarios.
+- **Published to PyPI** — `pip install DataExcept`, released through OIDC
+  trusted publishing with no long-lived token.
+- **96 exception classes** across job, pipeline, data science, data
+  engineering, pandas, database, network, I/O and security domains.
+- **Logging helpers** — `log_exception`, `log_and_raise` and `log_then_raise`
+  attach structured context and preserve tracebacks.
+- **Full typing** — `py.typed` ships, and mypy runs clean in CI, so downstream
+  type checkers get accurate annotations.
+- **CI on every push** — lint, format, type check and tests across Python
+  3.10–3.13, with coverage published alongside the docs.
+- **Security and complexity scanning** — CodeQL, pip-audit, and ruff's bandit
+  and mccabe rule sets.
+- **Documentation** at
+  [diogoribeiro7.github.io/DataExcept](https://diogoribeiro7.github.io/DataExcept/),
+  with an API reference generated from the source.
 
-## 0.5 - Developer Tooling
-- Integrate CI jobs for linting, type checking, and unit tests on each push.
-- Publish coverage reports to track testing progress.
-- Run security and complexity scans as part of the workflow.
+## 0.2 — Resolve the known API hazards
 
-## 1.0 - Stable Release
-- Finalize and document the public API.
-- Guarantee backward compatibility for minor versions.
-- Support the latest stable Python versions (3.10+).
-- Provide clear migration guides for projects upgrading from pre-1.0 releases.
+These are breaking, which is why they belong before 1.0 rather than after.
 
-## 1.1 - Community Feedback
-- Collect user feedback to prioritize new features.
-- Add advanced usage guides in the documentation.
-- Plan for Python 3.12 support.
+- **Stop shadowing builtins.** `ConnectionError` and `TimeoutError` share their
+  names with Python builtins but do not inherit from them, so
+  `from dataexcept import ConnectionError` silently stops
+  `except ConnectionError:` from catching real socket failures. Rename, with
+  the current names kept as deprecated aliases.
+- **Resolve the duplicate names.** `SerializationError` and
+  `FeatureEngineeringError` each name two different classes in different
+  modules, so catching one does not catch the other.
+- **Decide the top-level surface.** 30 of the 96 classes are importable
+  straight from `dataexcept`; the rest need a submodule import. Either export
+  everything or document the split as deliberate — the current state is
+  neither.
+
+## 0.3 — Make the hierarchy easier to use
+
+- Utilities for wrapping a third-party exception into the matching DataExcept
+  class, preserving the original as `__cause__`.
+- Guidance on building a project-specific hierarchy on top of these bases.
+- Optional integration hooks for error trackers such as Sentry, kept out of the
+  runtime dependencies.
+
+## 0.4 — Coverage and correctness
+
+- Raise test coverage from 85%, focused on the constructor branches that build
+  messages from partial arguments.
+- Property-based tests over the hierarchy: every public exception constructs
+  from its documented signature, produces a non-empty message, and lands in the
+  right place in the tree.
+- A test that fails when a new exception is added without being exported.
+
+## 1.0 — Stable
+
+- The public API is frozen under the [stability policy](https://diogoribeiro7.github.io/DataExcept/stability/).
+- `dataexcept.job_exceptions`, deprecated since 0.1.0, is removed.
+- Any aliases introduced in 0.2 are removed.
+- A migration guide covering every rename between 0.1 and 1.0.
+
+## Beyond 1.0
+
+- Track new stable Python releases within one minor version of their release.
+- Prioritise new exception domains by what users actually report reaching for
+  generic exceptions to express.

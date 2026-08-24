@@ -17,6 +17,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Complexity and security linting through ruff's mccabe (`C90`) and
   flake8-bandit (`S`) rule sets, so neither needs a separate tool. Complexity
   is capped at 8; the most complex function currently scores 6.
+- A published [API stability policy](https://diogoribeiro7.github.io/DataExcept/stability/)
+  stating what is public, what a version bump means, and the deprecation
+  process. It documents two known hazards found while auditing the surface:
+  `ConnectionError` and `TimeoutError` shadow Python builtins without
+  inheriting from them, and `SerializationError` and `FeatureEngineeringError`
+  each name two different classes.
+- `__all__` on `dataexcept.logging_helpers`, the one public module that
+  lacked it.
+
+### Changed
+
+- `dataexcept.job_exceptions` now names its removal version. It is deprecated
+  since 0.1.0 and scheduled for removal in 1.0.0; the warning and the module
+  docstring both say so.
+- `ROADMAP.md` rewritten against what actually shipped — six of its milestones
+  were already complete — and `CHECKLIST.md` replaced with a dated audit of
+  this repository rather than a blank template.
 
 ### Changed
 
