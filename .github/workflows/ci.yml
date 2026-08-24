@@ -74,7 +74,7 @@ jobs:
           poetry run coverage combine coverage_files
           poetry run coverage xml -o coverage.xml
           poetry run coverage html -d htmlcov
-          poetry run coverage-badge -o coverage.svg -f
+          poetry run python scripts/coverage_badge.py -o coverage.svg
       - uses: actions/upload-artifact@v7
         with:
           name: coverage-report

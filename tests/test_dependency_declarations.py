@@ -9,8 +9,12 @@ they agree.
 from __future__ import annotations
 
 import re
-import tomllib
 from pathlib import Path
+
+try:  # Python >=3.11
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - fallback for Python <3.11
+    import tomli as tomllib  # type: ignore[no-redef]
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
