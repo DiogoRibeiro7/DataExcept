@@ -9,7 +9,7 @@ The original 0.2–0.5 milestones are done:
 
 - **Published to PyPI** — `pip install DataExcept`, released through OIDC
   trusted publishing with no long-lived token.
-- **96 exception classes** across job, pipeline, data science, data
+- **98 exception classes** across job, pipeline, data science, data
   engineering, pandas, database, network, I/O and security domains.
 - **Logging helpers** — `log_exception`, `log_and_raise` and `log_then_raise`
   attach structured context and preserve tracebacks.
@@ -17,14 +17,16 @@ The original 0.2–0.5 milestones are done:
   type checkers get accurate annotations.
 - **CI on every push** — lint, format, type check and tests across Python
   3.10–3.13, with coverage published alongside the docs.
-- **Security and complexity scanning** — CodeQL, pip-audit, and ruff's bandit
-  and mccabe rule sets.
 - **Documentation** at
   [diogoribeiro7.github.io/DataExcept](https://diogoribeiro7.github.io/DataExcept/),
   with an API reference generated from the source.
 
 ## Shipped in 0.2.0
 
+- **Security and complexity scanning** — CodeQL, pip-audit, and ruff's bandit
+  and mccabe rule sets.
+- **PEP 621 metadata** and a published
+  [API stability policy](https://diogoribeiro7.github.io/DataExcept/stability/).
 - **Stopped shadowing builtins.** `ConnectionError` and `TimeoutError` became
   `ServiceConnectionError` and `OperationTimeoutError`. The old names shared
   their names with Python builtins without inheriting from them, so
@@ -40,10 +42,15 @@ The original 0.2–0.5 milestones are done:
 
 ## 0.3 — Settle the top-level surface
 
-- **Decide what `from dataexcept import ...` should offer.** 30 of the 96
-  classes are importable straight from the package and the rest need a
-  submodule import. Either export everything or document the split as
-  deliberate — the current state is neither.
+- **Decide what `from dataexcept import ...` should offer.** 30 of the 98
+  classes are importable straight from the package; the other 68 need a
+  submodule import, and nothing marks which is which.
+
+  This is not hypothetical. The README's own quick-start example opened with
+  `from dataexcept import ValidationError, ModelTrainingError`, which raises
+  `ImportError` — the author reached for the obvious import and it did not
+  exist. If the split is deliberate it needs to be visible; if it is not, the
+  top level should export everything.
 
 ## 0.4 — Make the hierarchy easier to use
 

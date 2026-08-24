@@ -8,15 +8,15 @@
 
 ❌ Without DataExcept            | ✅ With DataExcept
 ------------------------------- | -------------------------------------------------------------------------------------
-`ValueError: Invalid value`     | `DataValidationError: Invalid value for 'age': -1`
-`RuntimeError: Training failed` | `ConvergenceError: Model 'RandomForest' failed to converge after 100 iterations`
-`Exception: Prediction error`   | `ModelInferenceError: Inference failed for model 'CNN': CUDA out of memory`
-`KeyError: column not found`    | `MissingColumnError: Missing required column 'customer_id' in DataFrame 'sales_data'`
+`ValueError: Invalid value`     | `DataValidationError: [DataValidationError:age] Invalid value for 'age': -1`
+`RuntimeError: Training failed` | `ConvergenceError: [ConvergenceError] Model 'RandomForest' failed to converge after 100 iterations`
+`Exception: Prediction error`   | `ModelInferenceError: [ModelInferenceError:CNN] Inference failed for model 'CNN': CUDA out of memory`
+`KeyError: column not found`    | `MissingColumnError: [MissingColumnError] Missing required column 'customer_id' in DataFrame 'sales_data'`
 
 ## 🎯 Key Features
 
 - **🏗️ Hierarchical Structure**: Catch specific errors or broad categories
-- **📊 Data Science Focused**: 96 exception classes covering ML pipelines, feature engineering, model training
+- **📊 Data Science Focused**: 98 exception classes covering ML pipelines, feature engineering, model training
 - **🔧 Production Ready**: Comprehensive logging helpers and error context
 - **📚 Academic Quality**: Proper documentation, type hints, and citation support
 - **🐍 Python 3.10+**: Modern Python with full type safety
@@ -41,8 +41,8 @@ poetry install
 ### Basic Usage
 
 ```python
-from dataexcept import ValidationError, ModelTrainingError
-from dataexcept.datascience_exceptions import DataLoadingError
+from dataexcept import ValidationError
+from dataexcept.datascience_exceptions import DataLoadingError, ModelTrainingError
 import pandas as pd
 
 # Data validation with context
@@ -188,17 +188,18 @@ except Exception as exc:
 ### Command Line Interface
 
 ```bash
-# List all available exception classes
+# List every exception class the package exports (98 of them, alphabetically)
 $ dataexcept list
-JobError
-ValidationError
-DataScienceError
-ModelTrainingError
-... (40+ more)
+ApiError
+AuthenticationError
+AuthorizationError
+BatchProcessingError
+BiasDetectionError
+...
 
 # Check version
 $ dataexcept --version
-dataexcept 0.1.0
+dataexcept 0.2.0
 ```
 
 ## 🎯 Use Cases
@@ -229,6 +230,7 @@ dataexcept 0.1.0
 """
 Complete ML pipeline with DataExcept error handling
 """
+import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from dataexcept import ValidationError
@@ -343,12 +345,12 @@ through [SECURITY.md](SECURITY.md), not the public issue tracker.
 If you use DataExcept in your research, please cite it:
 
 ```bibtex
-@software{ribeiro_dataexcept_2025,
+@software{ribeiro_dataexcept_2026,
   author = {Ribeiro, Diogo},
   title = {DataExcept: Structured Exception Handling for Data Science},
   url = {https://github.com/DiogoRibeiro7/DataExcept},
-  version = {0.1.0},
-  year = {2025},
+  version = {0.2.0},
+  year = {2026},
   publisher = {GitHub}
 }
 ```

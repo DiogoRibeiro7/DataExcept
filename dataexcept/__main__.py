@@ -12,15 +12,22 @@ from typing import Iterable
 from . import __path__ as _PKG_PATH
 from . import __version__
 
+#: Deprecated compatibility shims. Listing these would advertise names that are
+#: scheduled for removal, and importing them emits a DeprecationWarning at
+#: anyone who merely wanted to see what the package offers.
+_DEPRECATED_MODULES = frozenset({"dataexcept.job_exceptions"})
+
 
 def _iter_exception_modules() -> Iterable[ModuleType]:
-    """Yield every submodule that explicitly defines ``__all__``."""
+    """Yield every non-deprecated submodule that explicitly defines ``__all__``."""
     allowed_suffixes = ("exceptions", "_exceptions")
 
     for module_info in pkgutil.walk_packages(
         _PKG_PATH, prefix="dataexcept.", onerror=lambda name: None
     ):
         if not module_info.name.endswith(allowed_suffixes):
+            continue
+        if module_info.name in _DEPRECATED_MODULES:
             continue
         try:
             module = import_module(module_info.name)
@@ -53,7 +60,11 @@ def _list_exceptions() -> None:
 
 def main(argv: list[str] | None = None) -> None:
     """Entry point for the ``dataexcept`` command."""
-    parser = argparse.ArgumentParser(description="Utilities for DataExcept")
+    parser = argparse.ArgumentParser(
+        # Without this, `python -m dataexcept --version` reports "__main__.py".
+        prog="dataexcept",
+        description="Utilities for DataExcept",
+    )
     parser.add_argument(
         "--version",
         action="version",
