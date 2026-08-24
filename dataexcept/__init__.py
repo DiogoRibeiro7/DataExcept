@@ -15,7 +15,11 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for Python <3.11
 from importlib import import_module, metadata
 from typing import Any
 
-from . import database_exceptions, dataengineering_exceptions, datascience_exceptions
+from . import (
+    database_exceptions,
+    dataengineering_exceptions,
+    datascience_exceptions,
+)
 from . import exceptions as _exceptions
 from . import (
     io_exceptions,

@@ -1,6 +1,9 @@
 # main.py
 
-from example_usage import perform_operation
+try:  # running as ``python -m examples.main``
+    from .example_usage import perform_operation
+except ImportError:  # running as a plain script from inside examples/
+    from example_usage import perform_operation
 
 from dataexcept import JobError
 

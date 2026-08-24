@@ -7,8 +7,12 @@ import uuid
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-from errors import ConfigurationError
-from lambda_example import load_config, seed_demo_env
+try:  # running as ``python -m examples.lambda_main``
+    from .errors import ConfigurationError
+    from .lambda_example import load_config, seed_demo_env
+except ImportError:  # running as a plain script from inside examples/
+    from errors import ConfigurationError
+    from lambda_example import load_config, seed_demo_env
 
 try:  # pragma: no cover - demo dependency not installed by default
     from ds_api.dynamodb import DynamoQuery  # type: ignore
