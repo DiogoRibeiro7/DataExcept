@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **A release now has to prove where it came from.** The release workflow
+  checked only that the tag text matched `pyproject.toml`, so a tag pushed to
+  an unreviewed branch could reach the PyPI publishing job. It now refuses to
+  build unless the tagged commit is reachable from `main` and the same checks
+  branch protection requires are green on that exact commit.
+- The built wheel is tested before it is published. A new `verify-wheel` job
+  installs the artifact, deletes the source package so nothing can import it by
+  accident, and runs the whole suite against what will actually be uploaded.
+  `scripts/check_wheel.py` then asserts the distribution ships `py.typed` and a
+  complete `__all__` — a file can be present in the repository and missing from
+  the artifact.
+
 ### Changed
 
 - **Coverage is now measured honestly, and gated.** `coverage run -m pytest`
