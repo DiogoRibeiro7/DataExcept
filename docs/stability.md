@@ -13,8 +13,11 @@ This page states exactly what that covers, so you know what you can rely on.
 
 Public, and covered by the versioning policy:
 
-- Every name in `dataexcept.__all__`.
-- Every name in the `__all__` of a documented submodule:
+- Every name in `dataexcept.__all__`. Since 0.3.0 that is **every exception the
+  package defines**, so `from dataexcept import AnyError` works without needing
+  to know which domain module a class lives in.
+- Every name in the `__all__` of a documented submodule, which re-exports the
+  *same objects*, so both spellings are interchangeable:
   `dataexcept.exceptions`, `dataexcept.datascience_exceptions`,
   `dataexcept.dataengineering_exceptions`, `dataexcept.database_exceptions`,
   `dataexcept.io_exceptions`, `dataexcept.network_exceptions`,
@@ -22,6 +25,8 @@ Public, and covered by the versioning policy:
   `dataexcept.security_exceptions` and `dataexcept.logging_helpers`.
 - For each public exception: its name, its position in the inheritance chain,
   and the constructor signature.
+- That a class imported from the top level and from its domain module is the
+  same object, so `except` behaves identically whichever import you used.
 - The `dataexcept` command-line entry point.
 
 Not public, and free to change in any release:

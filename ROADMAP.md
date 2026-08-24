@@ -40,17 +40,17 @@ The original 0.2–0.5 milestones are done:
 - Every old name still resolves, to the same class object, with a
   `DeprecationWarning` naming its replacement and 1.0.0 as its removal.
 
-## 0.3 — Settle the top-level surface
+## Shipped in 0.3.0
 
-- **Decide what `from dataexcept import ...` should offer.** 30 of the 98
-  classes are importable straight from the package; the other 68 need a
-  submodule import, and nothing marks which is which.
+- **The top level exports every exception.** All 98 classes are importable
+  straight from `dataexcept`, so you no longer have to know which domain module
+  a class lives in. The domain modules still export the same objects, so both
+  spellings work and refer to the same classes.
 
-  This is not hypothetical. The README's own quick-start example opened with
-  `from dataexcept import ValidationError, ModelTrainingError`, which raises
-  `ImportError` — the author reached for the obvious import and it did not
-  exist. If the split is deliberate it needs to be visible; if it is not, the
-  top level should export everything.
+  This was safe to do only because 0.2.0 removed the two things that made a flat
+  namespace dangerous: there are now no duplicate names and nothing shadows a
+  builtin. Both are enforced by tests, as is the rule that every exception the
+  package defines must be exported.
 
 ## 0.4 — Make the hierarchy easier to use
 
@@ -67,7 +67,6 @@ The original 0.2–0.5 milestones are done:
 - Property-based tests over the hierarchy: every public exception constructs
   from its documented signature, produces a non-empty message, and lands in the
   right place in the tree.
-- A test that fails when a new exception is added without being exported.
 
 ## 1.0 — Stable
 

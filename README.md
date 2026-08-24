@@ -16,6 +16,7 @@
 ## 🎯 Key Features
 
 - **🏗️ Hierarchical Structure**: Catch specific errors or broad categories
+- **📦 One Import**: Every exception is available from `dataexcept` directly, or from its domain module — same objects either way
 - **📊 Data Science Focused**: 98 exception classes covering ML pipelines, feature engineering, model training
 - **🔧 Production Ready**: Comprehensive logging helpers and error context
 - **📚 Academic Quality**: Proper documentation, type hints, and citation support
@@ -41,8 +42,7 @@ poetry install
 ### Basic Usage
 
 ```python
-from dataexcept import ValidationError
-from dataexcept.datascience_exceptions import DataLoadingError, ModelTrainingError
+from dataexcept import DataLoadingError, ModelTrainingError, ValidationError
 import pandas as pd
 
 # Data validation with context
@@ -199,7 +199,7 @@ BiasDetectionError
 
 # Check version
 $ dataexcept --version
-dataexcept 0.2.1
+dataexcept 0.3.0
 ```
 
 ## 🎯 Use Cases
@@ -349,7 +349,7 @@ If you use DataExcept in your research, please cite it:
   author = {Ribeiro, Diogo},
   title = {DataExcept: Structured Exception Handling for Data Science},
   url = {https://github.com/DiogoRibeiro7/DataExcept},
-  version = {0.2.1},
+  version = {0.3.0},
   year = {2026},
   publisher = {GitHub}
 }
