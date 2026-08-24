@@ -72,5 +72,7 @@ def test_webhook_error_includes_url_and_original(job_exceptions_module):
         "https://example.com/hook",
         original_exception=RuntimeError("x"),
     )
-    msg = "Webhook to URL 'https://example.com/hook' failed: x"
-    assert str(err) == msg
+    # The path of a webhook URL is the credential for Slack, Discord and
+    # others, so it is redacted; the host stays, because that is what makes
+    # the error actionable.
+    assert str(err) == "Webhook to URL 'https://example.com/***' failed: x"

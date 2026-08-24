@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Optional
 
 from .base import DataExceptError
+from .redaction import redact_if_url
 
 
 class DataEngineeringError(DataExceptError):
@@ -111,7 +112,7 @@ class MissingPartitionError(DataEngineeringError):
             message: Optional custom error message.
         """
         self.partition = partition
-        self.location = location
+        self.location = redact_if_url(location)
         default = f"Partition '{partition}' not found at {location}"
         super().__init__(message or default)
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from .._validation import is_number
+from ..redaction import redact_if_url
 from .base import DataScienceError
 
 
@@ -26,7 +27,7 @@ class ModelSerializationError(DataScienceError):
             )
 
         message = f"Failed to serialize to {path!r}: {original}"
-        self.path = path
+        self.path = redact_if_url(path)
         self.original = original
         super().__init__(message)
 

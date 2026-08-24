@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from ._deprecation import resolve_deprecated
 from .base import DataExceptError
-from .redaction import redact_url
+from .redaction import redact_if_url, redact_url
 
 
 class PipelineError(DataExceptError):
@@ -45,7 +45,7 @@ class StorageError(PipelineError):
         message: Optional[str] = None,
     ) -> None:
         default = f"Storage {operation} failed at location: '{location}'."
-        self.location = location
+        self.location = redact_if_url(location)
         self.operation = operation
         super().__init__(message or default)
 
@@ -187,7 +187,7 @@ class DataFetchError(PipelineError):
         message: Optional[str] = None,
     ) -> None:
         default = f"Failed to fetch '{source}' data for cid={cid}"
-        self.source = source
+        self.source = redact_if_url(source)
         self.cid = cid
         super().__init__(message or default)
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from .base import DataExceptError
-from .redaction import redact_secret
+from .redaction import redact_secret, remove_secret
 
 
 class SecurityError(DataExceptError):
@@ -62,7 +62,9 @@ class InvalidTokenError(SecurityError):
         default = "Invalid authentication token"
         if token:
             default += f": {self.token}"
-        super().__init__(message or default)
+        # The library was handed the secret, so it can be removed even from a
+        # message the caller wrote themselves.
+        super().__init__(remove_secret(message or default, token))
 
 
 __all__ = [
