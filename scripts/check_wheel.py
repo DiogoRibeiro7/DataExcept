@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import importlib.util
 import pathlib
-import sys
 
 
 def main() -> int:
