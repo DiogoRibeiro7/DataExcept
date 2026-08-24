@@ -16,7 +16,7 @@ The original 0.2–0.5 milestones are done:
 - **Full typing** — `py.typed` ships, and mypy runs clean in CI, so downstream
   type checkers get accurate annotations.
 - **CI on every push** — lint, format, type check and tests across Python
-  3.10–3.13, with coverage published alongside the docs.
+  3.10–3.14, with coverage published alongside the docs.
 - **Documentation** at
   [diogoribeiro7.github.io/DataExcept](https://diogoribeiro7.github.io/DataExcept/),
   with an API reference generated from the source.
@@ -78,6 +78,6 @@ The original 0.2–0.5 milestones are done:
 
 ## Beyond 1.0
 
-- Track new stable Python releases within one minor version of their release.
+- Track new stable Python releases promptly; 3.14 is supported as of 0.4.1.
 - Prioritise new exception domains by what users actually report reaching for
   generic exceptions to express.
