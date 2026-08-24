@@ -1,8 +1,12 @@
 """Top-level package for DataExcept.
 
-Exposes the common job-related exceptions directly and also provides
-access to data science specific exceptions via the ``datascience_exceptions``
-module.
+Every exception the package defines is importable straight from here::
+
+    from dataexcept import ValidationError, ModelTrainingError
+
+The domain modules (``datascience_exceptions``, ``pipeline_exceptions`` and so
+on) remain importable and export the same objects, so both spellings work and
+refer to the same classes.
 """
 
 from pathlib import Path
@@ -15,21 +19,74 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for Python <3.11
 from importlib import import_module, metadata
 from typing import Any
 
-from . import (
+from . import (  # noqa: F401
     database_exceptions,
     dataengineering_exceptions,
     datascience_exceptions,
-)
-from . import exceptions as _exceptions
-from . import (
+    exceptions,
     io_exceptions,
+    logging_helpers,
     network_exceptions,
     pandas_exceptions,
     pipeline_exceptions,
     security_exceptions,
 )
 from ._deprecation import resolve_deprecated
-from .exceptions import (  # noqa: F401
+from .database_exceptions import (
+    DatabaseConnectionError,
+    DatabaseError,
+    QueryExecutionError,
+    TransactionError,
+)
+from .dataengineering_exceptions import (
+    BatchProcessingError,
+    DataEngineeringError,
+    DataTransformationError,
+    DataWarehouseConnectionError,
+    ETLJobError,
+    MissingPartitionError,
+    SchemaEvolutionError,
+)
+from .datascience_exceptions import (
+    BiasDetectionError,
+    ConvergenceError,
+    CrossValidationError,
+    DataAugmentationError,
+    DataDriftError,
+    DataExportError,
+    DataFormatError,
+    DataImbalanceError,
+    DataLeakageError,
+    DataLoadingError,
+    DataNormalizationError,
+    DataScienceError,
+    DataValidationError,
+    DeploymentError,
+    DimensionalityReductionError,
+    EarlyStoppingError,
+    ExperimentTrackingError,
+    ExplainabilityError,
+    FeatureEngineeringError,
+    FeatureScalingError,
+    FeatureSelectionError,
+    GPUOutOfMemoryError,
+    HyperparameterError,
+    HyperparameterTuningError,
+    MissingDataError,
+    ModelCompatibilityError,
+    ModelEvaluationError,
+    ModelInferenceError,
+    ModelSerializationError,
+    ModelTrainingError,
+    OutlierDetectionError,
+    OverfittingError,
+    PredictionError,
+    ResourceLimitError,
+    SchemaMismatchError,
+    TrainingTimeoutError,
+    UnderfittingError,
+)
+from .exceptions import (
     AuthenticationError,
     AuthorizationError,
     ConfigurationError,
@@ -49,11 +106,173 @@ from .exceptions import (  # noqa: F401
     ValidationError,
     WebhookError,
 )
+from .io_exceptions import (
+    CustomIOError,
+    FileLockError,
+    FileReadError,
+    FileWriteError,
+)
 from .logging_helpers import (
+    Context,
     log_and_raise,
     log_exception,
     log_then_raise,
 )
+from .network_exceptions import (
+    ConnectionTimeoutError,
+    HostUnreachableError,
+    NetworkError,
+    ProtocolError,
+)
+from .pandas_exceptions import (
+    DtypeMismatchError,
+    IndexAlignmentError,
+    MergeKeyError,
+    MissingColumnError,
+    PandasError,
+    PandasIOError,
+)
+from .pipeline_exceptions import (
+    ApiError,
+    DataFetchError,
+    ExternalServiceError,
+    FeaturePreprocessingError,
+    PipelineError,
+    PipelineNotificationError,
+    PreprocessingError,
+    RetryLimitExceededError,
+    ServiceAuthenticationError,
+    ServiceAuthorizationError,
+    ServiceTimeoutError,
+    StorageError,
+    TimeDeltaTooLargeError,
+    TypeCheckError,
+)
+from .security_exceptions import (
+    DecryptionError,
+    EncryptionError,
+    InvalidTokenError,
+    SecurityError,
+)
+
+__all__ = [
+    # Every exception class the package defines.
+    "ApiError",
+    "AuthenticationError",
+    "AuthorizationError",
+    "BatchProcessingError",
+    "BiasDetectionError",
+    "ConfigurationError",
+    "ConnectionTimeoutError",
+    "ConvergenceError",
+    "CronExpressionError",
+    "CrossValidationError",
+    "CustomIOError",
+    "DataAugmentationError",
+    "DataDriftError",
+    "DataEngineeringError",
+    "DataExportError",
+    "DataFetchError",
+    "DataFormatError",
+    "DataImbalanceError",
+    "DataLeakageError",
+    "DataLoadingError",
+    "DataNormalizationError",
+    "DataScienceError",
+    "DataTransformationError",
+    "DataValidationError",
+    "DataWarehouseConnectionError",
+    "DatabaseConnectionError",
+    "DatabaseError",
+    "DecryptionError",
+    "DependencyError",
+    "DeploymentError",
+    "DeserializationError",
+    "DimensionalityReductionError",
+    "DtypeMismatchError",
+    "ETLJobError",
+    "EarlyStoppingError",
+    "EmailError",
+    "EncryptionError",
+    "ExperimentTrackingError",
+    "ExplainabilityError",
+    "ExternalServiceError",
+    "FeatureEngineeringError",
+    "FeaturePreprocessingError",
+    "FeatureScalingError",
+    "FeatureSelectionError",
+    "FileLockError",
+    "FileReadError",
+    "FileWriteError",
+    "GPUOutOfMemoryError",
+    "HostUnreachableError",
+    "HyperparameterError",
+    "HyperparameterTuningError",
+    "IndexAlignmentError",
+    "InvalidTokenError",
+    "JobCancellationError",
+    "JobError",
+    "MergeKeyError",
+    "MissingColumnError",
+    "MissingDataError",
+    "MissingPartitionError",
+    "ModelCompatibilityError",
+    "ModelEvaluationError",
+    "ModelInferenceError",
+    "ModelSerializationError",
+    "ModelTrainingError",
+    "NetworkError",
+    "NotificationError",
+    "OperationTimeoutError",
+    "OutlierDetectionError",
+    "OverfittingError",
+    "PandasError",
+    "PandasIOError",
+    "ParsingError",
+    "PipelineError",
+    "PipelineNotificationError",
+    "PredictionError",
+    "PreprocessingError",
+    "ProtocolError",
+    "QueryExecutionError",
+    "ResourceLimitError",
+    "ResourceNotFoundError",
+    "RetryLimitExceededError",
+    "ScheduleConflictError",
+    "SchemaEvolutionError",
+    "SchemaMismatchError",
+    "SecurityError",
+    "SerializationError",
+    "ServiceAuthenticationError",
+    "ServiceAuthorizationError",
+    "ServiceConnectionError",
+    "ServiceTimeoutError",
+    "StorageError",
+    "TimeDeltaTooLargeError",
+    "TrainingTimeoutError",
+    "TransactionError",
+    "TypeCheckError",
+    "UnderfittingError",
+    "ValidationError",
+    "WebhookError",
+    # Logging helpers.
+    "Context",
+    "log_and_raise",
+    "log_exception",
+    "log_then_raise",
+    # Domain modules, for callers who prefer a qualified import.
+    "database_exceptions",
+    "dataengineering_exceptions",
+    "datascience_exceptions",
+    "exceptions",
+    "io_exceptions",
+    "job_exceptions",
+    "logging_helpers",
+    "network_exceptions",
+    "pandas_exceptions",
+    "pipeline_exceptions",
+    "security_exceptions",
+]
 
 try:
     __version__ = metadata.version("DataExcept")
@@ -61,21 +280,6 @@ except metadata.PackageNotFoundError:  # pragma: no cover - fallback during dev
     _root = Path(__file__).resolve().parents[1]
     with open(_root / "pyproject.toml", "rb") as _f:
         __version__ = tomllib.load(_f)["project"]["version"]
-
-__all__ = list(_exceptions.__all__) + [
-    "datascience_exceptions",
-    "job_exceptions",
-    "pipeline_exceptions",
-    "dataengineering_exceptions",
-    "network_exceptions",
-    "io_exceptions",
-    "database_exceptions",
-    "security_exceptions",
-    "pandas_exceptions",
-    "log_exception",
-    "log_and_raise",
-    "log_then_raise",
-]
 
 
 #: Renamed in 0.2.0 because they shadowed Python builtins without inheriting

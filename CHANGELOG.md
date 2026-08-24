@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-24
+
+### Added
+
+- **Every exception the package defines is now importable from `dataexcept`
+  directly.** All 98 classes are exported at the top level, so callers no
+  longer need to know which domain module a class lives in. The domain modules
+  export the same objects, so `from dataexcept import ValidationError` and
+  `from dataexcept.exceptions import ValidationError` are interchangeable and
+  `except` behaves identically either way.
+
+  This was only safe because 0.2.0 removed the two hazards that make a flat
+  namespace dangerous: there are no duplicate class names left, and nothing
+  shadows a Python builtin. Imports are explicit rather than generated at
+  runtime, so type checkers and IDEs see the full surface — the package ships
+  `py.typed`.
+- `dataexcept.exceptions` and `dataexcept.logging_helpers` are now named in
+  `__all__` alongside the other domain modules; the stability policy already
+  described them as public.
+- Tests covering the public surface: every exception the package defines must
+  be exported and resolve, each top-level export must be the *same object* as
+  the submodule one, no exported name may shadow a builtin, no two exceptions
+  may share a name, and `from dataexcept import *` must expose the documented
+  surface. Verified these fail when an unexported exception is introduced.
+
 ## [0.2.1] - 2026-08-24
 
 Documentation and CLI fixes. 0.2.0's README is what PyPI renders as the
@@ -126,7 +151,8 @@ First public release.
 - Published to PyPI via OIDC trusted publishing; no long-lived API token is
   involved in a release.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/DiogoRibeiro7/DataExcept/releases/tag/v0.1.0
