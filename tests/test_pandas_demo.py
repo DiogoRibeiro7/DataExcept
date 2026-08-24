@@ -1,6 +1,7 @@
+import pytest
+
 from dataexcept import pandas_exceptions as pe
 from examples.pandas_demo import check_columns, validate_dtype
-import pytest
 
 
 def test_check_columns_missing():

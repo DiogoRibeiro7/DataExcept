@@ -1,11 +1,13 @@
 import os
 import sys
+
 import pytest
 
 EXAMPLES = os.path.join(os.path.dirname(__file__), "..", "examples")
 sys.path.insert(0, EXAMPLES)  # noqa: E402
 
 import datascience_demo as ds_demo  # noqa: E402
+
 from dataexcept.datascience_exceptions import (  # noqa: E402
     DataLoadingError,
     DataValidationError,

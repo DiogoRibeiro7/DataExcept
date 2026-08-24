@@ -9,7 +9,8 @@ from importlib import import_module
 from types import ModuleType
 from typing import Iterable
 
-from . import __path__ as _PKG_PATH, __version__
+from . import __path__ as _PKG_PATH
+from . import __version__
 
 
 def _iter_exception_modules() -> Iterable[ModuleType]:

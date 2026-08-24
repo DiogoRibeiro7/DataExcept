@@ -1,8 +1,8 @@
 from dataexcept.pandas_exceptions import (
-    MissingColumnError,
     DtypeMismatchError,
     IndexAlignmentError,
     MergeKeyError,
+    MissingColumnError,
     PandasIOError,
 )
 

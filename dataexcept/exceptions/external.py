@@ -36,7 +36,7 @@ class ResourceNotFoundError(JobError):
 class DependencyError(JobError):
     """Raised when a job dependency is missing or fails."""
 
-    def __init__(self, dependency_name: str, message: str = None):
+    def __init__(self, dependency_name: str, message: str | None = None):
         self.dependency_name = dependency_name
         self.message = message or f"Dependency '{dependency_name}' error"
         super().__init__(self.message)

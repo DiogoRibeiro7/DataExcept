@@ -1,6 +1,6 @@
 # DataExcept
 
-[![PyPI version](https://badge.fury.io/py/DataExcept.svg)](https://badge.fury.io/py/DataExcept) [![Python Support](https://img.shields.io/pypi/pyversions/DataExcept.svg)](https://pypi.org/project/DataExcept/) [![Coverage Status](./coverage.svg)](./coverage.svg) [![Documentation](https://readthedocs.org/projects/dataexcept/badge/?version=latest)](https://dataexcept.readthedocs.io/en/latest/?badge=latest) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![CI](https://github.com/DiogoRibeiro7/DataExcept/actions/workflows/ci.yml/badge.svg)](https://github.com/DiogoRibeiro7/DataExcept/actions/workflows/ci.yml) [![PyPI version](https://badge.fury.io/py/DataExcept.svg)](https://badge.fury.io/py/DataExcept) [![Python Support](https://img.shields.io/pypi/pyversions/DataExcept.svg)](https://pypi.org/project/DataExcept/) [![Coverage](./coverage.svg)](./coverage.svg) [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://diogoribeiro7.github.io/DataExcept/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 
 **DataExcept** is a production-ready Python library that provides **structured, hierarchical exception classes** specifically designed for **data science**, **machine learning**, and **data engineering** workflows. Stop debugging generic `ValueError`s and `RuntimeError`s -- get meaningful, actionable error messages that help you understand exactly what went wrong in your data pipeline.
 
@@ -20,7 +20,7 @@
 - **🔧 Production Ready**: Comprehensive logging helpers and error context
 - **📚 Academic Quality**: Proper documentation, type hints, and citation support
 - **🐍 Python 3.10+**: Modern Python with full type safety
-- **🧪 Well Tested**: 84% test coverage with comprehensive edge case handling
+- **🧪 Well Tested**: Broad test suite with comprehensive edge case handling (see the coverage badge above)
 
 ## 📦 Quick Installation
 
@@ -319,17 +319,23 @@ We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for deta
 # Development setup
 git clone https://github.com/DiogoRibeiro7/DataExcept.git
 cd DataExcept
-poetry install
-poetry run pytest
-poetry run flake8 dataexcept tests
+make install          # poetry install --with dev,docs
+pre-commit install
+
+make check            # lint, formatting, mypy and tests - everything CI runs
+make help             # list all targets
 ```
+
+Please also read the [Code of Conduct](CODE_OF_CONDUCT.md). Security issues go
+through [SECURITY.md](SECURITY.md), not the public issue tracker.
 
 ## 📖 Documentation
 
-- **Full Documentation**: [dataexcept.readthedocs.io](https://dataexcept.readthedocs.io)
-- **API Reference**: [API Docs](docs/api.rst)
-- **Advanced Usage**: [Advanced Guide](docs/advanced_usage.md)
-- **CLI Reference**: [CLI Guide](docs/cli.md)
+- **Full Documentation**: [diogoribeiro7.github.io/DataExcept](https://diogoribeiro7.github.io/DataExcept/)
+- **API Reference**: [API Docs](https://diogoribeiro7.github.io/DataExcept/api/)
+- **Advanced Usage**: [Advanced Guide](https://diogoribeiro7.github.io/DataExcept/advanced_usage/)
+- **CLI Reference**: [CLI Guide](https://diogoribeiro7.github.io/DataExcept/cli/)
+- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
 
 ## 🎓 Citation
 
@@ -348,7 +354,7 @@ If you use DataExcept in your research, please cite it:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the <LICENSE> file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🏆 About the Author
 

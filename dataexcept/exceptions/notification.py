@@ -40,7 +40,7 @@ class EmailError(NotificationError):
 class WebhookError(NotificationError):
     """Raised when a webhook POST fails."""
 
-    def __init__(self, url: str, original_exception: Exception = None):
+    def __init__(self, url: str, original_exception: Exception | None = None):
         self.url = url
         self.original_exception = original_exception
         msg = f"Webhook to URL '{url}' failed"

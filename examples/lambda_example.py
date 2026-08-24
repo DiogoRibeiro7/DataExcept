@@ -3,7 +3,10 @@
 import os
 from typing import Dict, List
 
-from errors import ConfigurationError
+try:  # running as ``python -m examples.lambda_example``
+    from .errors import ConfigurationError
+except ImportError:  # running as a plain script from inside examples/
+    from errors import ConfigurationError
 
 REQUIRED_ENV_VARS: List[str] = [
     "REGION",

@@ -4,8 +4,8 @@ from dataexcept.database_exceptions import (
     TransactionError,
 )
 from dataexcept.security_exceptions import (
-    EncryptionError,
     DecryptionError,
+    EncryptionError,
     InvalidTokenError,
 )
 

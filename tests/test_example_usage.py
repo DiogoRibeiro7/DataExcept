@@ -1,22 +1,24 @@
-import time
-import sys
 import os
+import sys
+import time
+
 import pytest
 
 sys.path.insert(
     0, os.path.join(os.path.dirname(__file__), "..", "examples")
 )  # noqa: E402
 
-from lambda_example import get_env_variable  # noqa: E402
 import example_usage as example_usage  # noqa: E402
-from example_usage import perform_operation  # noqa: E402
-from dataexcept import (  # noqa: E402
-    ValidationError,
-    TimeoutError,
-    ResourceNotFoundError,
-    DependencyError,
-)
 from errors import ConfigurationError as ExamplesConfigError  # noqa: E402
+from example_usage import perform_operation  # noqa: E402
+from lambda_example import get_env_variable  # noqa: E402
+
+from dataexcept import (  # noqa: E402
+    DependencyError,
+    ResourceNotFoundError,
+    TimeoutError,
+    ValidationError,
+)
 
 # Ensure example module has a time reference
 example_usage.time = time

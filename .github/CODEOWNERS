@@ -1,0 +1,4 @@
+# Code owners: requests review automatically on matching paths.
+# Replaces the `reviewers:` key in dependabot.yml, which GitHub has deprecated.
+
+* @DiogoRibeiro7

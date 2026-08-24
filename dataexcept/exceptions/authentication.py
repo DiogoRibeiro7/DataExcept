@@ -5,7 +5,7 @@ from .base import JobError
 class AuthenticationError(JobError):
     """Raised when user authentication fails."""
 
-    def __init__(self, user: str, message: str = None):
+    def __init__(self, user: str, message: str | None = None):
         self.user = user
         self.message = message or f"Authentication failed for user '{user}'"
         super().__init__(self.message)

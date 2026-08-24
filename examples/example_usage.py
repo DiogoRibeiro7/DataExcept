@@ -1,13 +1,14 @@
 # example_usage.py
 
 import time
+
 from dataexcept import (
-    ValidationError,
     ConfigurationError,
     ConnectionError,
-    TimeoutError,
-    ResourceNotFoundError,
     DependencyError,
+    ResourceNotFoundError,
+    TimeoutError,
+    ValidationError,
 )
 
 

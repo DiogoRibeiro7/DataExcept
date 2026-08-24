@@ -15,7 +15,7 @@ class ScheduleConflictError(JobError):
 class CronExpressionError(JobError):
     """Raised when a cron expression is invalid."""
 
-    def __init__(self, expression: str, message: str = None):
+    def __init__(self, expression: str, message: str | None = None):
         self.expression = expression
         self.message = message or f"Invalid cron expression: '{expression}'"
         super().__init__(self.message)
