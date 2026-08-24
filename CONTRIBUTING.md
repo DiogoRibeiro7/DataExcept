@@ -38,6 +38,11 @@ That expands to:
 `make format` applies black and isort for you. If `pre-commit` is installed,
 most of this happens automatically on commit.
 
+CI installs from `poetry.lock`, so the linters you run locally are the exact
+versions CI runs. If you change a dependency in `pyproject.toml`, run
+`poetry lock` and commit the result — `poetry check --lock` fails the build
+when the two disagree.
+
 DataExcept ships a `py.typed` marker, so its annotations are consumed by every
 downstream project that type-checks against it. **mypy must stay clean** — a
 loose annotation here becomes an error in somebody else's build.
