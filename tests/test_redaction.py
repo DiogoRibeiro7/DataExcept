@@ -7,6 +7,8 @@ stored or rendered; the caller already holds the value it passed in.
 
 from __future__ import annotations
 
+from urllib.parse import urlsplit
+
 import pytest
 
 import dataexcept
@@ -86,7 +88,9 @@ def test_a_credential_in_the_url_path_is_redacted():
     """Slack documents the whole webhook URL as a secret; the path is it."""
     rendered = str(dataexcept.WebhookError(SLACK))
     assert "XXXXsecretXXXX" not in rendered
-    assert "hooks.slack.com" in rendered, "the host is what makes it actionable"
+    # Compare the parsed host rather than searching for a substring: a
+    # substring check would also pass for hooks.slack.com.evil.example.
+    assert urlsplit(dataexcept.WebhookError(SLACK).url).netloc == "hooks.slack.com"
 
 
 def test_a_wrapped_exception_cannot_reintroduce_the_url():
@@ -141,7 +145,7 @@ def test_url_bearing_semantic_fields_are_redacted():
 
 @pytest.mark.parametrize(
     "path",
-    ["/var/data/orders.csv", "C:\data\orders.csv", "relative/orders.csv"],
+    ["/var/data/orders.csv", r"C:\data\orders.csv", "relative/orders.csv"],
 )
 def test_ordinary_file_paths_are_left_alone(path):
     """Redacting a path field must not mangle the common case."""

@@ -145,7 +145,10 @@ class DataExceptError(Exception):
         # untouched. Subclasses set it before calling up, so it is here to fix.
         stored = self.__dict__.get("message")
         if isinstance(stored, str):
-            self.message = redact_urls_in_text(stored, keep_path=keep_path)
+            # Written straight into __dict__, symmetric with the read above:
+            # this rewrites state a subclass already stored, rather than the
+            # base declaring an attribute of its own.
+            self.__dict__["message"] = redact_urls_in_text(stored, keep_path=keep_path)
         super().__init__(*args)
         # Constructors that wrap another exception record it on an attribute.
         # Mirroring it into __cause__ is what makes a traceback print the
