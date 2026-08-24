@@ -77,12 +77,13 @@ def test_log_exception_records_the_reason():
 
 def test_a_boolean_is_not_a_number():
     """bool subclasses int, so numbers.Real accepted True as a metric."""
-    with pytest.raises(TypeError):
-        dataexcept.DataImbalanceError(ratio=True, threshold=0.1)
+    # The callable form, rather than a bare instantiation inside a `with`
+    # block: the constructor is being called for its raising, and a bare
+    # instantiation reads (to a human and to CodeQL) as a discarded object.
+    pytest.raises(TypeError, dataexcept.DataImbalanceError, ratio=True, threshold=0.1)
 
 
 def test_a_bare_string_is_not_a_sequence_of_keys():
     """ "id" is iterable, so it silently became ['i', 'd']."""
-    with pytest.raises(TypeError):
-        dataexcept.MergeKeyError("id", "cust_id")
+    pytest.raises(TypeError, dataexcept.MergeKeyError, "id", "cust_id")
     assert dataexcept.MergeKeyError(["id"], ["cust_id"]).left_keys == ["id"]
