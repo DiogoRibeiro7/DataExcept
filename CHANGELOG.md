@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ran four times over identical results.
 - pre-commit now runs black, isort, mypy and the standard hygiene hooks in
   addition to ruff.
+- Releases are now driven by tags. The release workflow previously pushed its
+  version-bump commit straight to `main`, which a protected `main` rejects.
+  The bump now goes through a pull request (`make release-prep`) and pushing
+  the matching tag builds, publishes and cuts a GitHub release. The workflow
+  refuses to run if the tag and `pyproject.toml` disagree.
 
 ### Fixed
 
