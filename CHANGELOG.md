@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Every GitHub Action is pinned to a full-length commit SHA.** All 34
+  references used mutable tags, including `pypa/gh-action-pypi-publish` in the
+  OIDC publishing job — the step that holds the credential which uploads to
+  PyPI. Whoever controls an action repository can move a tag to different code
+  at any time; a commit SHA is the only immutable reference. Each pin carries
+  the version in a trailing comment so it stays reviewable and Dependabot can
+  still update it, and a test fails if any mutable reference reappears.
+
+### Security
+
 - **Credentials in a URL path are now redacted.** `redact_url` kept the whole
   path, so `WebhookError` logged a Slack webhook URL — which Slack documents as
   a secret in its entirety — unchanged. Where the path *is* the credential the
