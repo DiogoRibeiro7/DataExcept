@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-08-24
+
+Documentation and CLI fixes. 0.2.0's README is what PyPI renders as the
+project description, and its quick-start example did not run.
+
+### Fixed
+
+- `python -m dataexcept --version` reported `__main__.py` as the program name
+  instead of `dataexcept`, because argparse defaults `prog` to `sys.argv[0]`.
+- `dataexcept list` imported the deprecated `job_exceptions` shim to build its
+  output, so it emitted a `DeprecationWarning` at anyone who merely wanted to
+  see what the package offers, and it advertised `ConnectionError` and
+  `TimeoutError` alongside their replacements. Deprecated modules are now
+  skipped; the listing is 98 names, matching the classes the package defines.
+- README's quick-start example began `from dataexcept import ValidationError,
+  ModelTrainingError`, which raises `ImportError` — `ModelTrainingError` is in
+  `dataexcept.datascience_exceptions` and is not re-exported at the top level.
+- `docs/advanced_usage.md` taught `from dataexcept.job_exceptions import
+  JobError`, the deprecated path.
+- README's comparison table showed exception messages without the
+  `[ClassName]` prefix the classes actually emit, its sample `dataexcept list`
+  output did not match the real alphabetical listing, its exception count and
+  CLI version were stale, and its end-to-end example used `np.log` without
+  importing numpy.
+
+### Added
+
+- Tests that read the documentation: every `from dataexcept... import ...` in
+  README and `docs/` must resolve, no example may import a deprecated module,
+  and the README's exception count must match the package. Checked that these
+  fail when the original defects are reintroduced.
+
 ## [0.2.0] - 2026-08-24
 
 ### Changed
@@ -53,10 +85,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A regression guard that fails if any exported name ever shadows a builtin
   again.
 - `__all__` on `dataexcept.logging_helpers`, the one public module without one.
-- Tests that read the documentation: every `from dataexcept... import ...` in
-  README and `docs/` must resolve, no example may import a deprecated module,
-  and the README's exception count must match the package. Checked that these
-  fail when the original defects are reintroduced.
 
 ### Fixed
 
@@ -65,23 +93,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `[tool.poetry]`. They now read `[project]`.
 - `examples/example_usage.py` raised `TimeoutError` with keyword arguments the
   builtin does not accept — a live instance of the shadowing hazard.
-- `python -m dataexcept --version` reported `__main__.py` as the program name
-  instead of `dataexcept`, because argparse defaults `prog` to `sys.argv[0]`.
-- `dataexcept list` imported the deprecated `job_exceptions` shim to build its
-  output, so it emitted a `DeprecationWarning` at anyone who merely wanted to
-  see what the package offers, and it advertised `ConnectionError` and
-  `TimeoutError` alongside their replacements. Deprecated modules are now
-  skipped; the listing is 98 names, matching the classes the package defines.
-- README's quick-start example began `from dataexcept import ValidationError,
-  ModelTrainingError`, which raises `ImportError` — `ModelTrainingError` is in
-  `dataexcept.datascience_exceptions` and is not re-exported at the top level.
-- `docs/advanced_usage.md` taught `from dataexcept.job_exceptions import
-  JobError`, the deprecated path.
-- README's comparison table showed exception messages without the
-  `[ClassName]` prefix the classes actually emit, its sample `dataexcept list`
-  output did not match the real alphabetical listing, its exception count and
-  CLI version were stale, and its end-to-end example used `np.log` without
-  importing numpy.
 
 
 ## [0.1.0] - 2026-08-24
@@ -115,6 +126,7 @@ First public release.
 - Published to PyPI via OIDC trusted publishing; no long-lived API token is
   involved in a release.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/DiogoRibeiro7/DataExcept/releases/tag/v0.1.0
