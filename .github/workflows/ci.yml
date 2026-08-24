@@ -73,14 +73,6 @@ jobs:
           coverage xml -o coverage.xml
           coverage html -d htmlcov
           coverage-badge -o coverage.svg -f
-      - name: Commit updated coverage badge
-        if: github.event_name == 'push'
-        uses: stefanzweifel/git-auto-commit-action@v7
-        with:
-          commit_message: "chore: update coverage badge"
-          commit_user_name: github-actions
-          commit_user_email: github-actions@github.com
-          file_pattern: coverage.svg
       - uses: actions/upload-artifact@v7
         with:
           name: coverage-report
@@ -88,10 +80,13 @@ jobs:
             coverage.xml
             coverage.svg
             htmlcov
+          if-no-files-found: error
 
   docs:
-    needs: test
+    needs: [test, coverage]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -103,8 +98,32 @@ jobs:
           pip install -r docs/requirements.txt
       - name: Build documentation
         run: mkdocs build --strict
-      - uses: actions/upload-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
-          name: docs-html
+          name: coverage-report
+          path: coverage_report
+      - name: Publish the coverage badge and HTML report with the docs
+        run: |
+          cp coverage_report/coverage.svg site/coverage.svg
+          cp -r coverage_report/htmlcov site/htmlcov
+      - uses: actions/upload-pages-artifact@v5
+        with:
           path: site
-          if-no-files-found: error
+
+  deploy-docs:
+    needs: docs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    # Let a running deployment finish rather than publishing half a site.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
