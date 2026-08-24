@@ -5,9 +5,10 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from ._deprecation import resolve_deprecated
+from .base import DataExceptError
 
 
-class PipelineError(Exception):
+class PipelineError(DataExceptError):
     """Base exception for pipeline errors."""
 
     pass

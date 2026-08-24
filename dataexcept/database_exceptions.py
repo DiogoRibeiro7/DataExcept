@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from .base import DataExceptError
 
-class DatabaseError(Exception):
+
+class DatabaseError(DataExceptError):
     """Base exception for database-related errors."""
 
     pass

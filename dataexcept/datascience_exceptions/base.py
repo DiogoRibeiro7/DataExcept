@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from ..base import DataExceptError
 
-class DataScienceError(Exception):
+
+class DataScienceError(DataExceptError):
     """Base exception for data science errors."""
 
     def __init__(self, message: str) -> None:

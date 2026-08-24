@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from typing import Optional
 
+from .base import DataExceptError
 
-class DataEngineeringError(Exception):
+
+class DataEngineeringError(DataExceptError):
     """Base exception for data engineering errors."""
 
     pass

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from .base import DataExceptError
 
-class NetworkError(Exception):
+
+class NetworkError(DataExceptError):
     """Base exception for network-related errors.
 
     Example:
