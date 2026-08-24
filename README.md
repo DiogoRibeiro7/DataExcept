@@ -15,10 +15,10 @@
 
 ## 🎯 Key Features
 
-- **🏗️ Hierarchical Structure**: Catch one specific error, a whole domain, or everything via `DataExceptError`
+- **🏗️ Hierarchical Structure**: Catch one specific error, a whole domain, or every operational error via `DataExceptError`
 - **📦 One Import**: Every exception is available from `dataexcept` directly, or from its domain module — same objects either way
-- **📊 Data Science Focused**: 99 exception classes covering ML pipelines, feature engineering, model training
-- **🔧 Production Ready**: Logging helpers, error context, and exceptions that survive a process boundary intact
+- **📊 Data Science Focused**: 100 exception classes covering ML pipelines, feature engineering, model training
+- **🔧 Production Ready**: Logging helpers, error context, and exceptions that pickle — so they cross a process boundary with their message, attributes and cause intact
 - **📚 Academic Quality**: Proper documentation, type hints, and citation support
 - **🐍 Python 3.10+**: Modern Python with full type safety
 - **🧪 Well Tested**: 690+ tests at 92% branch coverage of the package, gated in CI
@@ -187,7 +187,7 @@ except Exception as exc:
 ### Command Line Interface
 
 ```bash
-# List every exception class the package exports (99 of them, alphabetically)
+# List every exception class the package exports (100 of them, alphabetically)
 $ dataexcept list
 ApiError
 AuthenticationError
