@@ -62,8 +62,8 @@ The original 0.2–0.5 milestones are done:
 
 ## 0.5 — Coverage and correctness
 
-- Raise test coverage from 85%, focused on the constructor branches that build
-  messages from partial arguments.
+- Raise coverage above the 92% floor, focused on the constructor branches that
+  build messages from partial arguments.
 - Property-based tests over the hierarchy: every public exception constructs
   from its documented signature, produces a non-empty message, and lands in the
   right place in the tree.

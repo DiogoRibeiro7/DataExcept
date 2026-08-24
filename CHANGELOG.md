@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Coverage is now measured honestly, and gated.** `coverage run -m pytest`
+  had no `source` setting, so it counted the tests and examples in the
+  denominator — and test files are by definition fully executed. The reported
+  figure was inflated: 86% when the package alone was at 79%.
+
+  `[tool.coverage.run]` now restricts measurement to `dataexcept` and enables
+  branch coverage, and `fail_under = 91` stops it regressing. The honest number
+  is **92%**; the README, checklist and roadmap now quote that rather than the
+  inflated one.
+- The CLI is exercised in-process as well as through a subprocess. The
+  subprocess tests verify real invocation but coverage cannot see inside them,
+  which left `__main__.py` reporting 23% despite being tested. It now reports
+  93%.
+
 ### Security
 
 - **Credentials are no longer written into exception messages.** `log_exception`

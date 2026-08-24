@@ -59,7 +59,10 @@ oversights.
 ## 7. Testing
 
 - [x] Unit tests implemented — 109 tests
-- [x] Coverage above 80% — currently 85%, combined across Python 3.10–3.13
+- [x] Coverage above 80% — 92% of the package, measured with branch coverage and
+      gated at 91% in CI. Until 0.4.0 the figure was measured without
+      restricting the source, so tests and examples counted toward it: the
+      reported 86% was really 79%.
 - [x] Tests are fast and deterministic — full suite under two seconds
 - [x] CI runs tests on every push and pull request
 - [ ] Property-based tests over the exception hierarchy; see the roadmap

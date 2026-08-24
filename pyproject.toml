@@ -100,3 +100,20 @@ files = ["dataexcept"]
 no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_configs = true
+
+[tool.coverage.run]
+# Without this, `coverage run -m pytest` measures the tests and examples too,
+# which inflates the figure: the test files are by definition fully executed.
+source = ["dataexcept"]
+branch = true
+
+[tool.coverage.report]
+# The floor is a ratchet against regression, not a target. Raise it when the
+# real number rises; never lower it to make a build pass.
+fail_under = 91
+show_missing = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
