@@ -72,8 +72,25 @@ line-length = 88
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F"]
+# S = flake8-bandit (security), C90 = mccabe (complexity). Both ship with ruff,
+# so neither needs a separate tool in CI.
+select = ["E", "F", "S", "C90"]
 ignore = []
+
+[tool.ruff.lint.mccabe]
+# The most complex function in the package currently scores 6. Eight leaves
+# room to breathe while still catching a function that grows out of hand.
+max-complexity = 8
+
+[tool.ruff.lint.per-file-ignores]
+# assert is how a test asserts, and "/tmp/data" there is a string literal used
+# as fixture data rather than a path that is ever opened.
+"tests/**" = ["S101", "S108"]
+# The lambda example asserts to narrow Optionals for the type checker.
+"examples/**" = ["S101"]
+# bump_version.py deliberately shells out to poetry, by name, on a maintainer's
+# own machine.
+"scripts/**" = ["S603", "S607"]
 
 [tool.mypy]
 python_version = "3.10"
