@@ -9,6 +9,13 @@ from typing import Any, Iterator, Mapping, Optional
 
 Context = Mapping[str, Any]
 
+__all__ = [
+    "Context",
+    "log_and_raise",
+    "log_exception",
+    "log_then_raise",
+]
+
 
 def _normalize_context_value(value: Any) -> Any:
     try:

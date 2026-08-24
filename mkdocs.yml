@@ -78,6 +78,7 @@ nav:
   - Logging Helpers: logging.md
   - Advanced Usage: advanced_usage.md
   - API Reference: api.md
+  - API Stability: stability.md
   - Citation: citation.md
 
 extra:
