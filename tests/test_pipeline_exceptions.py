@@ -1,6 +1,6 @@
 from dataexcept.pipeline_exceptions import (
     ExternalServiceError,
-    FeatureEngineeringError,
+    FeaturePreprocessingError,
     PipelineNotificationError,
     PreprocessingError,
     RetryLimitExceededError,
@@ -16,7 +16,7 @@ def test_preprocessing_error_message():
 
 
 def test_feature_engineering_error_inherits():
-    err = FeatureEngineeringError("age", reason="missing")
+    err = FeaturePreprocessingError("age", reason="missing")
     assert isinstance(err, PreprocessingError)
     assert "age" in str(err)
 

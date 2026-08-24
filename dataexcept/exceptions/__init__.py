@@ -1,12 +1,15 @@
 # __init__.py
+from typing import Any
+
+from .._deprecation import resolve_deprecated
 from .authentication import AuthenticationError, AuthorizationError
 from .base import JobError
 from .configuration import ConfigurationError
 from .external import (
-    ConnectionError,
     DependencyError,
+    OperationTimeoutError,
     ResourceNotFoundError,
-    TimeoutError,
+    ServiceConnectionError,
 )
 from .lifecycle import JobCancellationError
 from .notification import EmailError, NotificationError, WebhookError
@@ -18,8 +21,8 @@ __all__ = [
     "JobError",
     "ValidationError",
     "ConfigurationError",
-    "ConnectionError",
-    "TimeoutError",
+    "ServiceConnectionError",
+    "OperationTimeoutError",
     "ResourceNotFoundError",
     "DependencyError",
     "AuthenticationError",
@@ -34,3 +37,14 @@ __all__ = [
     "WebhookError",
     "JobCancellationError",
 ]
+
+#: Renamed in 0.2.0 because they shadowed Python builtins without inheriting
+#: from them. The alias is the same class object, so ``except`` keeps working.
+_DEPRECATED_ALIASES = {
+    "ConnectionError": ServiceConnectionError,
+    "TimeoutError": OperationTimeoutError,
+}
+
+
+def __getattr__(name: str) -> Any:
+    return resolve_deprecated(__name__, _DEPRECATED_ALIASES, name)

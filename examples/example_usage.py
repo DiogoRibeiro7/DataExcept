@@ -4,10 +4,10 @@ import time
 
 from dataexcept import (
     ConfigurationError,
-    ConnectionError,
     DependencyError,
+    OperationTimeoutError,
     ResourceNotFoundError,
-    TimeoutError,
+    ServiceConnectionError,
     ValidationError,
 )
 
@@ -35,15 +35,18 @@ def load_configuration(config):
     return config
 
 
+def _call_remote_service(service_name, timeout):
+    """Stand in for a real HTTP client, so the example has something to wrap."""
+    raise OperationTimeoutError(operation=f"fetch {service_name}", timeout=timeout)
+
+
 def fetch_remote_data(service_name, config):
-    # Imagine this uses some HTTP client...
+    """Wrap whatever the transport raises into a single, specific error."""
     try:
-        # client.connect(...)
-        # client.request(...)
-        pass
-    except (ConnectionError, TimeoutError) as exc:
-        # Wrap any low-level error
-        raise ConnectionError(service_name, original_exception=exc)
+        return _call_remote_service(service_name, config.get("timeout", 30))
+    except (ServiceConnectionError, OperationTimeoutError) as exc:
+        # `from exc` keeps the original as __cause__ so the traceback shows both.
+        raise ServiceConnectionError(service_name, original_exception=exc) from exc
 
 
 def perform_operation(data, config):
@@ -57,7 +60,9 @@ def perform_operation(data, config):
     # ... do work ...
     elapsed = time.time() - start
     if elapsed > cfg["timeout"]:
-        raise TimeoutError(operation="perform_operation", timeout=cfg["timeout"])
+        raise OperationTimeoutError(
+            operation="perform_operation", timeout=cfg["timeout"]
+        )
 
     # Suppose we depend on some file or resource
     resource_id = data.get("template_id")

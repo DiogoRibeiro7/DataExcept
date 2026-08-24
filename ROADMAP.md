@@ -23,24 +23,29 @@ The original 0.2–0.5 milestones are done:
   [diogoribeiro7.github.io/DataExcept](https://diogoribeiro7.github.io/DataExcept/),
   with an API reference generated from the source.
 
-## 0.2 — Resolve the known API hazards
+## Shipped in 0.2.0
 
-These are breaking, which is why they belong before 1.0 rather than after.
+- **Stopped shadowing builtins.** `ConnectionError` and `TimeoutError` became
+  `ServiceConnectionError` and `OperationTimeoutError`. The old names shared
+  their names with Python builtins without inheriting from them, so
+  `from dataexcept import ConnectionError` silently stopped
+  `except ConnectionError:` catching real socket failures.
+- **Resolved the duplicate names.** `datascience_exceptions.SerializationError`
+  became `ModelSerializationError` (it is about model persistence) and
+  `pipeline_exceptions.FeatureEngineeringError` became
+  `FeaturePreprocessingError` (it derives from `PreprocessingError` and is keyed
+  on a feature).
+- Every old name still resolves, to the same class object, with a
+  `DeprecationWarning` naming its replacement and 1.0.0 as its removal.
 
-- **Stop shadowing builtins.** `ConnectionError` and `TimeoutError` share their
-  names with Python builtins but do not inherit from them, so
-  `from dataexcept import ConnectionError` silently stops
-  `except ConnectionError:` from catching real socket failures. Rename, with
-  the current names kept as deprecated aliases.
-- **Resolve the duplicate names.** `SerializationError` and
-  `FeatureEngineeringError` each name two different classes in different
-  modules, so catching one does not catch the other.
-- **Decide the top-level surface.** 30 of the 96 classes are importable
-  straight from `dataexcept`; the rest need a submodule import. Either export
-  everything or document the split as deliberate — the current state is
-  neither.
+## 0.3 — Settle the top-level surface
 
-## 0.3 — Make the hierarchy easier to use
+- **Decide what `from dataexcept import ...` should offer.** 30 of the 96
+  classes are importable straight from the package and the rest need a
+  submodule import. Either export everything or document the split as
+  deliberate — the current state is neither.
+
+## 0.4 — Make the hierarchy easier to use
 
 - Utilities for wrapping a third-party exception into the matching DataExcept
   class, preserving the original as `__cause__`.
@@ -48,7 +53,7 @@ These are breaking, which is why they belong before 1.0 rather than after.
 - Optional integration hooks for error trackers such as Sentry, kept out of the
   runtime dependencies.
 
-## 0.4 — Coverage and correctness
+## 0.5 — Coverage and correctness
 
 - Raise test coverage from 85%, focused on the constructor branches that build
   messages from partial arguments.
@@ -61,8 +66,9 @@ These are breaking, which is why they belong before 1.0 rather than after.
 
 - The public API is frozen under the [stability policy](https://diogoribeiro7.github.io/DataExcept/stability/).
 - `dataexcept.job_exceptions`, deprecated since 0.1.0, is removed.
-- Any aliases introduced in 0.2 are removed.
-- A migration guide covering every rename between 0.1 and 1.0.
+- The aliases introduced in 0.2.0 are removed.
+- A migration guide covering every rename between 0.1 and 1.0; the 0.2.0
+  renames are already documented in the stability policy.
 
 ## Beyond 1.0
 

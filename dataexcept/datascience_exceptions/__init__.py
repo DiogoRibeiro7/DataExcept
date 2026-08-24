@@ -1,5 +1,8 @@
 """Custom exceptions for data science workflows."""
 
+from typing import Any
+
+from .._deprecation import resolve_deprecated
 from .base import DataScienceError
 from .ingestion import (
     DataAugmentationError,
@@ -18,8 +21,8 @@ from .operations import (
     DataDriftError,
     DataExportError,
     DeploymentError,
+    ModelSerializationError,
     ResourceLimitError,
-    SerializationError,
 )
 from .training import (
     BiasDetectionError,
@@ -59,7 +62,7 @@ __all__ = [
     "HyperparameterError",
     "ModelEvaluationError",
     "PredictionError",
-    "SerializationError",
+    "ModelSerializationError",
     "DeploymentError",
     "DataDriftError",
     "ResourceLimitError",
@@ -83,3 +86,11 @@ __all__ = [
     "FeatureScalingError",
     "ModelCompatibilityError",
 ]
+
+#: Renamed in 0.2.0: this named the same thing as
+#: ``dataexcept.exceptions.SerializationError`` while being a different class.
+_DEPRECATED_ALIASES = {"SerializationError": ModelSerializationError}
+
+
+def __getattr__(name: str) -> Any:
+    return resolve_deprecated(__name__, _DEPRECATED_ALIASES, name)

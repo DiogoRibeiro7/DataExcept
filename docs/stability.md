@@ -66,45 +66,31 @@ New subclasses may be introduced under an existing base in a minor release, so
 an `except JobError:` may start catching failures it did not catch before. That
 is deliberate. If you need to be immune to that, catch the specific class.
 
-## Two names to watch
+## Renames in 0.2.0
 
-### `ConnectionError` and `TimeoutError` shadow builtins
+Four names changed in 0.2.0. Every old name still works and resolves to the
+**same class object**, so an existing `except OldName:` catches exactly what it
+caught before. Touching an old name emits a `DeprecationWarning`; a plain
+`import dataexcept` does not.
 
-`dataexcept.ConnectionError` and `dataexcept.TimeoutError` have the same names
-as Python builtins, and **they do not inherit from them**:
+### They shadowed builtins
+
+`ConnectionError` and `TimeoutError` shared their names with Python builtins
+and did **not** inherit from them, so this quietly stopped working:
 
 ```python
-from dataexcept import ConnectionError   # shadows the builtin in this module
+from dataexcept import ConnectionError   # shadowed the builtin here
 
 try:
     socket.connect(...)
 except ConnectionError:                  # no longer the builtin
-    ...                                  # a real socket failure escapes
+    ...                                  # a real socket failure escaped
 ```
 
-Until this is resolved, prefer a qualified import:
+### They named two different classes
 
-```python
-from dataexcept import exceptions as dx
-
-except dx.ConnectionError:
-    ...
-```
-
-Renaming these is a candidate for the next minor release; see the roadmap.
-
-### Two names are defined twice
-
-`SerializationError` and `FeatureEngineeringError` each name two *different*
-classes:
-
-| Name | Also defined in |
-| --- | --- |
-| `SerializationError` | `dataexcept.exceptions` and `dataexcept.datascience_exceptions` |
-| `FeatureEngineeringError` | `dataexcept.pipeline_exceptions` and `dataexcept.datascience_exceptions` |
-
-Catching one does not catch the other. Import them qualified until this is
-resolved.
+`SerializationError` and `FeatureEngineeringError` each named two unrelated
+classes in different modules, so catching one silently missed the other.
 
 ## Deprecation policy
 
@@ -125,6 +111,12 @@ python -W error::DeprecationWarning -m pytest
 | Name | Since | Removed in | Replacement |
 | --- | --- | --- | --- |
 | `dataexcept.job_exceptions` | 0.1.0 | 1.0.0 | `dataexcept.exceptions` |
+| `dataexcept.ConnectionError` | 0.2.0 | 1.0.0 | `ServiceConnectionError` |
+| `dataexcept.TimeoutError` | 0.2.0 | 1.0.0 | `OperationTimeoutError` |
+| `dataexcept.exceptions.ConnectionError` | 0.2.0 | 1.0.0 | `ServiceConnectionError` |
+| `dataexcept.exceptions.TimeoutError` | 0.2.0 | 1.0.0 | `OperationTimeoutError` |
+| `datascience_exceptions.SerializationError` | 0.2.0 | 1.0.0 | `ModelSerializationError` |
+| `pipeline_exceptions.FeatureEngineeringError` | 0.2.0 | 1.0.0 | `FeaturePreprocessingError` |
 
 `job_exceptions` re-exports the *same class objects*, so it is a change of
 import line and nothing more — existing `except` clauses keep working while you
@@ -140,3 +132,21 @@ migrate:
 The package ships a `py.typed` marker, so its annotations are visible to type
 checkers in your project. They are checked by mypy in CI on every change, and a
 change that makes a public annotation less accurate is treated as a bug.
+
+### Migrating off the 0.2.0 renames
+
+The classes are unchanged, so this is a find-and-replace on import lines:
+
+```diff
+-from dataexcept import ConnectionError, TimeoutError
++from dataexcept import OperationTimeoutError, ServiceConnectionError
+
+-from dataexcept.datascience_exceptions import SerializationError
++from dataexcept.datascience_exceptions import ModelSerializationError
+
+-from dataexcept.pipeline_exceptions import FeatureEngineeringError
++from dataexcept.pipeline_exceptions import FeaturePreprocessingError
+```
+
+Run your suite with `python -W error::DeprecationWarning -m pytest` to find
+every remaining use.

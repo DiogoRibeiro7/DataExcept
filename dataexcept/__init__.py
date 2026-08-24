@@ -28,11 +28,11 @@ from . import (
     pipeline_exceptions,
     security_exceptions,
 )
+from ._deprecation import resolve_deprecated
 from .exceptions import (  # noqa: F401
     AuthenticationError,
     AuthorizationError,
     ConfigurationError,
-    ConnectionError,
     CronExpressionError,
     DependencyError,
     DeserializationError,
@@ -40,15 +40,20 @@ from .exceptions import (  # noqa: F401
     JobCancellationError,
     JobError,
     NotificationError,
+    OperationTimeoutError,
     ParsingError,
     ResourceNotFoundError,
     ScheduleConflictError,
     SerializationError,
-    TimeoutError,
+    ServiceConnectionError,
     ValidationError,
     WebhookError,
 )
-from .logging_helpers import log_and_raise, log_exception, log_then_raise
+from .logging_helpers import (
+    log_and_raise,
+    log_exception,
+    log_then_raise,
+)
 
 try:
     __version__ = metadata.version("DataExcept")
@@ -73,9 +78,17 @@ __all__ = list(_exceptions.__all__) + [
 ]
 
 
+#: Renamed in 0.2.0 because they shadowed Python builtins without inheriting
+#: from them. Each alias is the same class object as its replacement.
+_DEPRECATED_ALIASES = {
+    "ConnectionError": ServiceConnectionError,
+    "TimeoutError": OperationTimeoutError,
+}
+
+
 def __getattr__(name: str) -> Any:
     if name == "job_exceptions":
         module = import_module("dataexcept.job_exceptions")
         globals()[name] = module
         return module
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    return resolve_deprecated(__name__, _DEPRECATED_ALIASES, name)
