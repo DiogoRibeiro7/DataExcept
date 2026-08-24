@@ -14,7 +14,6 @@ import pkgutil
 import pytest
 
 import dataexcept
-from dataexcept import DataExceptError
 
 DEPRECATED_MODULES = {"dataexcept.job_exceptions"}
 
@@ -40,7 +39,7 @@ CLASSES = _all_exception_classes()
 
 @pytest.mark.parametrize("name", sorted(CLASSES))
 def test_every_exception_derives_from_the_root(name):
-    assert issubclass(CLASSES[name], DataExceptError)
+    assert issubclass(CLASSES[name], dataexcept.DataExceptError)
 
 
 def test_only_the_root_sits_directly_under_exception():
@@ -48,7 +47,7 @@ def test_only_the_root_sits_directly_under_exception():
     stray = sorted(
         name
         for name, cls in CLASSES.items()
-        if Exception in cls.__bases__ and cls is not DataExceptError
+        if Exception in cls.__bases__ and cls is not dataexcept.DataExceptError
     )
     assert not stray, f"these bypass DataExceptError: {stray}"
 
@@ -70,19 +69,12 @@ def test_a_single_clause_catches_across_domains(name):
     cls = getattr(dataexcept, name)
     instance = cls.__new__(cls)
     Exception.__init__(instance, "example")
-    with pytest.raises(DataExceptError):
+    with pytest.raises(dataexcept.DataExceptError):
         raise instance
 
 
 def test_domain_roots_still_catch_their_own_domain():
     """Adding a base must not cost the granular handling that already worked."""
-    from dataexcept import (
-        DataScienceError,
-        JobError,
-        ModelTrainingError,
-        ValidationError,
-    )
-
-    assert issubclass(ValidationError, JobError)
-    assert issubclass(ModelTrainingError, DataScienceError)
-    assert not issubclass(ModelTrainingError, JobError)
+    assert issubclass(dataexcept.ValidationError, dataexcept.JobError)
+    assert issubclass(dataexcept.ModelTrainingError, dataexcept.DataScienceError)
+    assert not issubclass(dataexcept.ModelTrainingError, dataexcept.JobError)
