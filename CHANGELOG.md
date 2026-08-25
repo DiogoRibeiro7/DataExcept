@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Property-based tests over the exception hierarchy**, using Hypothesis.
+  Generated text is fed to every class and four properties are asserted for
+  each: construction raises nothing but `TypeError`, a message built from real
+  input is non-empty, the exception survives a pickle round trip with its type,
+  message and cause intact, and a credential-bearing URL is never rendered.
+  Every constructor defect the reviews found — `MergeKeyError("id")` becoming
+  `['i', 'd']`, `is_number(True)`, and the one below — was in argument
+  handling and was found by inspection rather than by a test.
+
+### Fixed
+
+- `ApiError`, `DatabaseConnectionError` and `WebhookError` raised
+  `AttributeError: 'object' object has no attribute 'decode'` when given a
+  non-string, because the redaction helpers passed whatever they were given to
+  `urlsplit`. That masked the caller's actual mistake with a message about
+  `.decode`. The helpers now return a non-string untouched.
+
 ## [0.4.2] - 2026-08-25
 
 ### Changed

@@ -43,6 +43,7 @@ include = [
 black = "*"
 coverage = "*"
 flake8 = "*"
+hypothesis = "*"
 isort = "*"
 mypy = "*"
 pre-commit = "*"
