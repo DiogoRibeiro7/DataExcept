@@ -198,7 +198,7 @@ BiasDetectionError
 
 # Check version
 $ dataexcept --version
-dataexcept 0.4.3
+dataexcept 1.0.0
 ```
 
 ## 🎯 Use Cases
@@ -335,6 +335,7 @@ through [SECURITY.md](SECURITY.md), not the public issue tracker.
 - **Full Documentation**: [diogoribeiro7.github.io/DataExcept](https://diogoribeiro7.github.io/DataExcept/)
 - **API Reference**: [API Docs](https://diogoribeiro7.github.io/DataExcept/api/)
 - **API Stability**: [What is public and what may change](https://diogoribeiro7.github.io/DataExcept/stability/)
+- **Upgrading from 0.x**: [Migration guide](https://diogoribeiro7.github.io/DataExcept/migration/)
 - **Advanced Usage**: [Advanced Guide](https://diogoribeiro7.github.io/DataExcept/advanced_usage/)
 - **CLI Reference**: [CLI Guide](https://diogoribeiro7.github.io/DataExcept/cli/)
 - **Changelog**: [CHANGELOG.md](CHANGELOG.md)
@@ -348,7 +349,7 @@ If you use DataExcept in your research, please cite it:
   author = {Ribeiro, Diogo},
   title = {DataExcept: Structured Exception Handling for Data Science},
   url = {https://github.com/DiogoRibeiro7/DataExcept},
-  version = {0.4.3},
+  version = {1.0.0},
   year = {2026},
   publisher = {GitHub}
 }
