@@ -108,9 +108,16 @@ def test_no_module_imports_tomllib_without_a_fallback():
     remembering.
     """
     offenders = []
-    for path in sorted(PROJECT_ROOT.rglob("*.py")):
-        if any(part in {".venv", "site", "build", "dist"} for part in path.parts):
-            continue
+    # Only the project's own source, by name. Walking the whole tree picks up
+    # any virtualenv that happens to sit in it, whatever it is called, and
+    # site-packages is not ours to police.
+    sources = [
+        path
+        for directory in ("dataexcept", "tests", "examples", "scripts")
+        for path in sorted((PROJECT_ROOT / directory).rglob("*.py"))
+        if (PROJECT_ROOT / directory).is_dir()
+    ]
+    for path in sources:
         text = path.read_text(encoding="utf-8")
         if "import tomllib" in text and "import tomli as tomllib" not in text:
             offenders.append(str(path.relative_to(PROJECT_ROOT)))
