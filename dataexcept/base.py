@@ -100,15 +100,20 @@ def _rebuild(
     cls: Type["DataExceptError"],
     args: Tuple[Any, ...],
     state: Dict[str, Any],
-    cause: Optional[BaseException],
-    context: Optional[BaseException],
-    suppress_context: bool,
+    cause: Optional[BaseException] = None,
+    context: Optional[BaseException] = None,
+    suppress_context: bool = False,
 ) -> "DataExceptError":
     """Recreate *cls* without replaying its ``__init__``.
 
     Constructors validate and render a message from their arguments; replaying
     them would need those arguments, which ``args`` does not carry. Restoring
     ``args`` and ``__dict__`` directly reproduces the exception exactly.
+
+    The three chain arguments carry defaults so that a payload pickled by an
+    earlier version -- which passed only ``cls``, ``args`` and ``state`` --
+    still loads. An exception can outlive an upgrade: it may sit in a task
+    queue, or be sent by a worker running the previous release.
 
     ``__cause__``, ``__context__`` and ``__suppress_context__`` live outside
     ``__dict__`` -- they are special exception state -- so they are restored

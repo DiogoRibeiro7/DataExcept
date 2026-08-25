@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Redaction is no longer defeated by the traceback.** `log_exception` passed
+  `exc_info`, so logging rendered the whole exception chain — including a
+  wrapped third-party exception whose own message still quoted the
+  credential-bearing URL. Redacting what DataExcept renders did nothing about
+  that. When the chain contains a URL, `log_exception` now formats the
+  traceback and scrubs it; every other exception keeps the structured
+  `exc_info` path, so nothing changes for them.
+- `SECURITY.md` documents what remains outside that boundary: the wrapped
+  exception object is still reachable, so `traceback.print_exc()`,
+  `repr(exc.__dict__)` or `logger.error(..., exc_info=True)` will render its
+  text. A third-party exception's message is not ours to rewrite.
+
+### Fixed
+
+- **An exception pickled by 0.4.0 could not be loaded by 0.4.1.** Restoring the
+  chain added three parameters to the private `_rebuild`, and an older payload
+  passes only three arguments — so a queued exception that outlived an upgrade,
+  or one sent by a worker on the previous release, raised `TypeError` on
+  unpickling. The new parameters carry defaults.
+
 ### Added
 
 - Tests that derive the facts stated in more than one file, instead of trusting
