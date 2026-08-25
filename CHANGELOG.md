@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Three ways a URL could still reach a message, all closed.** The redaction
+  boundary scrubbed the message and a handful of named fields, but 18 classes
+  interpolate some *other* attribute into `__str__` — a field, a column, a
+  resource — and a caller can put a URL in any of them. Every stored string is
+  now swept, so no class leaks a credential-bearing URL through its message,
+  its attributes or its `args`. A test fills every string argument of every
+  class with one and checks all three surfaces.
+- Two classes assigned their attributes *after* calling `super().__init__`, so
+  the sweep never saw them. Both now assign first, and a test fails if any
+  constructor does it again.
+- The URL pattern carried a `` anchor, so a URL directly following a word
+  character was never matched — including `feature_https://...`, the step name
+  `FeaturePreprocessingError` builds from its own argument.
+
+### Fixed
+
+- **Sensitive query parameters are matched by token, not substring.** The
+  substring rule was wrong in both directions: it redacted `monkey`, `design`,
+  `assign`, `keyword` and `authors`, mangling ordinary debugging information,
+  while still missing `passphrase`. Parameter names are now split on
+  separators and camelCase and matched word by word, so `X-Amz-Signature`,
+  `accessToken` and `client_secret` are caught and `?monkey=bobo` is left
+  alone.
+
 ## [0.4.1] - 2026-08-25
 
 ### Added

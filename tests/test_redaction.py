@@ -7,10 +7,12 @@ stored or rendered; the caller already holds the value it passed in.
 
 from __future__ import annotations
 
+import inspect
 import io
 import re
 from urllib.parse import urlsplit
 
+import _exception_probe as _probe
 import pytest
 
 import dataexcept
@@ -228,3 +230,153 @@ def test_the_chain_precheck_terminates_on_a_cycle():
     from dataexcept.logging_helpers import _chain_mentions_a_url
 
     assert _chain_mentions_a_url(first) is False
+
+
+def test_no_constructor_assigns_attributes_after_super():
+    """The URL sweep runs in DataExceptError.__init__, so it only sees state
+    that already exists. An attribute assigned afterwards escapes it, which is
+    how FeaturePreprocessingError leaked a URL through `feature`.
+    """
+    import importlib
+    import inspect
+    import pkgutil
+
+    offenders = []
+    for info in pkgutil.walk_packages(dataexcept.__path__, "dataexcept."):
+        if info.name == "dataexcept.job_exceptions":
+            continue
+        module = importlib.import_module(info.name)
+        for name, obj in vars(module).items():
+            if not (
+                inspect.isclass(obj)
+                and issubclass(obj, BaseException)
+                and obj.__module__ == info.name
+                and "__init__" in vars(obj)
+            ):
+                continue
+            source = inspect.getsource(obj.__init__)
+            position = source.find("super().__init__")
+            if position == -1:
+                continue
+            assigned = re.findall(r"self\.(\w+)\s*=", source[position:])
+            # __cause__ is set by the base itself, deliberately and last.
+            assigned = [a for a in assigned if not a.startswith("__")]
+            if assigned:
+                offenders.append(f"{name}: {assigned}")
+
+    assert not offenders, (
+        "these assign attributes after super().__init__, so the redaction "
+        f"sweep never sees them: {offenders}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Findings from the third pass.
+# ---------------------------------------------------------------------------
+
+ORDINARY_PARAMS = [
+    "monkey",
+    "design",
+    "assign",
+    "keyword",
+    "keywords",
+    "authors",
+    "sigma",
+    "sessions",
+    "page",
+    "limit",
+    "sort",
+    "designer",
+    "turkey",
+]
+SECRET_PARAMS = [
+    "token",
+    "api_key",
+    "apiKey",
+    "apikey",
+    "X-Amz-Signature",
+    "X-Amz-Credential",
+    "auth_token",
+    "refresh_token",
+    "accessToken",
+    "password",
+    "passwd",
+    "pwd",
+    "passphrase",
+    "client_secret",
+    "SESSION",
+    "Authorization",
+    "signing_key",
+]
+
+
+@pytest.mark.parametrize("name", SECRET_PARAMS)
+def test_secret_parameter_names_are_redacted(name):
+    url = f"https://h/p?{name}=SECRETVALUE"
+    assert "SECRETVALUE" not in (redact_url(url) or "")
+
+
+@pytest.mark.parametrize("name", ORDINARY_PARAMS)
+def test_ordinary_parameter_names_are_left_alone(name):
+    """Substring matching redacted "monkey" and "design" while missing
+    "passphrase". Shredding a legitimate query parameter works against the
+    reason host and path are kept: the error has to stay debuggable.
+    """
+    url = f"https://h/p?{name}=value&page=2"
+    assert redact_url(url) == url
+
+
+def test_a_url_directly_after_a_word_character_is_still_found():
+    """The pattern had a \b anchor, so "feature_https://..." never matched --
+    which is exactly the step name FeaturePreprocessingError builds.
+    """
+    from dataexcept.redaction import redact_urls_in_text
+
+    scrubbed = redact_urls_in_text("feature_https://h/p?token=SECRETVALUE")
+    assert "SECRETVALUE" not in scrubbed
+
+
+def _construct_or_none(cls, args):
+    """Build *cls* from *args*, or return None if it rejects them.
+
+    Returning None rather than skipping from inside an ``except`` keeps the
+    caller's control flow visible -- to a reader and to a static analyser.
+    """
+    try:
+        return cls(*args)
+    except Exception:
+        return None
+
+
+@pytest.mark.parametrize("name", sorted(_probe.all_exception_classes()))
+def test_no_class_leaks_a_url_through_any_surface(name):
+    """Fill every string argument with a credential-bearing URL and check it
+    reaches neither the message, the attributes, nor args.
+
+    Three separate defects hid here: 18 classes interpolate an attribute other
+    than the message into __str__, two assigned attributes after super() so the
+    sweep never saw them, and the URL pattern missed a URL preceded by "_".
+    """
+    cls = _probe.all_exception_classes()[name]
+    url = "https://h/p?token=SECRETVALUE"
+    required = [
+        p
+        for p in list(inspect.signature(cls.__init__).parameters.values())[1:]
+        if p.default is inspect.Parameter.empty
+    ]
+    if not required:
+        pytest.skip(f"{name} takes no required arguments")
+
+    args = []
+    for parameter in required:
+        annotation = str(parameter.annotation)
+        sample = _probe.sample_for(annotation)
+        args.append(url if sample == "value" else sample)
+
+    exception = _construct_or_none(cls, args)
+    if exception is None:
+        pytest.skip(f"{name} rejects a URL in those positions")
+
+    assert "SECRETVALUE" not in str(exception)
+    assert "SECRETVALUE" not in repr(exception.__dict__)
+    assert "SECRETVALUE" not in repr(exception.args)

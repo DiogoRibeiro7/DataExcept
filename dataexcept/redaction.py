@@ -42,33 +42,62 @@ PLACEHOLDER = "***"
 #: nothing. The structured field is redacted regardless of length.
 MIN_REMOVABLE_SECRET_LENGTH = 8
 
-#: Substrings that mark a query or fragment parameter as carrying a secret.
-#: Matched anywhere in the parameter name, case insensitively, so
-#: ``X-Amz-Signature``, ``auth_token`` and ``refresh_token`` are all covered.
-#: Over-matching here is harmless; under-matching leaks.
-SENSITIVE_PARAM_MARKERS = frozenset(
+#: Parameter-name tokens that mark a value as a secret. A name is split into
+#: tokens on separators and camelCase boundaries, and matched token by token.
+#:
+#: Substring matching was tried first and was wrong in both directions: it
+#: redacted "monkey", "design", "assign", "keyword" and "authors" -- mangling
+#: ordinary debugging information -- while still missing "passphrase". The
+#: point of keeping host, port and path is that the error stays actionable, and
+#: shredding a legitimate query parameter works against that.
+SENSITIVE_PARAM_TOKENS = frozenset(
     {
+        "apikey",
         "auth",
+        "authorization",
         "credential",
+        "credentials",
         "key",
+        "keys",
+        "passphrase",
         "passwd",
         "password",
         "pwd",
         "secret",
+        "secrets",
         "session",
         "sig",
+        "signature",
         "token",
+        "tokens",
     }
 )
 
-#: Finds URLs inside free-form text, so a credential cannot slip through in a
-#: caller-supplied message or in the text of a wrapped exception.
-_URL_IN_TEXT = re.compile(r"\b[a-zA-Z][a-zA-Z0-9+.\-]*://[^\s'\"<>,;)\]}]+")
+#: Splits a parameter name into words: on separators, and between a lower-case
+#: or digit character and an upper-case one, so ``accessToken`` yields
+#: ``["access", "token"]``.
+_NAME_TOKENS = re.compile(r"[A-Za-z0-9]+")
+_CAMEL_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
+
+
+def _tokens(name: str) -> list[str]:
+    words: list[str] = []
+    for chunk in _NAME_TOKENS.findall(name):
+        words.extend(part.lower() for part in _CAMEL_BOUNDARY.split(chunk) if part)
+    return words
 
 
 def _is_sensitive(name: str) -> bool:
-    lowered = name.lower()
-    return any(marker in lowered for marker in SENSITIVE_PARAM_MARKERS)
+    return any(token in SENSITIVE_PARAM_TOKENS for token in _tokens(name))
+
+
+#: Finds URLs inside free-form text, so a credential cannot slip through in a
+#: caller-supplied message or in the text of a wrapped exception.
+# No word-boundary anchor: a URL can directly follow a word character, as
+# in the step name "feature_https://..." that FeaturePreprocessingError
+# builds. The scheme character class excludes "_", so a match still starts
+# at the scheme rather than mid-word.
+_URL_IN_TEXT = re.compile(r"[a-zA-Z][a-zA-Z0-9+.\-]*://[^\s'\"<>,;)\]}]+")
 
 
 def fingerprint(value: str) -> str:
