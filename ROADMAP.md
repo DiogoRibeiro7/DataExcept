@@ -64,9 +64,8 @@ The original 0.2–0.5 milestones are done:
 
 - Raise coverage above the 92% floor, focused on the constructor branches that
   build messages from partial arguments.
-- Property-based tests over the hierarchy: every public exception constructs
-  from its documented signature, produces a non-empty message, and lands in the
-  right place in the tree.
+- Extend the property-based suite beyond constructor inputs to the logging
+  helpers and the CLI.
 
 ## 1.0 — Stable
 

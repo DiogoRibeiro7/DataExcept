@@ -170,7 +170,10 @@ def redact_url(url: Optional[str], *, keep_path: bool = True) -> Optional[str]:
     incoming webhook URL is the common case -- Slack, Discord and others put
     the secret in the path, so preserving it would defeat the point.
     """
-    if not url:
+    if not url or not isinstance(url, str):
+        # Anything that is not a string is handed back untouched. urlsplit
+        # would raise AttributeError from inside urllib, masking whatever the
+        # caller's real mistake was with a message about `.decode`.
         return url
 
     try:

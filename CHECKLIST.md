@@ -68,7 +68,9 @@ oversights.
 - [x] CI runs tests on every push and pull request
 - [x] Every exception is covered by generated tests over the whole hierarchy:
       pickle round trip, message integrity, and inheritance from the root
-- [ ] Property-based tests over constructor inputs; see the roadmap
+- [x] Property-based tests over constructor inputs: generated text is fed to
+      every class and checked for construction, rendering, round-tripping and
+      redaction
 
 ## 8. Versioning & Releases
 
