@@ -17,6 +17,7 @@ The properties asserted here hold for *every* exception in the package:
 
 from __future__ import annotations
 
+import contextlib
 import inspect
 import io
 import pickle
@@ -234,9 +235,12 @@ def test_log_and_raise_reraises_the_original(message):
     logger, stream = _capture_logger("dataexcept.prop.raise")
     original = dataexcept.ValidationError("field", message)
 
+    def raise_original():
+        raise original
+
     with pytest.raises(dataexcept.ValidationError) as caught:
         with dataexcept.log_and_raise(logger=logger):
-            raise original
+            raise_original()
 
     assert caught.value is original, "the very same exception must propagate"
     assert stream.getvalue().strip()
@@ -279,10 +283,10 @@ def test_the_cli_never_raises_anything_but_systemexit(argv):
     """argparse exits rather than raising; nothing else should escape."""
     from dataexcept.__main__ import main
 
-    try:
+    # argparse exits on a bad argument; suppress that specifically, so anything
+    # else escapes and fails the test.
+    with contextlib.suppress(SystemExit):
         main(argv)
-    except SystemExit:
-        pass
 
 
 # ---------------------------------------------------------------------------
