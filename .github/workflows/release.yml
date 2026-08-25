@@ -106,17 +106,22 @@ jobs:
         with:
           name: dist
           path: dist/
+      - uses: abatilo/actions-poetry@0dd19c9498c3dc8728967849d0d2eae428a8a3d8 # v4
       - name: Run the test suite against the installed wheel
         run: |
-          python -m pip install --upgrade pip
-          pip install dist/*.whl pytest
+          # Test requirements come from the lock rather than a hand-written
+          # list here, which went stale the moment hypothesis was added.
+          # --no-root so the source project is not installed: the wheel is
+          # what is under test.
+          poetry install --only dev --no-root
+          poetry run pip install dist/*.whl
           # Delete the source package so the tests can only import the wheel.
           # The rest of the checkout stays: some tests read pyproject, README
           # and docs.
           rm -rf dataexcept
-          python -m pytest -q
+          poetry run pytest -q
       - name: Check the wheel ships what it should
-        run: python scripts/check_wheel.py
+        run: poetry run python scripts/check_wheel.py
 
   publish:
     needs: [build, verify-wheel]

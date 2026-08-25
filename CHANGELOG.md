@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The release workflow's `verify-wheel` job installed a hand-written list of
+  test requirements, which went stale the moment `hypothesis` was added — the
+  suite could not even be collected against the built wheel. It now installs
+  the dev group from the lock, so the list cannot drift again. The job did its
+  job: it failed, and publishing was skipped.
+- `test_no_module_imports_tomllib_without_a_fallback` walked the whole tree, so
+  it picked up any virtualenv sitting in it. It now scans the project's own
+  source directories by name; site-packages is not ours to police.
+
 ## [0.4.3] - 2026-08-25
 
 ### Added
