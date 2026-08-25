@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Property-based tests over the logging helpers and the CLI: generated context
+  values, including hostile ones, must never make `log_exception` raise; the
+  normalised context must be strict-JSON encodable; `log_and_raise` must
+  re-raise the *same* exception with its traceback intact; and the CLI must
+  raise nothing but `SystemExit` for any argument list.
 - **Property-based tests over the exception hierarchy**, using Hypothesis.
   Generated text is fed to every class and four properties are asserted for
   each: construction raises nothing but `TypeError`, a message built from real
@@ -20,6 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`log_exception` could raise, replacing the caller's error with its own.**
+  A context value whose `__repr__` raises propagated straight out of the
+  logging helper — so a helper called while handling a failure made the failure
+  worse. Nothing in context normalisation can raise now; a value that cannot be
+  described at all becomes `<unrepresentable TypeName>`.
+- **`NaN` and `Infinity` in a log context produced invalid JSON.**
+  `json.dumps` emits them bare, which a strict consumer downstream rejects.
+  They are stringified instead.
 - `ApiError`, `DatabaseConnectionError` and `WebhookError` raised
   `AttributeError: 'object' object has no attribute 'decode'` when given a
   non-string, because the redaction helpers passed whatever they were given to

@@ -64,8 +64,8 @@ The original 0.2–0.5 milestones are done:
 
 - Raise coverage above the 92% floor, focused on the constructor branches that
   build messages from partial arguments.
-- Extend the property-based suite beyond constructor inputs to the logging
-  helpers and the CLI.
+- Extend the property-based suite to the exception hierarchy's interaction
+  with third-party loggers and handlers.
 
 ## 1.0 — Stable
 
