@@ -1,6 +1,6 @@
 [project]
 name = "DataExcept"
-version = "0.4.2"
+version = "0.4.3"
 description = "A Python package providing structured, easily-extendable custom exception types."
 readme = "README.md"
 license = "MIT"
