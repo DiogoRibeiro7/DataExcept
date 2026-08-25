@@ -8,6 +8,7 @@ stored or rendered; the caller already holds the value it passed in.
 from __future__ import annotations
 
 import io
+import re
 from urllib.parse import urlsplit
 
 import pytest
@@ -197,7 +198,10 @@ def test_log_exception_scrubs_the_wrapped_traceback():
 
     assert "XXXXsecretXXXX" not in logged
     assert "Traceback" in logged, "the traceback must still be logged"
-    assert "hooks.slack.com" in logged, "the host is what makes it actionable"
+    # Parse the URLs out and compare hosts: searching the blob for
+    # "hooks.slack.com" would also match hooks.slack.com.evil.example.
+    hosts = {urlsplit(u).netloc for u in re.findall(r"https?://\S+", logged)}
+    assert "hooks.slack.com" in hosts, "the host is what makes it actionable"
 
 
 def test_an_ordinary_exception_keeps_the_structured_path():
