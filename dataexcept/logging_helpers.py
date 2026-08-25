@@ -12,6 +12,9 @@ from .redaction import redact_urls_in_text
 
 Context = Mapping[str, Any]
 
+#: Sentinel: the value could not be coerced into anything JSON will take.
+_UNCOERCIBLE = object()
+
 __all__ = [
     "Context",
     "log_and_raise",
@@ -20,15 +23,61 @@ __all__ = [
 ]
 
 
-def _normalize_context_value(value: Any) -> Any:
+def _is_json_safe(value: Any) -> bool:
+    """True if a strict JSON encoder will accept *value* as it stands.
+
+    ``allow_nan=False`` because ``json.dumps`` otherwise emits bare ``NaN`` and
+    ``Infinity``, which are not valid JSON and will be rejected downstream.
+    """
     try:
-        json.dumps(value)
-        return value
-    except TypeError:
+        json.dumps(value, allow_nan=False)
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
+def _coerced(value: Any) -> Any:
+    """Round-trip *value* through JSON, stringifying whatever will not encode.
+
+    Returns ``_UNCOERCIBLE`` rather than raising: this runs while the caller is
+    already handling a failure.
+    """
+    try:
+        return json.loads(json.dumps(value, default=str, allow_nan=False))
+    except Exception:
+        return _UNCOERCIBLE
+
+
+def _described(value: Any) -> str:
+    """Describe *value* without letting it raise.
+
+    An object may define a ``__repr__`` that raises. Naming the type is the
+    most that can be said without invoking anything the object controls.
+    """
+    try:
+        return repr(value)
+    except Exception:
         try:
-            return json.loads(json.dumps(value, default=str))
-        except Exception:  # pragma: no cover - extremely defensive
-            return repr(value)
+            return f"<unrepresentable {type(value).__name__}>"
+        except Exception:  # pragma: no cover - a type with a hostile __name__
+            return "<unrepresentable>"
+
+
+def _normalize_context_value(value: Any) -> Any:
+    """Return *value* in a form a strict JSON log encoder will accept.
+
+    Nothing here may raise. This runs while the caller is already handling a
+    failure, and an exception escaping would replace their error with one about
+    logging it -- so even a hostile ``__repr__`` has to be survivable.
+    """
+    if _is_json_safe(value):
+        return value
+
+    coerced = _coerced(value)
+    if coerced is not _UNCOERCIBLE:
+        return coerced
+
+    return _described(value)
 
 
 def _build_extra(context: Context | None) -> dict[str, Any] | None:
