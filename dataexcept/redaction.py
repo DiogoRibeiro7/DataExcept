@@ -50,19 +50,29 @@ MIN_REMOVABLE_SECRET_LENGTH = 8
 #: ordinary debugging information -- while still missing "passphrase". The
 #: point of keeping host, port and path is that the error stays actionable, and
 #: shredding a legitimate query parameter works against that.
+#:
+#: Deliberately absent: "code", "state", "nonce" and "client_id". An OAuth
+#: authorization code is a secret, but "code" is far more often a country
+#: code, an HTTP status or a discount code, and redacting those would destroy
+#: more debugging information than it protects. Checked against the parameter
+#: names used by AWS SigV4, Azure SAS, Google Cloud and OAuth 2.
 SENSITIVE_PARAM_TOKENS = frozenset(
     {
         "apikey",
         "auth",
         "authorization",
+        "bearer",
         "credential",
         "credentials",
+        "hmac",
+        "jwt",
         "key",
         "keys",
         "passphrase",
         "passwd",
         "password",
         "pwd",
+        "sas",
         "secret",
         "secrets",
         "session",

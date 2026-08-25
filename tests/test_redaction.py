@@ -380,3 +380,98 @@ def test_no_class_leaks_a_url_through_any_surface(name):
     assert "SECRETVALUE" not in str(exception)
     assert "SECRETVALUE" not in repr(exception.__dict__)
     assert "SECRETVALUE" not in repr(exception.args)
+
+
+# ---------------------------------------------------------------------------
+# Fourth pass: the token set against real API parameter names, and the
+# documented limits of the sweep.
+# ---------------------------------------------------------------------------
+
+REAL_SECRET_PARAMS = [
+    # AWS SigV4
+    "X-Amz-Signature",
+    "X-Amz-Credential",
+    "X-Amz-Security-Token",
+    # Google Cloud
+    "X-Goog-Signature",
+    "X-Goog-Credential",
+    # Azure
+    "sig",
+    "sas",
+    # OAuth 2 and friends
+    "access_token",
+    "refresh_token",
+    "id_token",
+    "client_secret",
+    # widely used elsewhere
+    "apikey",
+    "api-key",
+    "subscription-key",
+    "private_token",
+    "personal_access_token",
+    "jwt",
+    "bearer",
+    "hmac",
+    "password",
+]
+
+REAL_ORDINARY_PARAMS = [
+    # These travel alongside credentials and must survive: an error that says
+    # only "something was redacted" is not actionable.
+    "X-Amz-Algorithm",
+    "X-Amz-Date",
+    "X-Amz-Expires",
+    "X-Amz-SignedHeaders",
+    "X-Goog-Algorithm",
+    "client_id",
+    "state",
+    "nonce",
+    "code",
+    "page",
+    "limit",
+    "sort",
+    "region",
+    "version",
+]
+
+
+@pytest.mark.parametrize("name", REAL_SECRET_PARAMS)
+def test_real_world_secret_parameters_are_redacted(name):
+    assert "SECRETVALUE" not in (redact_url(f"https://h/p?{name}=SECRETVALUE") or "")
+
+
+@pytest.mark.parametrize("name", REAL_ORDINARY_PARAMS)
+def test_real_world_ordinary_parameters_survive(name):
+    """`code` is deliberately here: an OAuth code is a secret, but the name is
+    far more often a country code, an HTTP status or a discount code.
+    """
+    url = f"https://h/p?{name}=value"
+    assert redact_url(url) == url
+
+
+def test_state_attached_after_construction_is_not_swept():
+    """A documented limit, asserted so it cannot change silently."""
+    error = dataexcept.ValidationError("field", "v")
+    error.endpoint = "https://h/p?token=SECRETVALUE"
+    assert "SECRETVALUE" in error.endpoint
+
+
+def test_a_url_nested_in_a_value_is_rendered_redacted_but_not_rewritten():
+    """What the library renders is redacted; the caller's object is not."""
+    payload = {"nested": {"url": "https://h/p?token=SECRETVALUE"}}
+    error = dataexcept.DataValidationError("f", payload)
+
+    assert "SECRETVALUE" not in str(error), "the rendered message must be clean"
+    assert error.value is payload, "the caller's object must not be rewritten"
+
+
+def test_scrubbed_state_stays_scrubbed_across_a_round_trip():
+    import pickle
+
+    original = dataexcept.ValidationError("https://h/p?token=SECRETVALUE", "v")
+    assert "SECRETVALUE" not in repr(original.__dict__)
+
+    restored = pickle.loads(pickle.dumps(original))
+
+    assert "SECRETVALUE" not in repr(restored.__dict__)
+    assert "SECRETVALUE" not in str(restored)

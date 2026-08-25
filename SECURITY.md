@@ -103,6 +103,32 @@ If a third-party exception in your stack carries a credential, route it through
 `log_exception` or scrub it yourself with
 `dataexcept.redaction.redact_urls_in_text`.
 
+### Two more boundaries worth knowing
+
+**State you attach after the exception is constructed is not swept.** The
+redaction runs when the exception is built. This is not covered:
+
+```python
+error = ValidationError("field", value)
+error.endpoint = "https://h/p?token=SECRET"   # never redacted
+```
+
+**A URL nested inside a value you pass is not rewritten.** Anything the library
+*renders* is redacted, including a message that interpolates your value — so
+`str(exc)` is clean even when `value` is a dict containing a URL. The object
+you passed in is left as you gave it:
+
+```python
+error = DataValidationError("f", {"url": "https://h/p?token=SECRET"})
+str(error)        # redacted
+error.value       # your dict, untouched
+```
+
+Walking arbitrary caller data structures and rewriting them would be a
+surprising thing for an exception library to do, and could not be complete
+anyway. The same principle applies as to a wrapped third-party exception: what
+DataExcept renders is its responsibility; your objects are yours.
+
 ### What is not redacted
 
 **A bare, non-URL secret written into free-form text.** If you pass
