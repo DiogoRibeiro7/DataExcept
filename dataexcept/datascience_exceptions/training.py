@@ -69,8 +69,10 @@ class ConvergenceError(ModelTrainingError):
                 f"Model '{model_type}' failed to converge after "
                 f"{iterations} iterations"
             )
-        super().__init__(model_type=model_type, epoch=None, message=message)
+        # Assigned before super(): DataExceptError.__init__ sweeps the stored
+        # strings for URLs, and anything set afterwards escapes that.
         self.iterations = iterations
+        super().__init__(model_type=model_type, epoch=None, message=message)
 
     def __str__(self) -> str:
         return f"[ConvergenceError] {self.message}"

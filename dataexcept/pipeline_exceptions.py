@@ -30,9 +30,11 @@ class FeaturePreprocessingError(PreprocessingError):
     """Raised when feature engineering fails."""
 
     def __init__(self, feature: str, reason: Optional[str] = None) -> None:
-        super().__init__(step_name=f"feature_{feature}", details=reason)
+        # Assigned before super(): DataExceptError.__init__ sweeps the stored
+        # strings for URLs, and anything set afterwards escapes that.
         self.feature = feature
         self.reason = reason
+        super().__init__(step_name=f"feature_{feature}", details=reason)
 
 
 class StorageError(PipelineError):
