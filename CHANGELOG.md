@@ -7,27 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Security
-
-- **Redaction is no longer defeated by the traceback.** `log_exception` passed
-  `exc_info`, so logging rendered the whole exception chain — including a
-  wrapped third-party exception whose own message still quoted the
-  credential-bearing URL. Redacting what DataExcept renders did nothing about
-  that. When the chain contains a URL, `log_exception` now formats the
-  traceback and scrubs it; every other exception keeps the structured
-  `exc_info` path, so nothing changes for them.
-- `SECURITY.md` documents what remains outside that boundary: the wrapped
-  exception object is still reachable, so `traceback.print_exc()`,
-  `repr(exc.__dict__)` or `logger.error(..., exc_info=True)` will render its
-  text. A third-party exception's message is not ours to rewrite.
-
-### Fixed
-
-- **An exception pickled by 0.4.0 could not be loaded by 0.4.1.** Restoring the
-  chain added three parameters to the private `_rebuild`, and an older payload
-  passes only three arguments — so a queued exception that outlived an upgrade,
-  or one sent by a worker on the previous release, raised `TypeError` on
-  unpickling. The new parameters carry defaults.
+## [0.4.1] - 2026-08-25
 
 ### Added
 
@@ -43,7 +23,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exactly that. Skipping now requires an explicit, reasoned entry in an
   exclusion table, which is empty.
 
+- **Python 3.14 support.** `requires-python` capped at `<3.14`, so the package
+  refused to install on the current stable interpreter — 3.14 was released in
+  October 2025 and is no longer upcoming. The range is now `>=3.10,<3.15`, 3.14
+  is in the classifiers and the CI matrix, and `test (3.14)` joins the checks
+  the release workflow requires before it will build.
+
+### Changed
+
+- `SECURITY.md` states the boundary precisely, including what is **not**
+  covered: a bare non-URL secret written into free-form text cannot be
+  recognised. The previous wording claimed credentials "never appear ...
+  whatever you pass in", which was broader than the implementation.
+
+- The serialization and hierarchy guarantees are stated more precisely.
+  "Survives a process boundary intact" now says what happens to state that
+  cannot be serialized, and "catches anything this package raises" is now
+  "every operational exception" — constructors deliberately raise plain
+  `TypeError` for invalid arguments, which sits outside the hierarchy.
+
 ### Fixed
+
+- **An exception pickled by 0.4.0 could not be loaded by 0.4.1.** Restoring the
+  chain added three parameters to the private `_rebuild`, and an older payload
+  passes only three arguments — so a queued exception that outlived an upgrade,
+  or one sent by a worker on the previous release, raised `TypeError` on
+  unpickling. The new parameters carry defaults.
 
 - The test probe fed a bare string to `Sequence[str]` parameters, so
   `DataFormatError` and `DtypeMismatchError` correctly rejected it and were
@@ -63,15 +68,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   refused to verify its own output when run on an older interpreter — which is
   what CI does.
 
-### Added
-
-- **Python 3.14 support.** `requires-python` capped at `<3.14`, so the package
-  refused to install on the current stable interpreter — 3.14 was released in
-  October 2025 and is no longer upcoming. The range is now `>=3.10,<3.15`, 3.14
-  is in the classifiers and the CI matrix, and `test (3.14)` joins the checks
-  the release workflow requires before it will build.
+- **Exception chaining was lost on a pickle round trip.** `__reduce__` saved
+  `args` and `__dict__`, but `__cause__`, `__context__` and
+  `__suppress_context__` are special exception state rather than `__dict__`
+  entries — so a wrapped exception rebuilt in another process no longer showed
+  what actually failed. All three are now restored explicitly. The 0.4.0 tests
+  did not catch this because they compared `args`, rendered text and `__dict__`
+  and never the chain; they now check it.
+- **An exception carrying unpickleable state could not cross a process
+  boundary at all.** Several classes accept arbitrary caller state, so a
+  lambda, generator, open file or locally defined class made the whole
+  exception unserializable — replacing the real failure with a serialization
+  error about it. Such values are now replaced by an `UnpicklableValue`
+  describing what was there, and an unpickleable cause by an
+  `UnpicklableCause`, so the exception still arrives.
 
 ### Security
+
+- **Redaction is no longer defeated by the traceback.** `log_exception` passed
+  `exc_info`, so logging rendered the whole exception chain — including a
+  wrapped third-party exception whose own message still quoted the
+  credential-bearing URL. Redacting what DataExcept renders did nothing about
+  that. When the chain contains a URL, `log_exception` now formats the
+  traceback and scrubs it; every other exception keeps the structured
+  `exc_info` path, so nothing changes for them.
+- `SECURITY.md` documents what remains outside that boundary: the wrapped
+  exception object is still reachable, so `traceback.print_exc()`,
+  `repr(exc.__dict__)` or `logger.error(..., exc_info=True)` will render its
+  text. A third-party exception's message is not ours to rewrite.
 
 - **Every GitHub Action is pinned to a full-length commit SHA.** All 34
   references used mutable tags, including `pypa/gh-action-pypi-publish` in the
@@ -80,8 +104,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   at any time; a commit SHA is the only immutable reference. Each pin carries
   the version in a trailing comment so it stays reviewable and Dependabot can
   still update it, and a test fails if any mutable reference reappears.
-
-### Security
 
 - **Credentials in a URL path are now redacted.** `redact_url` kept the whole
   path, so `WebhookError` logged a Slack webhook URL — which Slack documents as
@@ -102,38 +124,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `DataLoadingError.source` documents itself as "file path, URL" and rendered
   a presigned S3 URL verbatim. Nine such fields now use `redact_if_url`, which
   leaves ordinary file paths untouched.
-
-### Changed
-
-- `SECURITY.md` states the boundary precisely, including what is **not**
-  covered: a bare non-URL secret written into free-form text cannot be
-  recognised. The previous wording claimed credentials "never appear ...
-  whatever you pass in", which was broader than the implementation.
-
-### Fixed
-
-- **Exception chaining was lost on a pickle round trip.** `__reduce__` saved
-  `args` and `__dict__`, but `__cause__`, `__context__` and
-  `__suppress_context__` are special exception state rather than `__dict__`
-  entries — so a wrapped exception rebuilt in another process no longer showed
-  what actually failed. All three are now restored explicitly. The 0.4.0 tests
-  did not catch this because they compared `args`, rendered text and `__dict__`
-  and never the chain; they now check it.
-- **An exception carrying unpickleable state could not cross a process
-  boundary at all.** Several classes accept arbitrary caller state, so a
-  lambda, generator, open file or locally defined class made the whole
-  exception unserializable — replacing the real failure with a serialization
-  error about it. Such values are now replaced by an `UnpicklableValue`
-  describing what was there, and an unpickleable cause by an
-  `UnpicklableCause`, so the exception still arrives.
-
-### Changed
-
-- The serialization and hierarchy guarantees are stated more precisely.
-  "Survives a process boundary intact" now says what happens to state that
-  cannot be serialized, and "catches anything this package raises" is now
-  "every operational exception" — constructors deliberately raise plain
-  `TypeError` for invalid arguments, which sits outside the hierarchy.
 
 ## [0.4.0] - 2026-08-24
 
@@ -364,7 +354,6 @@ project description, and its quick-start example did not run.
 - `examples/example_usage.py` raised `TimeoutError` with keyword arguments the
   builtin does not accept — a live instance of the shadowing hazard.
 
-
 ## [0.1.0] - 2026-08-24
 
 First public release.
@@ -396,7 +385,8 @@ First public release.
 - Published to PyPI via OIDC trusted publishing; no long-lived API token is
   involved in a release.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.2.0...v0.2.1
