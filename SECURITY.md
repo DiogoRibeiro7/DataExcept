@@ -78,6 +78,31 @@ A redacted secret renders as `***(1a2b3c4d)`, a truncated SHA-256, so the
 *same* bad credential failing repeatedly stays recognisable in a log without
 the credential being in it.
 
+### The wrapped exception is not ours to rewrite
+
+DataExcept redacts what *it* renders. A wrapped third-party exception renders
+itself: an HTTP client's error may quote the credential-bearing URL it was
+called with, and that string belongs to that library.
+
+`log_exception` handles this — when the exception chain contains a URL it
+formats the traceback and scrubs it, rather than handing logging an `exc_info`
+that would print the chain verbatim. Ordinary exceptions keep the structured
+`exc_info` path, so nothing changes for them.
+
+**Outside `log_exception`, the raw object is still reachable.** These all
+render the wrapped exception's own text:
+
+```python
+traceback.print_exc()          # your own traceback formatting
+repr(exc.__dict__)             # the wrapped exception is stored as an attribute
+str(exc.original_exception)    # reading it directly
+logger.error("failed", exc_info=True)
+```
+
+If a third-party exception in your stack carries a credential, route it through
+`log_exception` or scrub it yourself with
+`dataexcept.redaction.redact_urls_in_text`.
+
 ### What is not redacted
 
 **A bare, non-URL secret written into free-form text.** If you pass

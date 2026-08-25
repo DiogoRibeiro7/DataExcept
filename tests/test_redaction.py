@@ -7,6 +7,7 @@ stored or rendered; the caller already holds the value it passed in.
 
 from __future__ import annotations
 
+import io
 from urllib.parse import urlsplit
 
 import pytest
@@ -164,3 +165,57 @@ def test_redaction_survives_a_pickle_round_trip():
     restored = pickle.loads(pickle.dumps(dataexcept.WebhookError(SLACK)))
     assert "XXXXsecretXXXX" not in str(restored)
     assert "XXXXsecretXXXX" not in repr(restored.__dict__)
+
+
+# ---------------------------------------------------------------------------
+# The traceback route. Redacting the message is not enough: `log_exception`
+# passes exc_info, so logging renders the whole chain -- including a wrapped
+# third-party exception whose own text still quotes the credential.
+# ---------------------------------------------------------------------------
+
+
+def _capture(exception):
+    import logging
+
+    stream = io.StringIO()
+    logger = logging.getLogger(f"dataexcept.test.{id(exception)}")
+    logger.handlers = [logging.StreamHandler(stream)]
+    logger.setLevel(logging.ERROR)
+    logger.propagate = False
+    dataexcept.log_exception(exception, logger=logger)
+    return stream.getvalue()
+
+
+def test_log_exception_scrubs_the_wrapped_traceback():
+    try:
+        try:
+            raise ConnectionError(f"POST {SLACK} failed")
+        except ConnectionError as exc:
+            raise dataexcept.WebhookError("https://h/x", exc)
+    except dataexcept.WebhookError as error:
+        logged = _capture(error)
+
+    assert "XXXXsecretXXXX" not in logged
+    assert "Traceback" in logged, "the traceback must still be logged"
+    assert "hooks.slack.com" in logged, "the host is what makes it actionable"
+
+
+def test_an_ordinary_exception_keeps_the_structured_path():
+    """Scrubbing costs the exc_info shape, so it only happens when needed."""
+    try:
+        raise dataexcept.ValidationError("age", -1)
+    except dataexcept.ValidationError as error:
+        logged = _capture(error)
+
+    assert "Traceback" in logged
+
+
+def test_the_chain_precheck_terminates_on_a_cycle():
+    first = dataexcept.ValidationError("a", 1)
+    second = dataexcept.ValidationError("b", 2)
+    first.__cause__ = second
+    second.__cause__ = first
+
+    from dataexcept.logging_helpers import _chain_mentions_a_url
+
+    assert _chain_mentions_a_url(first) is False
