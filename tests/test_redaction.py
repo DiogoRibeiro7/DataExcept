@@ -336,6 +336,18 @@ def test_a_url_directly_after_a_word_character_is_still_found():
     assert "SECRETVALUE" not in scrubbed
 
 
+def _construct_or_none(cls, args):
+    """Build *cls* from *args*, or return None if it rejects them.
+
+    Returning None rather than skipping from inside an ``except`` keeps the
+    caller's control flow visible -- to a reader and to a static analyser.
+    """
+    try:
+        return cls(*args)
+    except Exception:
+        return None
+
+
 @pytest.mark.parametrize("name", sorted(_probe.all_exception_classes()))
 def test_no_class_leaks_a_url_through_any_surface(name):
     """Fill every string argument with a credential-bearing URL and check it
@@ -361,9 +373,8 @@ def test_no_class_leaks_a_url_through_any_surface(name):
         sample = _probe.sample_for(annotation)
         args.append(url if sample == "value" else sample)
 
-    try:
-        exception = cls(*args)
-    except Exception:
+    exception = _construct_or_none(cls, args)
+    if exception is None:
         pytest.skip(f"{name} rejects a URL in those positions")
 
     assert "SECRETVALUE" not in str(exception)
