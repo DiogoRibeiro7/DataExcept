@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-08-25
+
+### Changed
+
+- `SECURITY.md` states two further boundaries rather than leaving them to be
+  discovered: state attached to an exception *after* it is constructed is not
+  swept, and a URL nested inside a value you pass is rendered redacted but the
+  object itself is not rewritten. Walking and rewriting arbitrary caller data
+  structures would be a surprising thing for an exception library to do, and
+  could not be complete anyway.
+
+### Fixed
+
+- **Sensitive query parameters are matched by token, not substring.** The
+  substring rule was wrong in both directions: it redacted `monkey`, `design`,
+  `assign`, `keyword` and `authors`, mangling ordinary debugging information,
+  while still missing `passphrase`. Parameter names are now split on
+  separators and camelCase and matched word by word, so `X-Amz-Signature`,
+  `accessToken` and `client_secret` are caught and `?monkey=bobo` is left
+  alone.
+
 ### Security
 
 - **`jwt`, `bearer`, `hmac` and `sas` are recognised as secret parameter
@@ -29,25 +50,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The URL pattern carried a `` anchor, so a URL directly following a word
   character was never matched — including `feature_https://...`, the step name
   `FeaturePreprocessingError` builds from its own argument.
-
-### Changed
-
-- `SECURITY.md` states two further boundaries rather than leaving them to be
-  discovered: state attached to an exception *after* it is constructed is not
-  swept, and a URL nested inside a value you pass is rendered redacted but the
-  object itself is not rewritten. Walking and rewriting arbitrary caller data
-  structures would be a surprising thing for an exception library to do, and
-  could not be complete anyway.
-
-### Fixed
-
-- **Sensitive query parameters are matched by token, not substring.** The
-  substring rule was wrong in both directions: it redacted `monkey`, `design`,
-  `assign`, `keyword` and `authors`, mangling ordinary debugging information,
-  while still missing `passphrase`. Parameter names are now split on
-  separators and camelCase and matched word by word, so `X-Amz-Signature`,
-  `accessToken` and `client_secret` are caught and `?monkey=bobo` is left
-  alone.
 
 ## [0.4.1] - 2026-08-25
 
@@ -427,7 +429,8 @@ First public release.
 - Published to PyPI via OIDC trusted publishing; no long-lived API token is
   involved in a release.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.2.1...v0.3.0
