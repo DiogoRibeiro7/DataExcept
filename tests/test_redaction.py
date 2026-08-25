@@ -201,7 +201,12 @@ def test_log_exception_scrubs_the_wrapped_traceback():
     # Parse the URLs out and compare hosts: searching the blob for
     # "hooks.slack.com" would also match hooks.slack.com.evil.example.
     hosts = {urlsplit(u).netloc for u in re.findall(r"https?://\S+", logged)}
-    assert "hooks.slack.com" in hosts, "the host is what makes it actionable"
+    # Equality against each parsed host, not a containment test: a substring
+    # check would also pass for hooks.slack.com.evil.example, and `in` against
+    # a hostname literal reads as exactly that pattern.
+    assert any(
+        host == "hooks.slack.com" for host in hosts
+    ), f"the host is what makes the error actionable; got {sorted(hosts)}"
 
 
 def test_an_ordinary_exception_keeps_the_structured_path():
