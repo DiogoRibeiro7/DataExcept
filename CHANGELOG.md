@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **`jwt`, `bearer`, `hmac` and `sas` are recognised as secret parameter
+  names.** Checked the token set against the parameters actually used by AWS
+  SigV4, Azure SAS, Google Cloud and OAuth 2: the signature and credential
+  parameters were already covered, but those four were not. `code`, `state`,
+  `nonce` and `client_id` are deliberately still ignored — an OAuth code is a
+  secret, but the name is far more often a country code, an HTTP status or a
+  discount code, and redacting those would destroy more than it protects.
 - **Three ways a URL could still reach a message, all closed.** The redaction
   boundary scrubbed the message and a handful of named fields, but 18 classes
   interpolate some *other* attribute into `__str__` — a field, a column, a
@@ -22,6 +29,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The URL pattern carried a `` anchor, so a URL directly following a word
   character was never matched — including `feature_https://...`, the step name
   `FeaturePreprocessingError` builds from its own argument.
+
+### Changed
+
+- `SECURITY.md` states two further boundaries rather than leaving them to be
+  discovered: state attached to an exception *after* it is constructed is not
+  swept, and a URL nested inside a value you pass is rendered redacted but the
+  object itself is not rewritten. Walking and rewriting arbitrary caller data
+  structures would be a surprising thing for an exception library to do, and
+  could not be complete anyway.
 
 ### Fixed
 
