@@ -54,12 +54,3 @@ submodule.
 ## Command-line entry point
 
 ::: dataexcept.__main__
-
-## Deprecated
-
-!!! warning "Deprecated since 0.1.0"
-    `dataexcept.job_exceptions` is a compatibility shim that emits a
-    `DeprecationWarning` on import. Use [`dataexcept.exceptions`](#core-job-exceptions)
-    instead.
-
-::: dataexcept.job_exceptions

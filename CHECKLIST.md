@@ -1,7 +1,7 @@
 # Package Quality Checklist
 
 An audit of this repository against a general Python packaging checklist,
-current as of 0.4.3 (2026-08-25). Unticked boxes are genuinely not done, not
+current as of 1.0.0 (2026-08-25). Unticked boxes are genuinely not done, not
 oversights.
 
 ---
@@ -74,7 +74,8 @@ oversights.
 
 ## 8. Versioning & Releases
 
-- [x] Semantic versioning, with the guarantees written down
+- [x] Semantic versioning, with the guarantees written down and frozen at 1.0
+- [x] A migration guide for the 0.x to 1.0 upgrade
 - [x] Git tags created for releases
 - [x] `CHANGELOG.md` updated with each release
 - [x] Local build verified (`poetry build`, plus `twine check`)

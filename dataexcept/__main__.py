@@ -12,14 +12,9 @@ from typing import Iterable
 from . import __path__ as _PKG_PATH
 from . import __version__
 
-#: Deprecated compatibility shims. Listing these would advertise names that are
-#: scheduled for removal, and importing them emits a DeprecationWarning at
-#: anyone who merely wanted to see what the package offers.
-_DEPRECATED_MODULES = frozenset({"dataexcept.job_exceptions"})
-
 
 def _iter_exception_modules() -> Iterable[ModuleType]:
-    """Yield every non-deprecated submodule that explicitly defines ``__all__``."""
+    """Yield every submodule that explicitly defines ``__all__``."""
     allowed_suffixes = ("exceptions", "_exceptions")
     # dataexcept.base holds DataExceptError, the root of the hierarchy, and
     # does not match the suffix rule.
@@ -32,8 +27,6 @@ def _iter_exception_modules() -> Iterable[ModuleType]:
             not module_info.name.endswith(allowed_suffixes)
             and module_info.name not in always_include
         ):
-            continue
-        if module_info.name in _DEPRECATED_MODULES:
             continue
         try:
             module = import_module(module_info.name)

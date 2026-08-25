@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-25
+
+First stable release. The public API is frozen; see the
+[stability policy](https://diogoribeiro7.github.io/DataExcept/stability/)
+and the [migration guide](https://diogoribeiro7.github.io/DataExcept/migration/).
+
+### Added
+
+- A [migration guide](https://diogoribeiro7.github.io/DataExcept/migration/)
+  covering every rename between 0.1 and 1.0, with the one-line check for
+  whether any of it applies to you:
+  `python -W error::DeprecationWarning -m pytest` on 0.4.3.
+
+### Changed
+
+- **The public API is frozen.** The stability policy no longer carries a
+  pre-1.0 caveat: nothing public is renamed or removed outside a major release,
+  and anything that will be removed is deprecated first.
+
+### Removed
+
+- **`dataexcept.job_exceptions`**, deprecated since 0.1.0. Every name it
+  exported is available from `dataexcept.exceptions` and from the top-level
+  package, and they are the same class objects, so this is a change of import
+  line only.
+- **The four aliases introduced in 0.2.0**: `ConnectionError`,
+  `TimeoutError`, `datascience_exceptions.SerializationError` and
+  `pipeline_exceptions.FeatureEngineeringError`. Each has emitted a
+  `DeprecationWarning` naming 1.0.0 as its removal since 0.2.0.
+  `SerializationError` and `FeatureEngineeringError` remain exported — the
+  rename applied to the *duplicate* in each pair, and the original kept its
+  name.
+- The deprecation machinery itself (`dataexcept._deprecation`), which nothing
+  uses now.
+
 ### Fixed
 
 - The release workflow's `verify-wheel` job installed a hand-written list of
@@ -474,7 +509,8 @@ First public release.
 - Published to PyPI via OIDC trusted publishing; no long-lived API token is
   involved in a release.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.3...v1.0.0
 [0.4.3]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.0...v0.4.1

@@ -67,16 +67,22 @@ The original 0.2–0.5 milestones are done:
 - Extend the property-based suite to the exception hierarchy's interaction
   with third-party loggers and handlers.
 
-## 1.0 — Stable
+## Shipped in 1.0.0
 
-- The public API is frozen under the [stability policy](https://diogoribeiro7.github.io/DataExcept/stability/).
+- **The public API is frozen** under the
+  [stability policy](https://diogoribeiro7.github.io/DataExcept/stability/):
+  nothing public is renamed or removed outside a major release, and anything
+  that will be removed is deprecated first.
 - `dataexcept.job_exceptions`, deprecated since 0.1.0, is removed.
-- The aliases introduced in 0.2.0 are removed.
-- A migration guide covering every rename between 0.1 and 1.0; the 0.2.0
-  renames are already documented in the stability policy.
+- The four aliases introduced in 0.2.0 are removed, along with the deprecation
+  machinery that served them.
+- A [migration guide](https://diogoribeiro7.github.io/DataExcept/migration/)
+  covering every rename between 0.1 and 1.0.
 
 ## Beyond 1.0
 
 - Track new stable Python releases promptly; 3.14 is supported as of 0.4.1.
+- Utilities for wrapping a third-party exception into the matching DataExcept
+  class, and optional integration hooks for error trackers.
 - Prioritise new exception domains by what users actually report reaching for
   generic exceptions to express.

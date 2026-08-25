@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from ._deprecation import resolve_deprecated
 from .base import DataExceptError
 from .redaction import redact_if_url, redact_url
 
@@ -210,12 +209,3 @@ __all__ = [
     "TypeCheckError",
     "DataFetchError",
 ]
-
-#: Renamed in 0.2.0: this named the same thing as
-#: ``dataexcept.datascience_exceptions.FeatureEngineeringError`` while being a
-#: different class, so catching one silently missed the other.
-_DEPRECATED_ALIASES = {"FeatureEngineeringError": FeaturePreprocessingError}
-
-
-def __getattr__(name: str) -> Any:
-    return resolve_deprecated(__name__, _DEPRECATED_ALIASES, name)

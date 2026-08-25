@@ -3,11 +3,10 @@
 DataExcept follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 This page states exactly what that covers, so you know what you can rely on.
 
-!!! warning "Pre-1.0"
-    While the version is below 1.0, the guarantees below are intentions rather
-    than commitments, and breaking changes ship in minor releases. The known
-    breaking changes planned before 1.0 are listed in
-    [the roadmap](https://github.com/DiogoRibeiro7/DataExcept/blob/main/ROADMAP.md).
+!!! success "Stable since 1.0"
+    The guarantees below are commitments, not intentions. Nothing public is
+    renamed or removed outside a major release, and anything that will be
+    removed is deprecated first — see [Deprecation policy](#deprecation-policy).
 
 ## What is public
 
@@ -81,32 +80,6 @@ New subclasses may be introduced under an existing base in a minor release, so
 an `except JobError:` may start catching failures it did not catch before. That
 is deliberate. If you need to be immune to that, catch the specific class.
 
-## Renames in 0.2.0
-
-Four names changed in 0.2.0. Every old name still works and resolves to the
-**same class object**, so an existing `except OldName:` catches exactly what it
-caught before. Touching an old name emits a `DeprecationWarning`; a plain
-`import dataexcept` does not.
-
-### They shadowed builtins
-
-`ConnectionError` and `TimeoutError` shared their names with Python builtins
-and did **not** inherit from them, so this quietly stopped working:
-
-```python
-from dataexcept import ConnectionError   # shadowed the builtin here
-
-try:
-    socket.connect(...)
-except ConnectionError:                  # no longer the builtin
-    ...                                  # a real socket failure escaped
-```
-
-### They named two different classes
-
-`SerializationError` and `FeatureEngineeringError` each named two unrelated
-classes in different modules, so catching one silently missed the other.
-
 ## Deprecation policy
 
 A public name is never removed without warning first:
@@ -123,48 +96,14 @@ python -W error::DeprecationWarning -m pytest
 
 ### Currently deprecated
 
-| Name | Since | Removed in | Replacement |
-| --- | --- | --- | --- |
-| `dataexcept.job_exceptions` | 0.1.0 | 1.0.0 | `dataexcept.exceptions` |
-| `dataexcept.ConnectionError` | 0.2.0 | 1.0.0 | `ServiceConnectionError` |
-| `dataexcept.TimeoutError` | 0.2.0 | 1.0.0 | `OperationTimeoutError` |
-| `dataexcept.exceptions.ConnectionError` | 0.2.0 | 1.0.0 | `ServiceConnectionError` |
-| `dataexcept.exceptions.TimeoutError` | 0.2.0 | 1.0.0 | `OperationTimeoutError` |
-| `datascience_exceptions.SerializationError` | 0.2.0 | 1.0.0 | `ModelSerializationError` |
-| `pipeline_exceptions.FeatureEngineeringError` | 0.2.0 | 1.0.0 | `FeaturePreprocessingError` |
-
-`job_exceptions` re-exports the *same class objects*, so it is a change of
-import line and nothing more — existing `except` clauses keep working while you
-migrate:
-
-```diff
--from dataexcept.job_exceptions import JobError, ValidationError
-+from dataexcept.exceptions import JobError, ValidationError
-```
+Nothing. Everything deprecated before 1.0 was removed in it; see the
+[migration guide](migration.md) if you are coming from 0.x.
 
 ## Type annotations
 
 The package ships a `py.typed` marker, so its annotations are visible to type
 checkers in your project. They are checked by mypy in CI on every change, and a
 change that makes a public annotation less accurate is treated as a bug.
-
-### Migrating off the 0.2.0 renames
-
-The classes are unchanged, so this is a find-and-replace on import lines:
-
-```diff
--from dataexcept import ConnectionError, TimeoutError
-+from dataexcept import OperationTimeoutError, ServiceConnectionError
-
--from dataexcept.datascience_exceptions import SerializationError
-+from dataexcept.datascience_exceptions import ModelSerializationError
-
--from dataexcept.pipeline_exceptions import FeatureEngineeringError
-+from dataexcept.pipeline_exceptions import FeaturePreprocessingError
-```
-
-Run your suite with `python -W error::DeprecationWarning -m pytest` to find
-every remaining use.
 
 ## Serialization
 

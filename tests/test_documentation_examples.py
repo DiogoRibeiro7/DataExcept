@@ -17,7 +17,18 @@ from pathlib import Path
 import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DOC_FILES = [PROJECT_ROOT / "README.md", *sorted((PROJECT_ROOT / "docs").glob("*.md"))]
+#: The migration guide documents names that 1.0 removed, so its "before"
+#: examples deliberately do not resolve. Its "after" examples are checked
+#: separately, which is the half that matters.
+MIGRATION_GUIDE = PROJECT_ROOT / "docs" / "migration.md"
+DOC_FILES = [
+    path
+    for path in [
+        PROJECT_ROOT / "README.md",
+        *sorted((PROJECT_ROOT / "docs").glob("*.md")),
+    ]
+    if path != MIGRATION_GUIDE
+]
 
 IMPORT_RE = re.compile(r"^from (dataexcept[\w.]*) import (.+)$", re.MULTILINE)
 
@@ -91,3 +102,47 @@ def test_readme_exception_count_is_accurate():
         f"README claims {claimed.group(1)} exception classes, package defines "
         f"{len(classes)}"
     )
+
+
+def test_the_migration_guide_recommends_imports_that_work():
+    """Its "before" lines name removed things on purpose; its "after" lines
+    are what a reader will copy, so those must resolve.
+    """
+    text = MIGRATION_GUIDE.read_text(encoding="utf-8")
+    added = [
+        line[1:].strip()
+        for line in text.splitlines()
+        if line.startswith("+") and "import" in line
+    ]
+    assert added, "no diff additions found; the parser is probably broken"
+
+    for line in added:
+        match = IMPORT_RE.match(line)
+        assert match, f"could not parse {line!r}"
+        module = importlib.import_module(match.group(1))
+        for name in match.group(2).split(","):
+            name = name.strip()
+            assert hasattr(module, name), f"{line}: {name} does not exist"
+
+
+def test_the_migration_guide_does_not_recommend_a_removed_name():
+    """Compared name by name, not by substring: "ServiceConnectionError"
+    contains "ConnectionError", and a substring check would reject the very
+    replacement the guide exists to recommend.
+    """
+    removed = {"job_exceptions", "ConnectionError", "TimeoutError"}
+    text = MIGRATION_GUIDE.read_text(encoding="utf-8")
+
+    for line in text.splitlines():
+        if not line.startswith("+"):
+            continue
+        match = IMPORT_RE.match(line[1:].strip())
+        if not match:
+            continue
+        module, names = match.group(1), match.group(2)
+        assert module.rsplit(".", 1)[-1] not in removed, f"recommends {module}"
+        recommended = {name.strip() for name in names.split(",")}
+        assert not recommended & removed, (
+            f"migration guide recommends removed name(s) "
+            f"{sorted(recommended & removed)}: {line}"
+        )
