@@ -27,6 +27,8 @@ Public, and covered by the versioning policy:
 - That a class imported from the top level and from its domain module is the
   same object, so `except` behaves identically whichever import you used.
 - The `dataexcept` command-line entry point.
+- `wrap` and `wrapping`, and the guarantee that a wrapped exception is set as
+  `__cause__` whether or not the target records it.
 
 Not public, and free to change in any release:
 

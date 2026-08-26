@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`wrap` and `wrapping`**, for turning a third-party exception into a
+  DataExcept one:
+
+  ```python
+  with wrapping(OSError, DataLoadingError, source=path):
+      frame = pd.read_csv(path)
+  ```
+
+  The hand-written form is easy to get subtly wrong: a missing `from exc` loses
+  the traceback, the original passed to the wrong parameter is not recorded,
+  and a broad `except` relabels a `KeyboardInterrupt` as a data error. These
+  settle the wiring — the original goes to whichever constructor parameter
+  takes a cause (`original`, `original_exception` or `cause`) and is set as
+  `__cause__` either way, which matters because only 17 of the 100 classes
+  record one on an attribute.
+- Guidance in the advanced usage guide on building a project-specific
+  hierarchy on these bases, and what deriving from a domain root gets you.
+
 ## [1.0.0] - 2026-08-25
 
 First stable release. The public API is frozen; see the
