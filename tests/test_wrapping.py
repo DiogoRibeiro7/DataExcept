@@ -16,12 +16,27 @@ import pytest
 import dataexcept
 
 
+def _raiser(exception):
+    """Return a callable that raises *exception*.
+
+    The tests raise through a call rather than a bare `raise` inside the
+    `with`: a lexical raise there makes the assertions that follow look
+    unreachable to a static analyser, and it also mirrors how the wrapping is
+    actually used -- around a call that fails.
+    """
+
+    def raise_it():
+        raise exception
+
+    return raise_it
+
+
 def test_wrapping_records_the_original_and_chains_it():
     original = OSError("disk on fire")
 
     with pytest.raises(dataexcept.DataLoadingError) as caught:
         with dataexcept.wrapping(OSError, dataexcept.DataLoadingError, source="o.csv"):
-            raise original
+            _raiser(original)()
 
     assert caught.value.original is original, "recorded on the class's own field"
     assert caught.value.__cause__ is original, "and chained, so tracebacks show it"
@@ -61,7 +76,7 @@ def test_a_target_that_records_nothing_is_still_chained():
         with dataexcept.wrapping(
             ValueError, dataexcept.ValidationError, field="age", value=-1
         ):
-            raise original
+            _raiser(original)()
 
     assert caught.value.__cause__ is original
 
@@ -70,7 +85,7 @@ def test_only_the_named_exception_is_translated():
     """A broad except would relabel a bug in the block as a data error."""
     with pytest.raises(KeyError):
         with dataexcept.wrapping(OSError, dataexcept.DataLoadingError, source="o.csv"):
-            raise KeyError("a bug in the block")
+            _raiser(KeyError("a bug in the block"))()
 
 
 def test_keyboard_interrupt_is_never_swallowed():
@@ -78,7 +93,7 @@ def test_keyboard_interrupt_is_never_swallowed():
         with dataexcept.wrapping(
             Exception, dataexcept.DataLoadingError, source="o.csv"
         ):
-            raise KeyboardInterrupt
+            _raiser(KeyboardInterrupt())()
 
 
 def test_several_types_can_be_caught_at_once():
@@ -86,7 +101,7 @@ def test_several_types_can_be_caught_at_once():
         with dataexcept.wrapping(
             (OSError, ValueError), dataexcept.DataLoadingError, source="o.csv"
         ):
-            raise ValueError("not a path problem, but still a load failure")
+            _raiser(ValueError("not a path problem, but still a load failure"))()
 
 
 def test_nothing_happens_when_the_block_succeeds():
