@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-02
+
+### Added
+
+- **`exception_to_dict` and `exception_to_json`** provide a stable, strict
+  JSON-safe envelope for exceptions crossing API, queue, telemetry and
+  structured-log boundaries. The envelope preserves type, module, rendered
+  message, public attributes and bounded cause/context chains.
+- Structured export degrades hostile or unserialisable values safely, converts
+  non-finite floats and byte payloads to text, marks cycles and depth
+  truncation, and excludes traceback frames and private attributes.
+- Export uses a stricter redaction boundary than ordinary exception rendering:
+  credential-bearing URL paths are removed as well as sensitive query and
+  fragment values, including in third-party causes, mapping keys and arbitrary
+  attribute representations.
+
 ## [1.1.0] - 2026-09-02
 
 ### Added
@@ -531,7 +547,8 @@ First public release.
 - Published to PyPI via OIDC trusted publishing; no long-lived API token is
   involved in a release.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.3...v1.0.0
 [0.4.3]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.2...v0.4.3
