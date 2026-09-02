@@ -1,0 +1,48 @@
+name: Prepare 1.2.0 release metadata
+
+on:
+  push:
+    branches:
+      - release/1.2.0
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: release/1.2.0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+        with:
+          python-version: '3.12'
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Bump metadata and write changelog
+        run: |
+          set -euo pipefail
+          python scripts/bump_version.py minor
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('CHANGELOG.md')
+          text = path.read_text(encoding='utf-8')
+          marker = '## [Unreleased]\n\n'
+          section = '''## [1.2.0] - 2026-09-02\n\n### Added\n\n- **`exception_to_dict` and `exception_to_json`** provide a stable, strict\n  JSON-safe envelope for exceptions crossing API, queue, telemetry and\n  structured-log boundaries. The envelope preserves type, module, rendered\n  message, public attributes and bounded cause/context chains.\n- Structured export degrades hostile or unserialisable values safely, converts\n  non-finite floats and byte payloads to text, marks cycles and depth\n  truncation, and excludes traceback frames and private attributes.\n- Export uses a stricter redaction boundary than ordinary exception rendering:\n  credential-bearing URL paths are removed as well as sensitive query and\n  fragment values, including in third-party causes, mapping keys and arbitrary\n  attribute representations.\n\n'''
+          if marker not in text:
+              raise SystemExit('Unreleased marker not found')
+          path.write_text(text.replace(marker, marker + section, 1), encoding='utf-8', newline='\n')
+          PY
+      - name: Commit release metadata only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm .github/workflows/prepare-1-2-0.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pyproject.toml CITATION.cff CHECKLIST.md SECURITY.md CHANGELOG.md .github/workflows/prepare-1-2-0.yml
+          git commit -m 'release: 1.2.0'
+          git push origin HEAD:release/1.2.0
