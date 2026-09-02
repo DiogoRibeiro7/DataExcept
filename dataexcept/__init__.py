@@ -159,6 +159,7 @@ from .security_exceptions import (
     InvalidTokenError,
     SecurityError,
 )
+from .serialization import exception_to_dict, exception_to_json
 from .wrapping import wrap, wrapping
 
 __all__ = [
@@ -270,6 +271,9 @@ __all__ = [
     # Turning a third-party exception into one of these.
     "wrap",
     "wrapping",
+    # Structured serialization for APIs, queues and telemetry.
+    "exception_to_dict",
+    "exception_to_json",
     # Logging helpers.
     "Context",
     "log_and_raise",
