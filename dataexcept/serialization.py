@@ -15,6 +15,17 @@ _MAX_VALUE_DEPTH = 8
 _NOT_SCALAR = object()
 
 
+def _redact_export_text(text: str) -> str:
+    """Scrub URLs for export, including their paths.
+
+    Normal DataExcept messages preserve URL paths because paths are commonly
+    useful debugging context. Structured envelopes have a stricter boundary:
+    third-party errors and arbitrary caller state may put credentials in the
+    path itself, so exported text never preserves URL paths.
+    """
+    return redact_urls_in_text(text, keep_path=False)
+
+
 def _safe_text(value: Any) -> str:
     """Render *value* without raising and scrub credential-bearing URLs."""
     try:
@@ -24,12 +35,12 @@ def _safe_text(value: Any) -> str:
             text = f"<unrepresentable {type(value).__name__}>"
         except Exception:  # pragma: no cover - hostile type metadata
             text = "<unrepresentable>"
-    return redact_urls_in_text(text)
+    return _redact_export_text(text)
 
 
 def _safe_key(value: Any) -> str:
     if isinstance(value, str):
-        return redact_urls_in_text(value)
+        return _redact_export_text(value)
     return _safe_text(value)
 
 
@@ -39,7 +50,7 @@ def _safe_scalar(value: Any) -> Any:
     if isinstance(value, float):
         return value if math.isfinite(value) else str(value)
     if isinstance(value, str):
-        return redact_urls_in_text(value)
+        return _redact_export_text(value)
     if isinstance(value, (bytes, bytearray)):
         return _safe_text(value)
     return _NOT_SCALAR
@@ -94,14 +105,17 @@ def _attributes(exc: BaseException) -> dict[str, Any]:
     """Return public instance attributes in a JSON-safe representation."""
     try:
         state = vars(exc)
-    except TypeError:
+        result: dict[str, Any] = {}
+        for name, value in state.items():
+            if not isinstance(name, str) or name.startswith("_"):
+                continue
+            result[name] = _json_safe(value)
+        return result
+    except Exception:
+        # This code runs at an error-transport boundary. A hostile __dict__,
+        # custom mapping, iterator or key must not replace the original failure
+        # with a serialization failure.
         return {}
-    result: dict[str, Any] = {}
-    for name, value in state.items():
-        if name.startswith("_"):
-            continue
-        result[name] = _json_safe(value)
-    return result
 
 
 def _exception_record(
