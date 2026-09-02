@@ -32,6 +32,16 @@ def test_exception_to_dict_can_exclude_attributes() -> None:
     assert "attributes" not in payload
 
 
+def test_exception_to_dict_excludes_private_attributes() -> None:
+    exc = DataLoadingError("input.csv", OSError("disk unavailable"))
+    exc._secret_state = "do-not-export"
+
+    payload = exception_to_dict(exc)
+
+    assert "_secret_state" not in payload["attributes"]
+    assert "do-not-export" not in json.dumps(payload)
+
+
 def test_exception_to_dict_preserves_cause() -> None:
     cause = OSError("disk unavailable")
     exc = DataLoadingError("input.csv", cause)
@@ -40,6 +50,31 @@ def test_exception_to_dict_preserves_cause() -> None:
 
     assert payload["cause"]["type"] == "OSError"
     assert payload["cause"]["message"] == "disk unavailable"
+
+
+def test_exception_to_dict_preserves_unsuppressed_context() -> None:
+    try:
+        try:
+            raise KeyError("missing column")
+        except KeyError:
+            raise RuntimeError("validation failed")
+    except RuntimeError as exc:
+        payload = exception_to_dict(exc)
+
+    assert payload["context"]["type"] == "KeyError"
+    assert "missing column" in payload["context"]["message"]
+
+
+def test_exception_to_dict_omits_suppressed_context() -> None:
+    try:
+        try:
+            raise KeyError("missing column")
+        except KeyError:
+            raise RuntimeError("validation failed") from None
+    except RuntimeError as exc:
+        payload = exception_to_dict(exc)
+
+    assert "context" not in payload
 
 
 def test_exception_to_dict_redacts_urls_in_third_party_cause() -> None:
@@ -51,6 +86,20 @@ def test_exception_to_dict_redacts_urls_in_third_party_cause() -> None:
     rendered = json.dumps(payload)
     assert "secret" not in rendered
     assert "token=" in rendered
+
+
+def test_exception_to_dict_redacts_secret_url_paths() -> None:
+    secret = "path-secret"
+    cause = OSError(f"GET https://example.test/{secret}?token=query-secret")
+    exc = DataLoadingError("input.csv", cause)
+    exc.remote = f"https://example.test/{secret}/nested?token=query-secret"
+    exc.metadata = {f"https://example.test/{secret}": "value"}
+
+    payload = exception_to_dict(exc)
+
+    rendered = json.dumps(payload)
+    assert secret not in rendered
+    assert "query-secret" not in rendered
 
 
 def test_exception_to_dict_makes_non_finite_float_json_safe() -> None:
@@ -77,6 +126,28 @@ def test_exception_to_dict_survives_hostile_attribute_repr() -> None:
     payload = exception_to_dict(exc)
 
     assert payload["attributes"]["payload"].startswith("<unrepresentable")
+
+
+def test_exception_to_dict_survives_hostile_attribute_mapping() -> None:
+    class HostileStateError(RuntimeError):
+        @property
+        def __dict__(self):  # type: ignore[override]
+            raise RuntimeError("no state for you")
+
+    payload = exception_to_dict(HostileStateError("boom"))
+
+    assert "attributes" not in payload
+    assert payload["message"] == "boom"
+
+
+def test_exception_to_dict_skips_non_string_state_keys() -> None:
+    exc = RuntimeError("boom")
+    exc.__dict__[1] = "invalid-name"  # type: ignore[index]
+    exc.valid = "kept"
+
+    payload = exception_to_dict(exc)
+
+    assert payload["attributes"] == {"valid": "kept"}
 
 
 def test_exception_to_dict_marks_chain_cycles() -> None:
