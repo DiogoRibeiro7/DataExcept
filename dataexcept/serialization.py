@@ -12,6 +12,7 @@ from .redaction import redact_urls_in_text
 __all__ = ["exception_to_dict", "exception_to_json"]
 
 _MAX_VALUE_DEPTH = 8
+_NOT_SCALAR = object()
 
 
 def _safe_text(value: Any) -> str:
@@ -30,6 +31,16 @@ def _safe_key(value: Any) -> str:
     if isinstance(value, str):
         return redact_urls_in_text(value)
     return _safe_text(value)
+
+
+def _safe_scalar(value: Any) -> Any:
+    if value is None or isinstance(value, (bool, int)):
+        return value
+    if isinstance(value, float):
+        return value if math.isfinite(value) else str(value)
+    if isinstance(value, str):
+        return redact_urls_in_text(value)
+    return _NOT_SCALAR
 
 
 def _safe_mapping(
@@ -65,21 +76,16 @@ def _json_safe(value: Any, *, depth: int = 0, seen: set[int] | None = None) -> A
     """Return *value* in a strict JSON-safe form without raising."""
     if seen is None:
         seen = set()
-    if value is None or isinstance(value, (bool, int)):
-        return value
-    if isinstance(value, float):
-        return value if math.isfinite(value) else str(value)
-    if isinstance(value, str):
-        return redact_urls_in_text(value)
+    scalar = _safe_scalar(value)
+    if scalar is not _NOT_SCALAR:
+        return scalar
     if depth >= _MAX_VALUE_DEPTH:
         return "<truncated>"
     if id(value) in seen:
         return "<cycle>"
     if isinstance(value, Mapping):
         return _safe_mapping(value, depth=depth, seen=seen)
-    if isinstance(value, (Sequence, Set)) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, (Sequence, Set)):
         return _safe_collection(value, depth=depth, seen=seen)
     return _safe_text(value)
 
