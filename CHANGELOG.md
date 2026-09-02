@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-02
+
+### Added
+
+- **`exception_to_dict` and `exception_to_json`** provide a stable, strict
+  JSON-safe envelope for exceptions crossing API, queue, telemetry and
+  structured-log boundaries. The envelope preserves type, module, rendered
+  message, public attributes and bounded cause/context chains.
+- Structured export degrades hostile or unserialisable values safely, converts
+  non-finite floats and byte payloads to text, marks cycles and depth
+  truncation, and excludes traceback frames and private attributes.
+- Export uses a stricter redaction boundary than ordinary exception rendering:
+  credential-bearing URL paths are removed as well as sensitive query and
+  fragment values, including in third-party causes, mapping keys and arbitrary
+  attribute representations.
+
 ## [1.1.0] - 2026-09-02
 
 ### Added
