@@ -32,6 +32,58 @@ with log_and_raise(logger=logger):
     raise MyCustomJobError("42")
 ```
 
+## Structured error envelopes
+
+Use `exception_to_dict` when an exception has to cross a boundary that wants
+structured data rather than a Python object: an API response, queue message,
+telemetry event or JSON log.
+
+```python
+from dataexcept import DataLoadingError, exception_to_dict
+
+try:
+    load_orders()
+except DataLoadingError as exc:
+    event = exception_to_dict(exc)
+```
+
+The envelope contains the exception type, module and rendered message. Public
+instance attributes are included by default, and explicit or implicit exception
+chains are represented recursively. Traceback frames and private attributes are
+not exported.
+
+```python
+{
+    "type": "DataLoadingError",
+    "module": "dataexcept.datascience_exceptions.ingestion",
+    "message": "...",
+    "attributes": {"source": "orders.csv", "original": "..."},
+    "cause": {
+        "type": "OSError",
+        "module": "builtins",
+        "message": "disk unavailable"
+    }
+}
+```
+
+For a ready-to-send string, use `exception_to_json`:
+
+```python
+from dataexcept import exception_to_json
+
+payload = exception_to_json(exc, sort_keys=True)
+```
+
+Both helpers are deliberately strict. Non-finite floats are converted to text,
+objects that cannot be represented degrade to a safe description, recursive
+values and exception chains are bounded, and credential-bearing URLs are
+redacted even when they come from a third-party cause. `exception_to_json`
+forces strict JSON rather than allowing bare `NaN` or `Infinity` tokens.
+
+Set `include_attributes=False` when the receiving system only needs the error
+identity and chain. Use `max_depth` to put a smaller bound on nested exception
+chains.
+
 ## Integrating with Sentry
 
 If [Sentry](https://sentry.io/) is installed, you can capture exceptions before re-raising them:
