@@ -1,24 +1,24 @@
 name: Release
 
-# Releases are normally driven by tags. The workflow can also be dispatched
-# explicitly with an existing tag, which is useful when the tag was created by
-# another workflow: GitHub intentionally suppresses downstream workflow
-# triggers for pushes made with GITHUB_TOKEN.
+# Releases are normally driven by tags. Automation may also request release of
+# an existing tag through repository_dispatch. Unlike workflow_dispatch,
+# repository_dispatch always executes the workflow definition from the default
+# branch, so a caller cannot select an untrusted branch's release logic.
 #
 # Both paths run the same release gates. A tag by itself proves nothing, so the
-# build job checks that the tagged commit is on main, that CI passed on that
-# exact commit, and that the tag matches the project version. The wheel is then
-# tested before anything is published.
+# build job checks that the tag exists, resolves to a commit on main, that CI
+# passed on that exact commit, and that the tag matches the project version. The
+# wheel is then tested before anything is published.
 on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: Existing release tag to publish, for example v1.1.0
-        required: true
-        type: string
+  repository_dispatch:
+    types:
+      - release_tag
+
+env:
+  RELEASE_TAG: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag || github.ref_name }}
 
 jobs:
   build:
@@ -27,9 +27,21 @@ jobs:
       contents: read
       checks: read
     steps:
+      - name: Validate release request
+        run: |
+          set -euo pipefail
+          if [[ ! "${RELEASE_TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Invalid release tag '${RELEASE_TAG}'."
+            exit 1
+          fi
+          echo "Release request is for ${RELEASE_TAG}."
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ inputs.tag || github.ref_name }}
+          # repository_dispatch is executed from main, but the package must be
+          # built from the existing release tag. Prefixing the payload with
+          # refs/tags/ means a same-named branch can never be selected.
+          ref: ${{ github.event_name == 'repository_dispatch' && format('refs/tags/{0}', github.event.client_payload.tag) || github.ref }}
           # Needed to prove the tagged commit is reachable from main.
           fetch-depth: 0
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -37,14 +49,19 @@ jobs:
           python-version: '3.x'
       - uses: abatilo/actions-poetry@0dd19c9498c3dc8728967849d0d2eae428a8a3d8 # v4
 
-      - name: Resolve release ref
-        env:
-          DISPATCH_TAG: ${{ inputs.tag }}
+      - name: Resolve and verify the release tag
         run: |
           set -euo pipefail
-          RELEASE_TAG="${DISPATCH_TAG:-${GITHUB_REF_NAME}}"
           RELEASE_SHA="$(git rev-parse HEAD)"
-          echo "RELEASE_TAG=${RELEASE_TAG}" >> "${GITHUB_ENV}"
+          if ! git show-ref --verify --quiet "refs/tags/${RELEASE_TAG}"; then
+            echo "::error::Tag ${RELEASE_TAG} does not exist."
+            exit 1
+          fi
+          TAG_SHA="$(git rev-parse "refs/tags/${RELEASE_TAG}^{commit}")"
+          if [ "${TAG_SHA}" != "${RELEASE_SHA}" ]; then
+            echo "::error::Checked-out commit ${RELEASE_SHA} does not match ${RELEASE_TAG} (${TAG_SHA})."
+            exit 1
+          fi
           echo "RELEASE_SHA=${RELEASE_SHA}" >> "${GITHUB_ENV}"
 
       - name: Verify the tag points at a commit on main
@@ -112,9 +129,16 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Validate release request
+        run: |
+          set -euo pipefail
+          if [[ ! "${RELEASE_TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Invalid release tag '${RELEASE_TAG}'."
+            exit 1
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ inputs.tag || github.ref_name }}
+          ref: ${{ github.event_name == 'repository_dispatch' && format('refs/tags/{0}', github.event.client_payload.tag) || github.ref }}
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.12'
@@ -165,12 +189,6 @@ jobs:
         with:
           name: dist
           path: dist/
-      - name: Resolve release tag
-        env:
-          DISPATCH_TAG: ${{ inputs.tag }}
-        run: |
-          set -euo pipefail
-          echo "RELEASE_TAG=${DISPATCH_TAG:-${GITHUB_REF_NAME}}" >> "${GITHUB_ENV}"
       - name: Create the GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -178,4 +196,5 @@ jobs:
           gh release create "${RELEASE_TAG}" dist/* \
             --repo "${GITHUB_REPOSITORY}" \
             --title "${RELEASE_TAG}" \
-            --generate-notes
+            --generate-notes \
+            --verify-tag
