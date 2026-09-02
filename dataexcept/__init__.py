@@ -159,6 +159,7 @@ from .security_exceptions import (
     InvalidTokenError,
     SecurityError,
 )
+from .wrapping import wrap, wrapping
 
 __all__ = [
     # The root of the hierarchy: catches every operational exception the
@@ -266,6 +267,9 @@ __all__ = [
     "UnderfittingError",
     "ValidationError",
     "WebhookError",
+    # Turning a third-party exception into one of these.
+    "wrap",
+    "wrapping",
     # Logging helpers.
     "Context",
     "log_and_raise",

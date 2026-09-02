@@ -52,13 +52,14 @@ The original 0.2–0.5 milestones are done:
   builtin. Both are enforced by tests, as is the rule that every exception the
   package defines must be exported.
 
-## 0.4 — Make the hierarchy easier to use
+## Shipped in 1.1.0
 
-- Utilities for wrapping a third-party exception into the matching DataExcept
-  class, preserving the original as `__cause__`.
-- Guidance on building a project-specific hierarchy on top of these bases.
-- Optional integration hooks for error trackers such as Sentry, kept out of the
-  runtime dependencies.
+- **`wrap` and `wrapping`** turn a third-party exception into a DataExcept one,
+  passing the original to whichever constructor parameter takes a cause and
+  setting `__cause__` either way — so a traceback shows both failures even for
+  a class that records nothing.
+- **Guidance on building a project-specific hierarchy** on these bases, in the
+  advanced usage guide.
 
 ## 0.5 — Coverage and correctness
 
@@ -82,7 +83,7 @@ The original 0.2–0.5 milestones are done:
 ## Beyond 1.0
 
 - Track new stable Python releases promptly; 3.14 is supported as of 0.4.1.
-- Utilities for wrapping a third-party exception into the matching DataExcept
-  class, and optional integration hooks for error trackers.
+- Optional integration hooks for error trackers such as Sentry, kept out of the
+  runtime dependencies.
 - Prioritise new exception domains by what users actually report reaching for
   generic exceptions to express.
