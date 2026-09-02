@@ -32,11 +32,39 @@ def _safe_key(value: Any) -> str:
     return _safe_text(value)
 
 
+def _safe_mapping(
+    value: Mapping[Any, Any], *, depth: int, seen: set[int]
+) -> Any:
+    identity = id(value)
+    seen.add(identity)
+    try:
+        return {
+            _safe_key(key): _json_safe(item, depth=depth + 1, seen=seen)
+            for key, item in value.items()
+        }
+    except Exception:
+        return _safe_text(value)
+    finally:
+        seen.discard(identity)
+
+
+def _safe_collection(
+    value: Sequence[Any] | Set[Any], *, depth: int, seen: set[int]
+) -> Any:
+    identity = id(value)
+    seen.add(identity)
+    try:
+        return [_json_safe(item, depth=depth + 1, seen=seen) for item in value]
+    except Exception:
+        return _safe_text(value)
+    finally:
+        seen.discard(identity)
+
+
 def _json_safe(value: Any, *, depth: int = 0, seen: set[int] | None = None) -> Any:
     """Return *value* in a strict JSON-safe form without raising."""
     if seen is None:
         seen = set()
-
     if value is None or isinstance(value, (bool, int)):
         return value
     if isinstance(value, float):
@@ -45,36 +73,14 @@ def _json_safe(value: Any, *, depth: int = 0, seen: set[int] | None = None) -> A
         return redact_urls_in_text(value)
     if depth >= _MAX_VALUE_DEPTH:
         return "<truncated>"
-
-    identity = id(value)
-    if identity in seen:
+    if id(value) in seen:
         return "<cycle>"
-
     if isinstance(value, Mapping):
-        seen.add(identity)
-        try:
-            return {
-                _safe_key(key): _json_safe(item, depth=depth + 1, seen=seen)
-                for key, item in value.items()
-            }
-        except Exception:
-            return _safe_text(value)
-        finally:
-            seen.discard(identity)
-
+        return _safe_mapping(value, depth=depth, seen=seen)
     if isinstance(value, (Sequence, Set)) and not isinstance(
         value, (str, bytes, bytearray)
     ):
-        seen.add(identity)
-        try:
-            return [
-                _json_safe(item, depth=depth + 1, seen=seen) for item in value
-            ]
-        except Exception:
-            return _safe_text(value)
-        finally:
-            seen.discard(identity)
-
+        return _safe_collection(value, depth=depth, seen=seen)
     return _safe_text(value)
 
 
