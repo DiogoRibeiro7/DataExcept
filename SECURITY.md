@@ -2,13 +2,12 @@
 
 ## Supported versions
 
-DataExcept is pre-1.0. Security fixes are applied to the latest released
-version only.
+Security fixes are applied to the latest released minor series only.
 
 | Version | Supported |
 | --- | --- |
-| 1.0.x | ✅ |
-| < 1.0 | ❌ |
+| 1.1.x | ✅ |
+| < 1.1 | ❌ |
 
 ## Reporting a vulnerability
 
