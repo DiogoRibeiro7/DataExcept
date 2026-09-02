@@ -40,12 +40,12 @@ def _safe_scalar(value: Any) -> Any:
         return value if math.isfinite(value) else str(value)
     if isinstance(value, str):
         return redact_urls_in_text(value)
+    if isinstance(value, (bytes, bytearray)):
+        return _safe_text(value)
     return _NOT_SCALAR
 
 
-def _safe_mapping(
-    value: Mapping[Any, Any], *, depth: int, seen: set[int]
-) -> Any:
+def _safe_mapping(value: Mapping[Any, Any], *, depth: int, seen: set[int]) -> Any:
     identity = id(value)
     seen.add(identity)
     try:
