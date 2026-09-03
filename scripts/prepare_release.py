@@ -11,7 +11,9 @@ import pathlib
 import re
 import sys
 
-_VERSION_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
+_VERSION_RE = re.compile(
+    r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$"
+)
 _RELEASE_HEADING_RE = re.compile(r"^## \[(\d+\.\d+\.\d+)\]", re.MULTILINE)
 
 
@@ -69,7 +71,10 @@ def _prepare_changelog(version: str, today: str) -> None:
         f"v{prior_version}...v{version}"
     )
     insertion = re.search(r"^\[Unreleased\]: .*?$", text, re.MULTILINE)
-    assert insertion is not None
+    if insertion is None:
+        raise SystemExit(
+            "error: [Unreleased] comparison link disappeared during preparation"
+        )
     end = insertion.end()
     text = text[:end] + "\n" + release_link + text[end:]
     path.write_text(text, encoding="utf-8", newline="\n")
@@ -94,12 +99,12 @@ def _prepare_roadmap(version: str) -> None:
 
     replacement = f"## Shipped in {version}{match.group('suffix')}"
     text = landed.sub(replacement, text, count=1)
-    text = text.replace(
-        "\nThe implementation is on `main`; it will become a released feature when the\n"
-        f"{version} release is cut.\n",
-        "",
-        1,
+    pre_release_note = (
+        "\nThe implementation is on `main`; it will become a released feature "
+        "when the\n"
+        f"{version} release is cut.\n"
     )
+    text = text.replace(pre_release_note, "", 1)
     path.write_text(text, encoding="utf-8", newline="\n")
 
 
