@@ -68,6 +68,9 @@ def main() -> int:
             "pull before releasing"
         )
 
+    if _run("git", "status", "--porcelain", capture=True):
+        raise SystemExit("error: working tree must be clean before releasing")
+
     project_version = _run("poetry", "version", "-s", capture=True)
     if project_version != version:
         raise SystemExit(
@@ -87,7 +90,11 @@ def main() -> int:
             raise SystemExit(f"error: {tag} points to {tag_sha}, expected {local_sha}")
     else:
         _run("git", "tag", "-a", tag, local_sha, "-m", f"DataExcept {version}")
-        _run("git", "push", "origin", f"refs/tags/{tag}")
+
+    # Push even when the tag already existed locally. This is idempotent when
+    # origin has the same tag, repairs a local-only tag, and safely rejects a
+    # conflicting remote tag because this is deliberately not a force push.
+    _run("git", "push", "origin", f"refs/tags/{tag}")
 
     _run(
         "gh",
