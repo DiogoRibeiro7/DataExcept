@@ -47,6 +47,14 @@ def _cause_parameter(target: Type[DataExceptError]) -> str | None:
     return None
 
 
+def _explicit_cause_parameter(kwargs: dict[str, Any]) -> str | None:
+    """Return an explicitly supplied canonical or legacy cause keyword."""
+    for name in _CAUSE_PARAMETERS:
+        if name in kwargs:
+            return name
+    return None
+
+
 def wrap(
     original: BaseException,
     target: Type[DataExceptError],
@@ -64,11 +72,14 @@ def wrap(
     for a class that records nothing.
 
     An explicit cause keyword wins, so callers can still say exactly what they
-    mean. Legacy cause aliases remain valid for classes that expose them.
+    mean. Legacy cause aliases remain valid for classes that expose them. The
+    traceback chain still points to *original*, the failure that ``wrap`` was
+    asked to translate.
     """
-    parameter = _cause_parameter(target)
-    if parameter is not None and parameter not in kwargs:
-        kwargs[parameter] = original
+    if _explicit_cause_parameter(kwargs) is None:
+        parameter = _cause_parameter(target)
+        if parameter is not None:
+            kwargs[parameter] = original
 
     exception = target(**kwargs)
     # Set unconditionally: the target may record nothing, and the point is that
