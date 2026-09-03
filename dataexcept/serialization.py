@@ -121,12 +121,15 @@ def _group_members(exc: BaseException) -> Sequence[BaseException] | None:
     """Return exception-group members without importing a 3.11-only symbol."""
     if _EXCEPTION_GROUP_TYPE is None or not isinstance(exc, _EXCEPTION_GROUP_TYPE):
         return None
-    members: object = getattr(exc, "exceptions", None)
-    if not isinstance(members, tuple):
+    try:
+        members: object = getattr(exc, "exceptions", None)
+        if not isinstance(members, tuple):
+            return None
+        if not all(isinstance(member, BaseException) for member in members):
+            return None
+        return members
+    except Exception:
         return None
-    if not all(isinstance(member, BaseException) for member in members):
-        return None
-    return members
 
 
 def _exception_record(

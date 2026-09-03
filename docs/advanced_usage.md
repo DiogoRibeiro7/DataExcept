@@ -131,6 +131,11 @@ Python 3.10 remains supported. There is no `exceptiongroup` runtime dependency;
 the group-specific behavior simply becomes available when the interpreter
 provides the built-in group types.
 
+A custom group subclass with malformed or raising `exceptions` metadata cannot
+break serialization. In that case DataExcept falls back to the ordinary
+exception record and omits the `exceptions` key rather than replacing the
+original failure with a serialization error.
+
 ## Integrating with Sentry
 
 If [Sentry](https://sentry.io/) is installed, you can capture exceptions before re-raising them:

@@ -233,6 +233,28 @@ def test_exception_group_members_obey_max_depth() -> None:
     assert payload["exceptions"][0]["exceptions"] == [{"truncated": True}]
 
 
+def test_exception_group_survives_hostile_member_metadata() -> None:
+    group_type = getattr(builtins, "ExceptionGroup", None)
+    if group_type is None:
+        pytest.skip("ExceptionGroup is Python 3.11+")
+
+    def raise_on_members(_: object) -> tuple[BaseException, ...]:
+        raise RuntimeError("no members for you")
+
+    hostile_type = type(
+        "HostileExceptionGroup",
+        (group_type,),
+        {"exceptions": property(raise_on_members)},
+    )
+    group = hostile_type("parallel failures", [ValueError("bad row")])
+
+    payload = exception_to_dict(group)
+
+    assert payload["type"] == "HostileExceptionGroup"
+    assert "exceptions" not in payload
+    assert "parallel failures" in payload["message"]
+
+
 def test_exception_to_json_is_strict_json() -> None:
     exc = DataLoadingError("input.csv", OSError("disk unavailable"))
     exc.metric = float("inf")
