@@ -1,6 +1,6 @@
 # DataExcept
 
-[![CI](https://github.com/DiogoRibeiro7/DataExcept/actions/workflows/ci.yml/badge.svg)](https://github.com/DiogoRibeiro7/DataExcept/actions/workflows/ci.yml) [![PyPI version](https://badge.fury.io/py/DataExcept.svg)](https://badge.fury.io/py/DataExcept) [![Python Support](https://img.shields.io/pypi/pyversions/DataExcept.svg)](https://pypi.org/project/DataExcept/) [![Coverage](https://diogoribeiro7.github.io/DataExcept/coverage.svg)](https://diogoribeiro7.github.io/DataExcept/htmlcov/) [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://diogoribeiro7.github.io/DataExcept/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
+[![CI](https://github.com/DiogoRibeiro7/DataExcept/actions/workflows/ci.yml/badge.svg)](https://github.com/DiogoRibeiro7/DataExcept/actions/workflows/ci.yml) [![PyPI version](https://img.shields.io/pypi/v/DataExcept.svg)](https://pypi.org/project/DataExcept/) [![Python Support](https://img.shields.io/pypi/pyversions/DataExcept.svg)](https://pypi.org/project/DataExcept/) [![Coverage](https://diogoribeiro7.github.io/DataExcept/coverage.svg)](https://diogoribeiro7.github.io/DataExcept/htmlcov/) [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://diogoribeiro7.github.io/DataExcept/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 
 **DataExcept** is a production-ready Python library that provides **structured, hierarchical exception classes** specifically designed for **data science**, **machine learning**, and **data engineering** workflows. Stop debugging generic `ValueError`s and `RuntimeError`s -- get meaningful, actionable error messages that help you understand exactly what went wrong in your data pipeline.
 
@@ -196,9 +196,9 @@ BatchProcessingError
 BiasDetectionError
 ...
 
-# Check version
+# Check the installed version
 $ dataexcept --version
-dataexcept 1.0.0
+dataexcept <installed version>
 ```
 
 ## 🎯 Use Cases
@@ -342,18 +342,8 @@ through [SECURITY.md](SECURITY.md), not the public issue tracker.
 
 ## 🎓 Citation
 
-If you use DataExcept in your research, please cite it:
-
-```bibtex
-@software{ribeiro_dataexcept_2026,
-  author = {Ribeiro, Diogo},
-  title = {DataExcept: Structured Exception Handling for Data Science},
-  url = {https://github.com/DiogoRibeiro7/DataExcept},
-  version = {1.0.0},
-  year = {2026},
-  publisher = {GitHub}
-}
-```
+If you use DataExcept in your research, please cite the exact release you used.
+The canonical release metadata is maintained in [CITATION.cff](CITATION.cff).
 
 ## 📄 License
 
