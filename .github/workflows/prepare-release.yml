@@ -45,12 +45,13 @@ jobs:
           CURRENT="$(poetry version -s)"
           python - "${CURRENT}" "${RELEASE_VERSION}" <<'PY'
           import sys
-          from packaging.version import Version
 
-          current = Version(sys.argv[1])
-          target = Version(sys.argv[2])
+          current = tuple(map(int, sys.argv[1].split('.')))
+          target = tuple(map(int, sys.argv[2].split('.')))
           if target <= current:
-              raise SystemExit(f"target {target} must be newer than current {current}")
+              raise SystemExit(
+                  f"target {sys.argv[2]} must be newer than current {sys.argv[1]}"
+              )
           PY
 
       - name: Prepare release branch
