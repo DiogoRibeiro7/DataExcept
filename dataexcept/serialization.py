@@ -114,9 +114,6 @@ def _attributes(exc: BaseException) -> dict[str, Any]:
             result[name] = _json_safe(value)
         return result
     except Exception:
-        # This code runs at an error-transport boundary. A hostile __dict__,
-        # custom mapping, iterator or key must not replace the original failure
-        # with a serialization failure.
         return {}
 
 
@@ -124,9 +121,10 @@ def _group_members(exc: BaseException) -> Sequence[BaseException] | None:
     """Return exception-group members without importing a 3.11-only symbol."""
     if _EXCEPTION_GROUP_TYPE is None or not isinstance(exc, _EXCEPTION_GROUP_TYPE):
         return None
-    try:
-        members = exc.exceptions
-    except Exception:  # pragma: no cover - builtin object is well behaved
+    members: object = getattr(exc, "exceptions", None)
+    if not isinstance(members, tuple):
+        return None
+    if not all(isinstance(member, BaseException) for member in members):
         return None
     return members
 
