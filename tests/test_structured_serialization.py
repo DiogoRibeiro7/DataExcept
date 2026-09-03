@@ -1,9 +1,17 @@
+import builtins
 import json
-import sys
 
 import pytest
 
 from dataexcept import DataLoadingError, exception_to_dict, exception_to_json
+
+
+def _exception_group(message: str, members: list[Exception]) -> BaseException:
+    """Build an ExceptionGroup where the runtime provides the 3.11 builtin."""
+    group_type = getattr(builtins, "ExceptionGroup", None)
+    if group_type is None:
+        pytest.skip("ExceptionGroup is Python 3.11+")
+    return group_type(message, members)
 
 
 def test_exception_to_dict_contains_type_module_and_message() -> None:
@@ -174,9 +182,8 @@ def test_exception_to_dict_truncates_deep_chains() -> None:
     assert payload["cause"]["cause"] == {"truncated": True}
 
 
-@pytest.mark.skipif(sys.version_info < (3, 11), reason="ExceptionGroup is Python 3.11+")
 def test_exception_to_dict_preserves_exception_group_members() -> None:
-    group = ExceptionGroup(  # type: ignore[name-defined]
+    group = _exception_group(
         "parallel failures",
         [ValueError("bad row"), OSError("disk unavailable")],
     )
@@ -190,27 +197,23 @@ def test_exception_to_dict_preserves_exception_group_members() -> None:
     assert payload["exceptions"][0]["message"] == "bad row"
 
 
-@pytest.mark.skipif(sys.version_info < (3, 11), reason="ExceptionGroup is Python 3.11+")
 def test_exception_to_dict_preserves_nested_exception_group_shape() -> None:
-    nested = ExceptionGroup(  # type: ignore[name-defined]
+    inner = _exception_group("inner", [KeyError("missing")])
+    nested = _exception_group(
         "outer",
-        [
-            RuntimeError("direct"),
-            ExceptionGroup("inner", [KeyError("missing")]),  # type: ignore[name-defined]
-        ],
+        [RuntimeError("direct"), inner],
     )
 
     payload = exception_to_dict(nested)
 
     assert payload["exceptions"][0]["type"] == "RuntimeError"
-    inner = payload["exceptions"][1]
-    assert inner["type"] == "ExceptionGroup"
-    assert inner["exceptions"][0]["type"] == "KeyError"
+    inner_payload = payload["exceptions"][1]
+    assert inner_payload["type"] == "ExceptionGroup"
+    assert inner_payload["exceptions"][0]["type"] == "KeyError"
 
 
-@pytest.mark.skipif(sys.version_info < (3, 11), reason="ExceptionGroup is Python 3.11+")
 def test_exception_group_members_share_redaction_contract() -> None:
-    group = ExceptionGroup(  # type: ignore[name-defined]
+    group = _exception_group(
         "remote failures",
         [OSError("GET https://example.test/path-secret?token=query-secret")],
     )
@@ -221,12 +224,9 @@ def test_exception_group_members_share_redaction_contract() -> None:
     assert "query-secret" not in rendered
 
 
-@pytest.mark.skipif(sys.version_info < (3, 11), reason="ExceptionGroup is Python 3.11+")
 def test_exception_group_members_obey_max_depth() -> None:
-    nested = ExceptionGroup(  # type: ignore[name-defined]
-        "outer",
-        [ExceptionGroup("inner", [RuntimeError("leaf")])],  # type: ignore[name-defined]
-    )
+    inner = _exception_group("inner", [RuntimeError("leaf")])
+    nested = _exception_group("outer", [inner])
 
     payload = exception_to_dict(nested, max_depth=1)
 
