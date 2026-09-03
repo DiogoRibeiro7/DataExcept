@@ -107,9 +107,7 @@ def test_release_automation_is_one_trusted_version_agnostic_workflow():
     assert "prepare-release.yml" not in names
 
     version_specific = sorted(
-        name
-        for name in names
-        if re.search(r"(?:^|[-_])v?\d+[-_.]\d+[-_.]\d+", name)
+        name for name in names if re.search(r"(?:^|[-_])v?\d+[-_.]\d+[-_.]\d+", name)
     )
     assert not version_specific, (
         "release automation must not create version-specific workflow files: "
