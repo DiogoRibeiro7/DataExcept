@@ -177,15 +177,34 @@ jobs:
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
 
   github-release:
-    needs: publish
+    needs: [preflight, publish]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ needs.preflight.outputs.release_sha }}
+          fetch-depth: 0
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: dist
           path: dist/
+      - name: Re-verify release tag
+        env:
+          RELEASE_SHA: ${{ needs.preflight.outputs.release_sha }}
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          if [ "$(git cat-file -t "refs/tags/${RELEASE_TAG}")" != "tag" ]; then
+            echo "::error::${RELEASE_TAG} is no longer an annotated tag."
+            exit 1
+          fi
+          TAG_SHA="$(git rev-parse "refs/tags/${RELEASE_TAG}^{commit}")"
+          if [ "${TAG_SHA}" != "${RELEASE_SHA}" ]; then
+            echo "::error::${RELEASE_TAG} moved to ${TAG_SHA}; expected ${RELEASE_SHA}."
+            exit 1
+          fi
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
