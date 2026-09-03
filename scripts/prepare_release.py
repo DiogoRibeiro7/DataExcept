@@ -78,11 +78,11 @@ def _prepare_roadmap(version: str) -> None:
     path = pathlib.Path("ROADMAP.md")
     text = path.read_text(encoding="utf-8")
     landed = re.compile(
-        rf"^## Landed for {re.escape(version)}(?P<suffix>.*)$",
+        rf"^## Landed for {re.escape(version)}(?P<suffix>(?:[ \t].*)?)$",
         re.MULTILINE,
     )
     shipped = re.compile(
-        rf"^## Shipped in {re.escape(version)}(?P<suffix>.*)$",
+        rf"^## Shipped in {re.escape(version)}(?P<suffix>(?:[ \t].*)?)$",
         re.MULTILINE,
     )
     if shipped.search(text):
@@ -92,7 +92,7 @@ def _prepare_roadmap(version: str) -> None:
         return
 
     replacement = f"## Shipped in {version}{match.group('suffix')}"
-    text = landed.sub(replacement, text, count=1)
+    text = landed.sub(lambda _: replacement, text, count=1)
     pre_release_note = (
         "\nThe implementation is on `main`; it will become a released feature "
         "when the\n"
