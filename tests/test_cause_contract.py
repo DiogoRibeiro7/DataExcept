@@ -17,6 +17,22 @@ from dataexcept import (
 )
 
 
+def _build_query_with_conflicting_causes() -> QueryExecutionError:
+    return QueryExecutionError(
+        "SELECT 1",
+        RuntimeError("legacy"),
+        cause=RuntimeError("canonical"),
+    )
+
+
+def _build_service_with_conflicting_causes() -> ServiceConnectionError:
+    return ServiceConnectionError(
+        "warehouse",
+        OSError("legacy"),
+        cause=OSError("canonical"),
+    )
+
+
 @pytest.mark.parametrize(
     ("factory", "expected_type"),
     [
@@ -68,14 +84,24 @@ def test_canonical_cause_keyword_works_on_legacy_cause_aware_classes():
 
 
 def test_legacy_and_canonical_cause_arguments_cannot_be_mixed():
-    first = RuntimeError("first")
-    second = RuntimeError("second")
+    with pytest.raises(TypeError, match="provide only one"):
+        _build_query_with_conflicting_causes()
 
     with pytest.raises(TypeError, match="provide only one"):
-        QueryExecutionError("SELECT 1", first, cause=second)
+        _build_service_with_conflicting_causes()
 
-    with pytest.raises(TypeError, match="provide only one"):
-        ServiceConnectionError("warehouse", first, cause=second)
+
+@pytest.mark.parametrize(
+    "factory",
+    [
+        lambda: StorageError("/tmp/data", "read", cause="not-an-exception"),
+        lambda: QueryExecutionError("SELECT 1", cause="not-an-exception"),
+        lambda: ServiceConnectionError("warehouse", cause="not-an-exception"),
+    ],
+)
+def test_cause_aliases_reject_non_exception_values(factory):
+    with pytest.raises(TypeError, match="must be Exception or None"):
+        factory()
 
 
 def test_canonical_cause_survives_pickle_round_trip():
@@ -106,3 +132,14 @@ def test_wrap_prefers_canonical_cause_keyword_when_available():
 
     assert exc.cause is cause
     assert exc.__cause__ is cause
+
+
+def test_wrap_respects_explicit_legacy_cause_override_on_dual_signature_target():
+    caught = OSError("outer")
+    explicit = RuntimeError("explicit")
+
+    exc = wrap(caught, QueryExecutionError, query="SELECT 1", original=explicit)
+
+    assert exc.original is explicit
+    assert exc.cause is explicit
+    assert exc.__cause__ is caught
