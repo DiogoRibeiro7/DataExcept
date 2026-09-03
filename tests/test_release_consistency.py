@@ -100,6 +100,39 @@ def test_the_supported_python_range_is_stated_consistently():
     ), f"the release gate does not require test ({highest})"
 
 
+def test_release_automation_is_version_agnostic():
+    workflows = PROJECT_ROOT / ".github" / "workflows"
+    names = {path.name for path in workflows.glob("*.yml")}
+    assert "prepare-release.yml" in names
+    assert "release.yml" in names
+
+    version_specific = sorted(
+        name for name in names if re.search(r"(?:^|[-_])\d+[-_.]\d+[-_.]\d+", name)
+    )
+    assert not version_specific, (
+        "release automation must not create version-specific workflow files: "
+        f"{version_specific}"
+    )
+
+    prepare = _read(".github/workflows/prepare-release.yml")
+    release = _read(".github/workflows/release.yml")
+    assert "workflow_dispatch:" in prepare
+    assert "version:" in prepare
+    assert "release/${RELEASE_VERSION}" in prepare
+    assert "workflow_dispatch:" in release
+    assert "version:" in release
+    assert "repository_dispatch:" not in release
+    assert "environment:\n      name: pypi" in release
+
+
+def test_release_scripts_are_exact_version_driven():
+    bump = _read("scripts/bump_version.py")
+    prepare = _read("scripts/prepare_release.py")
+    assert "patch|minor|major|X.Y.Z" in bump
+    assert "prepare_release.py X.Y.Z" in prepare
+    assert "[Unreleased] is empty" in prepare
+
+
 def test_no_module_imports_tomllib_without_a_fallback():
     """`tomllib` is 3.11+, and this package supports 3.10.
 
