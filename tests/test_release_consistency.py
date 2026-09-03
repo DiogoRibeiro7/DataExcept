@@ -121,6 +121,8 @@ def test_release_automation_is_one_trusted_version_agnostic_workflow():
     assert "environment:\n      name: pypi" in release
     assert "git cat-file -t" in release
     assert "needs.preflight.outputs.release_sha" in release
+    assert "Re-verify release tag" in release
+    assert "github-release:\n    needs: [preflight, publish]" in release
 
 
 def test_release_scripts_are_exact_version_driven():
@@ -132,6 +134,10 @@ def test_release_scripts_are_exact_version_driven():
     assert "request_release.py X.Y.Z" in request
     assert "[Unreleased] is empty" in prepare
     assert "repository_dispatch" in request
+    assert '"status", "--porcelain"' in request
+    assert '_run("git", "push", "origin", f"refs/tags/{tag}")' in request
+    assert "(?:[ \\t].*)?" in prepare
+    assert "landed.sub(lambda _: replacement" in prepare
 
 
 def test_no_module_imports_tomllib_without_a_fallback():
