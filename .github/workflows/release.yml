@@ -1,33 +1,34 @@
 name: Release
 
+# The privileged release workflow is invoked only through repository_dispatch.
+# GitHub always loads repository_dispatch workflows from the default branch, so
+# callers cannot select a modified branch containing different publishing logic.
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: Exact semantic version already merged into main, for example 1.4.0
-        required: true
-        type: string
+  repository_dispatch:
+    types:
+      - release_tag
 
 concurrency:
-  group: release-${{ inputs.version }}
+  group: release-${{ github.event.client_payload.tag }}
   cancel-in-progress: false
 
 env:
-  RELEASE_VERSION: ${{ inputs.version }}
-  RELEASE_TAG: v${{ inputs.version }}
+  RELEASE_TAG: ${{ github.event.client_payload.tag }}
 
 jobs:
   preflight:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       checks: read
+    outputs:
+      release_sha: ${{ steps.release.outputs.release_sha }}
     steps:
-      - name: Validate version
+      - name: Validate release request
         run: |
           set -euo pipefail
-          if [[ ! "${RELEASE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Version must be X.Y.Z, got '${RELEASE_VERSION}'."
+          if [[ ! "${RELEASE_TAG}" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::Release tag must be vX.Y.Z without leading zeroes; got '${RELEASE_TAG}'."
             exit 1
           fi
 
@@ -44,20 +45,24 @@ jobs:
         with:
           poetry-version: '2.4.2'
 
-      - name: Verify project version
+      - name: Verify project version and exact main commit
+        id: release
         run: |
           set -euo pipefail
+          RELEASE_VERSION="${RELEASE_TAG#v}"
           PROJECT_VERSION="$(poetry version -s)"
           if [ "${PROJECT_VERSION}" != "${RELEASE_VERSION}" ]; then
             echo "::error::main is ${PROJECT_VERSION}, requested ${RELEASE_VERSION}."
-            echo "::error::Run Prepare Release and merge its PR first."
+            echo "::error::Prepare and merge the release metadata first."
             exit 1
           fi
-          echo "RELEASE_SHA=$(git rev-parse HEAD)" >> "${GITHUB_ENV}"
+          RELEASE_SHA="$(git rev-parse HEAD)"
+          echo "release_sha=${RELEASE_SHA}" >> "${GITHUB_OUTPUT}"
 
       - name: Verify required CI passed on exact main commit
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ steps.release.outputs.release_sha }}
         run: |
           set -euo pipefail
           gh api --paginate \
@@ -83,22 +88,25 @@ jobs:
           rm -f checks.tsv
           [ "$failed" -eq 0 ] || exit 1
 
-      - name: Create or verify annotated release tag
+      - name: Verify annotated release tag
+        env:
+          RELEASE_SHA: ${{ steps.release.outputs.release_sha }}
         run: |
           set -euo pipefail
           git fetch --tags --force
-          if git show-ref --verify --quiet "refs/tags/${RELEASE_TAG}"; then
-            TAG_SHA="$(git rev-parse "refs/tags/${RELEASE_TAG}^{commit}")"
-            if [ "${TAG_SHA}" != "${RELEASE_SHA}" ]; then
-              echo "::error::${RELEASE_TAG} already points to ${TAG_SHA}, expected ${RELEASE_SHA}."
-              exit 1
-            fi
-            echo "${RELEASE_TAG} already exists on the correct commit."
-          else
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git tag -a "${RELEASE_TAG}" "${RELEASE_SHA}" -m "DataExcept ${RELEASE_VERSION}"
-            git push origin "refs/tags/${RELEASE_TAG}"
+          if ! git show-ref --verify --quiet "refs/tags/${RELEASE_TAG}"; then
+            echo "::error::Annotated tag ${RELEASE_TAG} does not exist."
+            echo "::error::Create it on ${RELEASE_SHA} before dispatching this workflow."
+            exit 1
+          fi
+          if [ "$(git cat-file -t "refs/tags/${RELEASE_TAG}")" != "tag" ]; then
+            echo "::error::${RELEASE_TAG} exists but is not an annotated tag."
+            exit 1
+          fi
+          TAG_SHA="$(git rev-parse "refs/tags/${RELEASE_TAG}^{commit}")"
+          if [ "${TAG_SHA}" != "${RELEASE_SHA}" ]; then
+            echo "::error::${RELEASE_TAG} points to ${TAG_SHA}, expected ${RELEASE_SHA}."
+            exit 1
           fi
 
   build:
@@ -109,7 +117,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: refs/tags/${{ env.RELEASE_TAG }}
+          ref: ${{ needs.preflight.outputs.release_sha }}
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.x'
@@ -125,14 +133,14 @@ jobs:
           if-no-files-found: error
 
   verify-wheel:
-    needs: build
+    needs: [preflight, build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: refs/tags/${{ env.RELEASE_TAG }}
+          ref: ${{ needs.preflight.outputs.release_sha }}
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.12'
