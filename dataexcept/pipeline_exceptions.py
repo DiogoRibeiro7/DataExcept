@@ -44,10 +44,13 @@ class StorageError(PipelineError):
         location: str,
         operation: str,
         message: Optional[str] = None,
+        *,
+        cause: Exception | None = None,
     ) -> None:
         default = f"Storage {operation} failed at location: '{location}'."
         self.location = redact_if_url(location)
         self.operation = operation
+        self.cause = cause
         super().__init__(message or default)
 
 
