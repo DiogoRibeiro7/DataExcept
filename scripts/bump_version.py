@@ -1,7 +1,7 @@
 """Bump the project version and keep every file that states it in step.
 
 Usage:
-    python scripts/bump_version.py [patch|minor|major]
+    python scripts/bump_version.py [patch|minor|major|X.Y.Z]
 
 Several files name the version. Hand-editing them is what let documentation
 drift reappear in 0.4.0 immediately after it had been fixed, so they are
@@ -16,6 +16,9 @@ import pathlib
 import re
 import subprocess
 import sys
+
+_VERSION_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
+_BUMP_PARTS = {"patch", "minor", "major"}
 
 
 def _poetry(*args: str) -> str:
@@ -35,10 +38,20 @@ def _rewrite(path: pathlib.Path, pattern: str, replacement: str, what: str) -> N
     path.write_text(text, encoding="utf-8", newline="\n")
 
 
-def main() -> int:
-    part = sys.argv[1] if len(sys.argv) > 1 else "patch"
+def _target() -> str:
+    target = sys.argv[1] if len(sys.argv) > 1 else "patch"
+    if target not in _BUMP_PARTS and not _VERSION_RE.fullmatch(target):
+        raise SystemExit(
+            "error: target must be patch, minor, major, or X.Y.Z without "
+            "leading zeroes"
+        )
+    return target
 
-    _poetry("version", part)
+
+def main() -> int:
+    target = _target()
+
+    _poetry("version", target)
     version = _poetry("version", "-s")
     today = datetime.date.today().isoformat()
     major, minor, _ = version.split(".", 2)
@@ -64,13 +77,6 @@ def main() -> int:
     _rewrite(security, r"\| < \d+\.\d+ \|", f"| < {major}.{minor} |", "unsupported row")
 
     print(f"Bumped to {version}; CITATION.cff, CHECKLIST.md and SECURITY.md updated.")
-    print("Next:")
-    print(f"  1. Move CHANGELOG.md's [Unreleased] entries under [{version}]")
-    print("  2. Commit, open a pull request, and merge it")
-    print(f"  3. Create and push annotated tag v{version} on the merged release commit")
-    print("  4. Dispatch the guarded Release workflow with event_type=release_tag")
-    print(f"     and payload tag=v{version}")
-    print("  5. Approve the pypi environment deployment when prompted")
     return 0
 
 
