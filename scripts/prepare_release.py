@@ -11,13 +11,16 @@ import pathlib
 import re
 import sys
 
-_VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
+_VERSION_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
 _RELEASE_HEADING_RE = re.compile(r"^## \[(\d+\.\d+\.\d+)\]", re.MULTILINE)
 
 
 def _version() -> str:
     if len(sys.argv) != 2 or not _VERSION_RE.fullmatch(sys.argv[1]):
-        raise SystemExit("error: usage: python scripts/prepare_release.py X.Y.Z")
+        raise SystemExit(
+            "error: usage: python scripts/prepare_release.py X.Y.Z "
+            "without leading zeroes"
+        )
     return sys.argv[1]
 
 
@@ -26,9 +29,13 @@ def _prepare_changelog(version: str, today: str) -> None:
     text = path.read_text(encoding="utf-8")
     marker = "## [Unreleased]\n"
     if text.count(marker) != 1:
-        raise SystemExit("error: CHANGELOG.md must contain exactly one [Unreleased] heading")
+        raise SystemExit(
+            "error: CHANGELOG.md must contain exactly one [Unreleased] heading"
+        )
     if re.search(rf"^## \[{re.escape(version)}\]", text, re.MULTILINE):
-        raise SystemExit(f"error: CHANGELOG.md already contains release {version}")
+        raise SystemExit(
+            f"error: CHANGELOG.md already contains release {version}"
+        )
 
     start = text.index(marker) + len(marker)
     next_heading = _RELEASE_HEADING_RE.search(text, start)
@@ -37,7 +44,9 @@ def _prepare_changelog(version: str, today: str) -> None:
 
     unreleased = text[start : next_heading.start()].strip("\n")
     if not unreleased.strip():
-        raise SystemExit("error: [Unreleased] is empty; add release notes before preparing")
+        raise SystemExit(
+            "error: [Unreleased] is empty; add release notes before preparing"
+        )
 
     prior_version = next_heading.group(1)
     release_block = f"\n\n## [{version}] - {today}\n\n{unreleased}\n\n"
@@ -45,9 +54,12 @@ def _prepare_changelog(version: str, today: str) -> None:
 
     unreleased_link = re.compile(r"^\[Unreleased\]: .*$", re.MULTILINE)
     if len(unreleased_link.findall(text)) != 1:
-        raise SystemExit("error: expected exactly one [Unreleased] comparison link")
+        raise SystemExit(
+            "error: expected exactly one [Unreleased] comparison link"
+        )
     text = unreleased_link.sub(
-        f"[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v{version}...HEAD",
+        "[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/"
+        f"v{version}...HEAD",
         text,
         count=1,
     )
@@ -66,14 +78,22 @@ def _prepare_changelog(version: str, today: str) -> None:
 def _prepare_roadmap(version: str) -> None:
     path = pathlib.Path("ROADMAP.md")
     text = path.read_text(encoding="utf-8")
-    landed = f"## Landed for {version}"
-    shipped = f"## Shipped in {version}"
-    if shipped in text:
+    landed = re.compile(
+        rf"^## Landed for {re.escape(version)}(?P<suffix>.*)$",
+        re.MULTILINE,
+    )
+    shipped = re.compile(
+        rf"^## Shipped in {re.escape(version)}(?P<suffix>.*)$",
+        re.MULTILINE,
+    )
+    if shipped.search(text):
         return
-    if landed not in text:
+    match = landed.search(text)
+    if match is None:
         return
 
-    text = text.replace(landed, shipped, 1)
+    replacement = f"## Shipped in {version}{match.group('suffix')}"
+    text = landed.sub(replacement, text, count=1)
     text = text.replace(
         "\nThe implementation is on `main`; it will become a released feature when the\n"
         f"{version} release is cut.\n",
