@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-03
+
+### Added
+
+- **Structured `ExceptionGroup` support** on Python 3.11+:
+  `exception_to_dict` and `exception_to_json` now preserve group members under
+  an `exceptions` field, including nested groups, instead of flattening
+  concurrent failures into one rendered message.
+- Group members use the same public-attribute, redaction, cycle and shared
+  `max_depth` guarantees as ordinary causes and contexts. Python 3.10 remains
+  supported without an `exceptiongroup` backport or additional runtime
+  dependency.
+
+### Changed
+
+- Hostile or malformed exception-group member metadata now degrades to the
+  ordinary exception record rather than allowing serialization itself to fail.
+- The README now uses a PyPI-backed version badge and avoids hard-coded version
+  and citation values that can drift between releases. The documented exception
+  count is contract-tested against the package.
+- The roadmap now records a future language-neutral envelope schema and optional
+  Pino interoperability track without claiming Node.js/Pino support today.
+
 ## [1.2.0] - 2026-09-02
 
 ### Added
@@ -547,7 +570,8 @@ First public release.
 - Published to PyPI via OIDC trusted publishing; no long-lived API token is
   involved in a release.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v0.4.3...v1.0.0
