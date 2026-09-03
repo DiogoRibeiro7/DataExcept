@@ -11,9 +11,7 @@ import pathlib
 import re
 import sys
 
-_VERSION_RE = re.compile(
-    r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$"
-)
+_VERSION_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
 _RELEASE_HEADING_RE = re.compile(r"^## \[(\d+\.\d+\.\d+)\]", re.MULTILINE)
 
 
@@ -35,9 +33,7 @@ def _prepare_changelog(version: str, today: str) -> None:
             "error: CHANGELOG.md must contain exactly one [Unreleased] heading"
         )
     if re.search(rf"^## \[{re.escape(version)}\]", text, re.MULTILINE):
-        raise SystemExit(
-            f"error: CHANGELOG.md already contains release {version}"
-        )
+        raise SystemExit(f"error: CHANGELOG.md already contains release {version}")
 
     start = text.index(marker) + len(marker)
     next_heading = _RELEASE_HEADING_RE.search(text, start)
@@ -56,9 +52,7 @@ def _prepare_changelog(version: str, today: str) -> None:
 
     unreleased_link = re.compile(r"^\[Unreleased\]: .*$", re.MULTILINE)
     if len(unreleased_link.findall(text)) != 1:
-        raise SystemExit(
-            "error: expected exactly one [Unreleased] comparison link"
-        )
+        raise SystemExit("error: expected exactly one [Unreleased] comparison link")
     text = unreleased_link.sub(
         "[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/"
         f"v{version}...HEAD",
