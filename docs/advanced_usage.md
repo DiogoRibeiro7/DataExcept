@@ -84,6 +84,58 @@ Set `include_attributes=False` when the receiving system only needs the error
 identity and chain. Use `max_depth` to put a smaller bound on nested exception
 chains.
 
+### Exception groups
+
+On Python 3.11 and later, `ExceptionGroup` and `BaseExceptionGroup` are kept as
+trees rather than being flattened into one message. Group members appear under
+an `exceptions` key and are structured recursively using the same rules as
+`cause` and `context`.
+
+```python
+group = ExceptionGroup(
+    "parallel failures",
+    [ValueError("bad row"), OSError("disk unavailable")],
+)
+
+payload = exception_to_dict(group)
+```
+
+The result keeps both member failures:
+
+```python
+{
+    "type": "ExceptionGroup",
+    "module": "builtins",
+    "message": "parallel failures (2 sub-exceptions)",
+    "exceptions": [
+        {
+            "type": "ValueError",
+            "module": "builtins",
+            "message": "bad row"
+        },
+        {
+            "type": "OSError",
+            "module": "builtins",
+            "message": "disk unavailable"
+        }
+    ]
+}
+```
+
+Nested groups keep the same tree shape. The `max_depth` budget is shared across
+all recursive exception edges: group members, explicit causes and implicit
+contexts. Once that budget is exceeded, the child is replaced by
+`{"truncated": true}`.
+
+Python 3.10 remains supported. There is no `exceptiongroup` runtime dependency;
+the group-specific behavior simply becomes available when the interpreter
+provides the built-in group types.
+
+A custom group subclass with malformed or raising `exceptions` metadata cannot
+break serialization. In that case DataExcept falls back to the ordinary
+exception record and omits the `exceptions` key rather than replacing the
+original failure with a serialization error.
+
 ## Integrating with Sentry
 
 If [Sentry](https://sentry.io/) is installed, you can capture exceptions before re-raising them:

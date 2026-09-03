@@ -1,8 +1,17 @@
+import builtins
 import json
 
 import pytest
 
 from dataexcept import DataLoadingError, exception_to_dict, exception_to_json
+
+
+def _exception_group(message: str, members: list[Exception]) -> BaseException:
+    """Build an ExceptionGroup where the runtime provides the 3.11 builtin."""
+    group_type = getattr(builtins, "ExceptionGroup", None)
+    if group_type is None:
+        pytest.skip("ExceptionGroup is Python 3.11+")
+    return group_type(message, members)
 
 
 def test_exception_to_dict_contains_type_module_and_message() -> None:
@@ -171,6 +180,79 @@ def test_exception_to_dict_truncates_deep_chains() -> None:
     payload = exception_to_dict(first, max_depth=1)
 
     assert payload["cause"]["cause"] == {"truncated": True}
+
+
+def test_exception_to_dict_preserves_exception_group_members() -> None:
+    group = _exception_group(
+        "parallel failures",
+        [ValueError("bad row"), OSError("disk unavailable")],
+    )
+
+    payload = exception_to_dict(group)
+
+    assert [item["type"] for item in payload["exceptions"]] == [
+        "ValueError",
+        "OSError",
+    ]
+    assert payload["exceptions"][0]["message"] == "bad row"
+
+
+def test_exception_to_dict_preserves_nested_exception_group_shape() -> None:
+    inner = _exception_group("inner", [KeyError("missing")])
+    nested = _exception_group(
+        "outer",
+        [RuntimeError("direct"), inner],
+    )
+
+    payload = exception_to_dict(nested)
+
+    assert payload["exceptions"][0]["type"] == "RuntimeError"
+    inner_payload = payload["exceptions"][1]
+    assert inner_payload["type"] == "ExceptionGroup"
+    assert inner_payload["exceptions"][0]["type"] == "KeyError"
+
+
+def test_exception_group_members_share_redaction_contract() -> None:
+    group = _exception_group(
+        "remote failures",
+        [OSError("GET https://example.test/path-secret?token=query-secret")],
+    )
+
+    rendered = json.dumps(exception_to_dict(group))
+
+    assert "path-secret" not in rendered
+    assert "query-secret" not in rendered
+
+
+def test_exception_group_members_obey_max_depth() -> None:
+    inner = _exception_group("inner", [RuntimeError("leaf")])
+    nested = _exception_group("outer", [inner])
+
+    payload = exception_to_dict(nested, max_depth=1)
+
+    assert payload["exceptions"][0]["exceptions"] == [{"truncated": True}]
+
+
+def test_exception_group_survives_hostile_member_metadata() -> None:
+    group_type = getattr(builtins, "ExceptionGroup", None)
+    if group_type is None:
+        pytest.skip("ExceptionGroup is Python 3.11+")
+
+    def raise_on_members(_: object) -> tuple[BaseException, ...]:
+        raise RuntimeError("no members for you")
+
+    hostile_type = type(
+        "HostileExceptionGroup",
+        (group_type,),
+        {"exceptions": property(raise_on_members)},
+    )
+    group = hostile_type("parallel failures", [ValueError("bad row")])
+
+    payload = exception_to_dict(group)
+
+    assert payload["type"] == "HostileExceptionGroup"
+    assert "exceptions" not in payload
+    assert "parallel failures" in payload["message"]
 
 
 def test_exception_to_json_is_strict_json() -> None:

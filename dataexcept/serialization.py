@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import json
 import math
 from collections.abc import Mapping, Sequence, Set
@@ -13,6 +14,7 @@ __all__ = ["exception_to_dict", "exception_to_json"]
 
 _MAX_VALUE_DEPTH = 8
 _NOT_SCALAR = object()
+_EXCEPTION_GROUP_TYPE = getattr(builtins, "BaseExceptionGroup", None)
 
 
 def _redact_export_text(text: str) -> str:
@@ -112,10 +114,22 @@ def _attributes(exc: BaseException) -> dict[str, Any]:
             result[name] = _json_safe(value)
         return result
     except Exception:
-        # This code runs at an error-transport boundary. A hostile __dict__,
-        # custom mapping, iterator or key must not replace the original failure
-        # with a serialization failure.
         return {}
+
+
+def _group_members(exc: BaseException) -> Sequence[BaseException] | None:
+    """Return exception-group members without importing a 3.11-only symbol."""
+    if _EXCEPTION_GROUP_TYPE is None or not isinstance(exc, _EXCEPTION_GROUP_TYPE):
+        return None
+    try:
+        members: object = getattr(exc, "exceptions", None)
+        if not isinstance(members, tuple):
+            return None
+        if not all(isinstance(member, BaseException) for member in members):
+            return None
+        return members
+    except Exception:
+        return None
 
 
 def _exception_record(
@@ -149,6 +163,19 @@ def _exception_record(
         if attributes:
             record["attributes"] = attributes
 
+    members = _group_members(exc)
+    if members is not None:
+        record["exceptions"] = [
+            _exception_record(
+                member,
+                include_attributes=include_attributes,
+                max_depth=max_depth,
+                depth=depth + 1,
+                seen=seen,
+            )
+            for member in members
+        ]
+
     if exc.__cause__ is not None:
         record["cause"] = _exception_record(
             exc.__cause__,
@@ -179,8 +206,9 @@ def exception_to_dict(
     """Return a strict JSON-safe structured representation of *exc*.
 
     The representation contains the exception type, module and rendered
-    message, optionally public instance attributes, and bounded cause/context
-    chains. Traceback frames and private attributes are deliberately excluded.
+    message, optionally public instance attributes, bounded cause/context
+    chains, and on Python 3.11+ the member tree of exception groups. Traceback
+    frames and private attributes are deliberately excluded.
     """
     if not isinstance(exc, BaseException):
         raise TypeError("exc must be an exception instance")
