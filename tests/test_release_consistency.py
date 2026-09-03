@@ -100,37 +100,40 @@ def test_the_supported_python_range_is_stated_consistently():
     ), f"the release gate does not require test ({highest})"
 
 
-def test_release_automation_is_version_agnostic():
+def test_release_automation_is_one_trusted_version_agnostic_workflow():
     workflows = PROJECT_ROOT / ".github" / "workflows"
     names = {path.name for path in workflows.glob("*.yml")}
-    assert "prepare-release.yml" in names
     assert "release.yml" in names
+    assert "prepare-release.yml" not in names
 
     version_specific = sorted(
-        name for name in names if re.search(r"(?:^|[-_])\d+[-_.]\d+[-_.]\d+", name)
+        name
+        for name in names
+        if re.search(r"(?:^|[-_])v?\d+[-_.]\d+[-_.]\d+", name)
     )
     assert not version_specific, (
         "release automation must not create version-specific workflow files: "
         f"{version_specific}"
     )
 
-    prepare = _read(".github/workflows/prepare-release.yml")
     release = _read(".github/workflows/release.yml")
-    assert "workflow_dispatch:" in prepare
-    assert "version:" in prepare
-    assert "release/${RELEASE_VERSION}" in prepare
-    assert "workflow_dispatch:" in release
-    assert "version:" in release
-    assert "repository_dispatch:" not in release
+    assert "repository_dispatch:" in release
+    assert "workflow_dispatch:" not in release
+    assert "release_tag" in release
     assert "environment:\n      name: pypi" in release
+    assert "git cat-file -t" in release
+    assert "needs.preflight.outputs.release_sha" in release
 
 
 def test_release_scripts_are_exact_version_driven():
     bump = _read("scripts/bump_version.py")
     prepare = _read("scripts/prepare_release.py")
+    request = _read("scripts/request_release.py")
     assert "patch|minor|major|X.Y.Z" in bump
     assert "prepare_release.py X.Y.Z" in prepare
+    assert "request_release.py X.Y.Z" in request
     assert "[Unreleased] is empty" in prepare
+    assert "repository_dispatch" in request
 
 
 def test_no_module_imports_tomllib_without_a_fallback():
