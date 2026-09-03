@@ -52,22 +52,6 @@ The original 0.2–0.5 milestones are done:
   builtin. Both are enforced by tests, as is the rule that every exception the
   package defines must be exported.
 
-## Shipped in 1.1.0
-
-- **`wrap` and `wrapping`** turn a third-party exception into a DataExcept one,
-  passing the original to whichever constructor parameter takes a cause and
-  setting `__cause__` either way — so a traceback shows both failures even for
-  a class that records nothing.
-- **Guidance on building a project-specific hierarchy** on these bases, in the
-  advanced usage guide.
-
-## 0.5 — Coverage and correctness
-
-- Raise coverage above the 92% floor, focused on the constructor branches that
-  build messages from partial arguments.
-- Extend the property-based suite to the exception hierarchy's interaction
-  with third-party loggers and handlers.
-
 ## Shipped in 1.0.0
 
 - **The public API is frozen** under the
@@ -79,6 +63,44 @@ The original 0.2–0.5 milestones are done:
   machinery that served them.
 - A [migration guide](https://diogoribeiro7.github.io/DataExcept/migration/)
   covering every rename between 0.1 and 1.0.
+
+## Shipped in 1.1.0
+
+- **`wrap` and `wrapping`** turn a third-party exception into a DataExcept one,
+  passing the original to whichever constructor parameter takes a cause and
+  setting `__cause__` either way — so a traceback shows both failures even for
+  a class that records nothing.
+- **Guidance on building a project-specific hierarchy** on these bases, in the
+  advanced usage guide.
+
+## Shipped in 1.2.0
+
+- **Structured exception envelopes** — `exception_to_dict` and
+  `exception_to_json` preserve exception identity, public attributes and
+  bounded cause/context chains for APIs, queues, telemetry and structured logs.
+- **Strict JSON-safe export** — non-finite floats, byte payloads and hostile or
+  unserialisable caller state degrade safely instead of breaking error
+  transport.
+- **Stricter export redaction** — credential-bearing URL paths are removed as
+  well as sensitive query and fragment values, including inside third-party
+  causes and caller-supplied attributes.
+
+## 1.3.0 — Structured concurrent failures
+
+- Preserve Python 3.11+ `ExceptionGroup` and `BaseExceptionGroup` trees under an
+  `exceptions` field instead of flattening concurrent failures into one
+  rendered message.
+- Apply the same redaction, public-attribute, cycle and depth-limit guarantees
+  to group members as to ordinary causes and contexts.
+- Keep Python 3.10 support with no `exceptiongroup` backport or added runtime
+  dependency.
+
+## 0.5 — Coverage and correctness
+
+- Raise coverage above the 92% floor, focused on the constructor branches that
+  build messages from partial arguments.
+- Extend the property-based suite to the exception hierarchy's interaction
+  with third-party loggers and handlers.
 
 ## Beyond 1.0
 
