@@ -17,12 +17,8 @@ def resolve_cause(
     ``original_exception`` remain supported only for backward compatibility.
     """
     supplied = [
-        value
-        for value in (cause, original, original_exception)
-        if value is not None
+        value for value in (cause, original, original_exception) if value is not None
     ]
     if len(supplied) > 1:
-        raise TypeError(
-            "provide only one of cause, original, or original_exception"
-        )
+        raise TypeError("provide only one of cause, original, or original_exception")
     return supplied[0] if supplied else None
