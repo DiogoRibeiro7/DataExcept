@@ -1,4 +1,5 @@
 import json
+import sys
 
 import pytest
 
@@ -171,6 +172,65 @@ def test_exception_to_dict_truncates_deep_chains() -> None:
     payload = exception_to_dict(first, max_depth=1)
 
     assert payload["cause"]["cause"] == {"truncated": True}
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="ExceptionGroup is Python 3.11+")
+def test_exception_to_dict_preserves_exception_group_members() -> None:
+    group = ExceptionGroup(  # type: ignore[name-defined]
+        "parallel failures",
+        [ValueError("bad row"), OSError("disk unavailable")],
+    )
+
+    payload = exception_to_dict(group)
+
+    assert [item["type"] for item in payload["exceptions"]] == [
+        "ValueError",
+        "OSError",
+    ]
+    assert payload["exceptions"][0]["message"] == "bad row"
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="ExceptionGroup is Python 3.11+")
+def test_exception_to_dict_preserves_nested_exception_group_shape() -> None:
+    nested = ExceptionGroup(  # type: ignore[name-defined]
+        "outer",
+        [
+            RuntimeError("direct"),
+            ExceptionGroup("inner", [KeyError("missing")]),  # type: ignore[name-defined]
+        ],
+    )
+
+    payload = exception_to_dict(nested)
+
+    assert payload["exceptions"][0]["type"] == "RuntimeError"
+    inner = payload["exceptions"][1]
+    assert inner["type"] == "ExceptionGroup"
+    assert inner["exceptions"][0]["type"] == "KeyError"
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="ExceptionGroup is Python 3.11+")
+def test_exception_group_members_share_redaction_contract() -> None:
+    group = ExceptionGroup(  # type: ignore[name-defined]
+        "remote failures",
+        [OSError("GET https://example.test/path-secret?token=query-secret")],
+    )
+
+    rendered = json.dumps(exception_to_dict(group))
+
+    assert "path-secret" not in rendered
+    assert "query-secret" not in rendered
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="ExceptionGroup is Python 3.11+")
+def test_exception_group_members_obey_max_depth() -> None:
+    nested = ExceptionGroup(  # type: ignore[name-defined]
+        "outer",
+        [ExceptionGroup("inner", [RuntimeError("leaf")])],  # type: ignore[name-defined]
+    )
+
+    payload = exception_to_dict(nested, max_depth=1)
+
+    assert payload["exceptions"][0]["exceptions"] == [{"truncated": True}]
 
 
 def test_exception_to_json_is_strict_json() -> None:
