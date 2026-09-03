@@ -80,6 +80,7 @@ nav:
   - API Reference: api.md
   - API Stability: stability.md
   - Migrating to 1.0: migration.md
+  - Releasing: releasing.md
   - Citation: citation.md
 
 extra:
