@@ -17,7 +17,7 @@ import re
 import subprocess
 import sys
 
-_VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
+_VERSION_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
 _BUMP_PARTS = {"patch", "minor", "major"}
 
 
@@ -41,7 +41,10 @@ def _rewrite(path: pathlib.Path, pattern: str, replacement: str, what: str) -> N
 def _target() -> str:
     target = sys.argv[1] if len(sys.argv) > 1 else "patch"
     if target not in _BUMP_PARTS and not _VERSION_RE.fullmatch(target):
-        raise SystemExit("error: target must be patch, minor, major, or X.Y.Z")
+        raise SystemExit(
+            "error: target must be patch, minor, major, or X.Y.Z without "
+            "leading zeroes"
+        )
     return target
 
 
