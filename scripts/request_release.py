@@ -84,9 +84,7 @@ def main() -> int:
             raise SystemExit(f"error: {tag} exists but is not an annotated tag")
         tag_sha = _run("git", "rev-parse", f"{tag}^{{commit}}", capture=True)
         if tag_sha != local_sha:
-            raise SystemExit(
-                f"error: {tag} points to {tag_sha}, expected {local_sha}"
-            )
+            raise SystemExit(f"error: {tag} points to {tag_sha}, expected {local_sha}")
     else:
         _run("git", "tag", "-a", tag, local_sha, "-m", f"DataExcept {version}")
         _run("git", "push", "origin", f"refs/tags/{tag}")
