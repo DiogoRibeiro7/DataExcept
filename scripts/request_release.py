@@ -36,13 +36,28 @@ def _version() -> str:
     return sys.argv[1]
 
 
+def _repository() -> str:
+    return _run(
+        "gh",
+        "repo",
+        "view",
+        "--json",
+        "nameWithOwner",
+        "-q",
+        ".nameWithOwner",
+        capture=True,
+    )
+
+
 def main() -> int:
     version = _version()
     tag = f"v{version}"
 
     branch = _run("git", "branch", "--show-current", capture=True)
     if branch != "main":
-        raise SystemExit(f"error: release requests must be made from main, got {branch!r}")
+        raise SystemExit(
+            f"error: release requests must be made from main, got {branch!r}"
+        )
 
     _run("git", "fetch", "origin", "main", "--tags")
     local_sha = _run("git", "rev-parse", "HEAD", capture=True)
@@ -79,7 +94,7 @@ def main() -> int:
     _run(
         "gh",
         "api",
-        f"repos/{_run('gh', 'repo', 'view', '--json', 'nameWithOwner', '-q', '.nameWithOwner', capture=True)}/dispatches",
+        f"repos/{_repository()}/dispatches",
         "--method",
         "POST",
         "-f",
