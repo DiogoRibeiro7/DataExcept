@@ -67,8 +67,10 @@ def main() -> int:
     print("Next:")
     print(f"  1. Move CHANGELOG.md's [Unreleased] entries under [{version}]")
     print("  2. Commit, open a pull request, and merge it")
-    print(f"  3. git tag v{version} && git push origin v{version}")
-    print("     Pushing the tag builds, publishes to PyPI and cuts the release.")
+    print(f"  3. Create and push annotated tag v{version} on the merged release commit")
+    print("  4. Dispatch the guarded Release workflow with event_type=release_tag")
+    print(f"     and payload tag=v{version}")
+    print("  5. Approve the pypi environment deployment when prompted")
     return 0
 
 

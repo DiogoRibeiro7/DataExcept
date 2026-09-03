@@ -85,10 +85,7 @@ The original 0.2–0.5 milestones are done:
   well as sensitive query and fragment values, including inside third-party
   causes and caller-supplied attributes.
 
-## Landed for 1.3.0 — Structured concurrent failures
-
-The implementation is on `main`; it will become a released feature when the
-1.3.0 release is cut.
+## Shipped in 1.3.0 — Structured concurrent failures
 
 - Preserve Python 3.11+ `ExceptionGroup` and `BaseExceptionGroup` trees under an
   `exceptions` field instead of flattening concurrent failures into one
