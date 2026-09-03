@@ -85,15 +85,59 @@ The original 0.2–0.5 milestones are done:
   well as sensitive query and fragment values, including inside third-party
   causes and caller-supplied attributes.
 
-## 1.3.0 — Structured concurrent failures
+## Landed for 1.3.0 — Structured concurrent failures
+
+The implementation is on `main`; it will become a released feature when the
+1.3.0 release is cut.
 
 - Preserve Python 3.11+ `ExceptionGroup` and `BaseExceptionGroup` trees under an
   `exceptions` field instead of flattening concurrent failures into one
   rendered message.
 - Apply the same redaction, public-attribute, cycle and depth-limit guarantees
   to group members as to ordinary causes and contexts.
+- Treat hostile or malformed exception-group member metadata as an export
+  boundary failure: fall back to the ordinary exception record instead of
+  raising from the serializer.
 - Keep Python 3.10 support with no `exceptiongroup` backport or added runtime
   dependency.
+- Keep the advanced usage guide aligned with the exact envelope shape and
+  fallback semantics.
+
+## Future — Language-neutral error envelope
+
+The structured envelope should become a deliberately language-neutral contract,
+not merely a Python implementation detail.
+
+- Define and version a JSON Schema for the stable envelope fields, including
+  `type`, `module`, `message`, `attributes`, `cause`, `context`, `exceptions`,
+  `cycle` and `truncated`.
+- Publish representative fixtures for ordinary exceptions, explicit causes,
+  implicit contexts, nested exception groups, redaction and truncation.
+- Add compatibility tests that validate emitted payloads against the schema.
+- Preserve the 1.x stability rule: additive fields are allowed, but established
+  field meanings do not change silently.
+
+## Future — Pino interoperability
+
+Make DataExcept envelopes easy to consume from Node.js services using Pino
+without adding a Node.js dependency to the Python package.
+
+- Define a Pino-compatible projection/profile for DataExcept envelopes, with a
+  natural `err` object and predictable mappings for `type`, `message`, causes,
+  extra attributes and nested group members.
+- Preserve DataExcept's richer `cause`, `context` and `exceptions` structure
+  rather than flattening it merely to imitate JavaScript's `Error` object.
+- Never fabricate a Python traceback or JavaScript stack. A stack field is only
+  emitted when a real stack representation exists at the integration boundary.
+- Keep the same redaction and failure-safety guarantees: converting an envelope
+  for Pino must be JSON-safe and must never replace the original error with a
+  serializer failure.
+- Provide documented JavaScript/TypeScript examples showing how a Pino custom
+  serializer or transport can consume the envelope.
+- Add cross-language contract fixtures/tests so a Python-produced DataExcept
+  payload and the Pino-side representation cannot drift independently.
+- Keep Pino support optional and dependency-free for Python users; any Node.js
+  helper package or adapter should live as a separate integration artifact.
 
 ## 0.5 — Coverage and correctness
 
