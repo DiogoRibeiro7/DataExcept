@@ -64,6 +64,11 @@ def wrap(
 ) -> DataExceptError:
     """Build *target* from *original*, recording it as the cause.
 
+    Extra keyword arguments are passed through to the target constructor. If
+    the target accepts a cause parameter, *original* is injected unless the
+    caller already supplied ``cause``, ``original`` or ``original_exception``.
+    The resulting exception is always chained to *original* via ``__cause__``.
+
     ``failure_metadata`` optionally overrides the target class's conservative
     default when the integration has backend-specific evidence about whether
     the failure is transient or retryable.
