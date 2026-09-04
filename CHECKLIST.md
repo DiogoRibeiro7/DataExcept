@@ -1,7 +1,7 @@
 # Package Quality Checklist
 
 An audit of this repository against a general Python packaging checklist,
-current as of 1.3.0 (2026-09-03). Unticked boxes are genuinely not done, not
+current as of 1.4.0 (2026-09-04). Unticked boxes are genuinely not done, not
 oversights.
 
 ---
