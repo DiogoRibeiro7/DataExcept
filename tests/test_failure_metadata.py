@@ -8,6 +8,7 @@ import pytest
 
 from dataexcept import (
     DatabaseConnectionError,
+    DataExceptError,
     ServiceAuthenticationError,
     ServiceAuthorizationError,
     StorageError,
@@ -86,6 +87,21 @@ def test_structured_envelope_always_contains_failure_object():
     assert permanent["failure"] == {
         "kind": "permanent",
         "retryable": False,
+        "retry_after_seconds": None,
+    }
+
+
+def test_hostile_failure_metadata_accessor_falls_back_to_unknown():
+    class HostileMetadataError(DataExceptError):
+        @property
+        def failure_metadata(self):
+            raise RuntimeError("metadata unavailable")
+
+    envelope = exception_to_dict(HostileMetadataError("boom"))
+
+    assert envelope["failure"] == {
+        "kind": "unknown",
+        "retryable": None,
         "retry_after_seconds": None,
     }
 
