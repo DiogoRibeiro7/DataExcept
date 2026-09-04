@@ -141,13 +141,25 @@ def _failure_record(exc: DataExceptError) -> dict[str, Any]:
             "retryable": metadata.retryable,
             "retry_after_seconds": metadata.retry_after_seconds,
         }
-        json.dumps(failure, allow_nan=False)
         if failure["kind"] not in {"transient", "permanent", "unknown"}:
             raise ValueError("invalid failure kind")
         if failure["retryable"] is not None and not isinstance(
             failure["retryable"], bool
         ):
             raise TypeError("invalid retryable value")
+
+        retry_after = failure["retry_after_seconds"]
+        if retry_after is not None:
+            if isinstance(retry_after, bool) or not isinstance(
+                retry_after, (int, float)
+            ):
+                raise TypeError("invalid retry_after_seconds value")
+            retry_after = float(retry_after)
+            if not math.isfinite(retry_after) or retry_after < 0:
+                raise ValueError("invalid retry_after_seconds value")
+            failure["retry_after_seconds"] = retry_after
+
+        json.dumps(failure, allow_nan=False)
         return failure
     except Exception:
         return dict(_UNKNOWN_FAILURE)
