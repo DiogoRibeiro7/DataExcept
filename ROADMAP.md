@@ -100,16 +100,36 @@ The original 0.2–0.5 milestones are done:
 - Keep the advanced usage guide aligned with the exact envelope shape and
   fallback semantics.
 
+## Shipped in 1.4.0 — Cause and failure metadata
+
+- **Canonical wrapped-exception causes** — `cause=` and `.cause` are the public
+  contract for migrated operational exceptions, while legacy `original` and
+  `original_exception` aliases remain compatible where already public.
+- **Machine-readable recovery metadata** — every `DataExceptError` exposes
+  `failure_kind`, `retryable`, `retry_after_seconds` and `failure_metadata`.
+  Defaults stay conservative: validation and unchanged auth failures are
+  permanent/non-retryable, while generic infrastructure failures remain
+  unknown unless an integration has backend-specific evidence.
+- **Backend-informed wrapping** — `wrap()` and `wrapping()` accept
+  `failure_metadata=` without changing target exception constructor APIs.
+- **Structured failure envelopes** — DataExcept records include a stable
+  `failure` object, with hostile or malformed custom metadata falling back to
+  the canonical unknown record rather than breaking serialization.
+- **Simplified release architecture** — release preparation uses normal
+  branches and pull requests; one permanent privileged Release workflow builds,
+  verifies and publishes only a reviewed commit on protected `main`.
+
 ## Future — Language-neutral error envelope
 
 The structured envelope should become a deliberately language-neutral contract,
 not merely a Python implementation detail.
 
 - Define and version a JSON Schema for the stable envelope fields, including
-  `type`, `module`, `message`, `attributes`, `cause`, `context`, `exceptions`,
-  `cycle` and `truncated`.
+  `type`, `module`, `message`, `attributes`, `failure`, `cause`, `context`,
+  `exceptions`, `cycle` and `truncated`.
 - Publish representative fixtures for ordinary exceptions, explicit causes,
-  implicit contexts, nested exception groups, redaction and truncation.
+  failure metadata, implicit contexts, nested exception groups, redaction and
+  truncation.
 - Add compatibility tests that validate emitted payloads against the schema.
 - Preserve the 1.x stability rule: additive fields are allowed, but established
   field meanings do not change silently.
@@ -120,10 +140,11 @@ Make DataExcept envelopes easy to consume from Node.js services using Pino
 without adding a Node.js dependency to the Python package.
 
 - Define a Pino-compatible projection/profile for DataExcept envelopes, with a
-  natural `err` object and predictable mappings for `type`, `message`, causes,
-  extra attributes and nested group members.
-- Preserve DataExcept's richer `cause`, `context` and `exceptions` structure
-  rather than flattening it merely to imitate JavaScript's `Error` object.
+  natural `err` object and predictable mappings for `type`, `message`, failure
+  metadata, causes, extra attributes and nested group members.
+- Preserve DataExcept's richer `failure`, `cause`, `context` and `exceptions`
+  structure rather than flattening it merely to imitate JavaScript's `Error`
+  object.
 - Never fabricate a Python traceback or JavaScript stack. A stack field is only
   emitted when a real stack representation exists at the integration boundary.
 - Keep the same redaction and failure-safety guarantees: converting an envelope
