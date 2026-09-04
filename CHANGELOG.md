@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-04
+
+### Added
+
+- **A canonical cause contract for operational exceptions.** New code can use
+  keyword-only `cause=` and the public `.cause` attribute, while existing
+  `original=` and `original_exception=` APIs remain supported where they were
+  already public. Accepted causes populate `__cause__`, survive pickling and
+  structured serialization, and invalid or ambiguous aliases fail fast.
+- **Machine-readable failure metadata.** Every `DataExceptError` exposes
+  `failure_kind`, `retryable`, `retry_after_seconds` and the immutable
+  `FailureMetadata` value object. Validation and authentication/authorization
+  failures have conservative permanent/non-retryable defaults; generic
+  infrastructure failures remain unknown unless backend evidence says more.
+- `wrap()` and `wrapping()` accept `failure_metadata=` so integrations can
+  attach backend-informed retryability without parsing messages or changing
+  exception constructors.
+- Structured envelopes now include a stable `failure` object carrying failure
+  kind, retryability and optional retry delay.
+
+### Changed
+
+- `wrap()` now prefers the canonical `cause` keyword when a target supports it,
+  while preserving explicit legacy cause overrides and always chaining the
+  actual wrapped exception through `__cause__`.
+- Release automation now uses one permanent privileged Release workflow. Normal
+  release preparation happens through ordinary branches and pull requests;
+  publication is requested only after the reviewed release commit reaches
+  protected `main`.
+
+### Fixed
+
+- Failure-metadata serialization now preserves the serializer's never-throw
+  contract even for hostile or malformed custom accessors. Invalid kinds,
+  retryability values, string or boolean delays, negative delays and non-finite
+  delays all fall back to the canonical unknown failure record; valid numeric
+  delays are normalised to `float`.
+- Cause-aware wrapping no longer injects a second canonical cause when a caller
+  already supplied a legacy `original` or `original_exception` override.
+
 ## [1.3.0] - 2026-09-03
 
 ### Added
@@ -188,7 +228,7 @@ and the [migration guide](https://diogoribeiro7.github.io/DataExcept/migration/)
 - Two classes assigned their attributes *after* calling `super().__init__`, so
   the sweep never saw them. Both now assign first, and a test fails if any
   constructor does it again.
-- The URL pattern carried a `` anchor, so a URL directly following a word
+- The URL pattern carried a `\b` anchor, so a URL directly following a word
   character was never matched — including `feature_https://...`, the step name
   `FeaturePreprocessingError` builds from its own argument.
 
@@ -570,7 +610,8 @@ First public release.
 - Published to PyPI via OIDC trusted publishing; no long-lived API token is
   involved in a release.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.0.0...v1.1.0
