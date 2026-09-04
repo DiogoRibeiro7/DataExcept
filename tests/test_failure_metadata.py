@@ -106,16 +106,23 @@ def test_hostile_failure_metadata_accessor_falls_back_to_unknown():
     }
 
 
-def test_malformed_retry_delay_falls_back_to_unknown():
+@pytest.mark.parametrize(
+    "retry_after",
+    ["later", True, -1, float("inf"), float("nan")],
+    ids=["string", "bool", "negative", "infinite", "nan"],
+)
+def test_malformed_retry_delay_falls_back_to_unknown(retry_after):
     class MalformedMetadata:
         failure_kind = "transient"
         retryable = True
-        retry_after_seconds = "later"
+
+        def __init__(self, retry_after_seconds):
+            self.retry_after_seconds = retry_after_seconds
 
     class MalformedMetadataError(DataExceptError):
         @property
         def failure_metadata(self):
-            return MalformedMetadata()
+            return MalformedMetadata(retry_after)
 
     envelope = exception_to_dict(MalformedMetadataError("boom"))
 
