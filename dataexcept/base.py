@@ -57,7 +57,10 @@ class UnpicklableValue:
         return self.__repr__()
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, UnpicklableValue) and other.description == self.description
+        return (
+            isinstance(other, UnpicklableValue)
+            and other.description == self.description
+        )
 
     def __hash__(self) -> int:
         return hash(self.description)
