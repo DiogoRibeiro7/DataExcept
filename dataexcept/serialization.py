@@ -153,6 +153,13 @@ def _failure_record(exc: DataExceptError) -> dict[str, Any]:
         return dict(_UNKNOWN_FAILURE)
 
 
+def _failure_fields(exc: BaseException) -> dict[str, Any]:
+    """Return the optional structured failure field for *exc*."""
+    if not isinstance(exc, DataExceptError):
+        return {}
+    return {"failure": _failure_record(exc)}
+
+
 def _exception_record(
     exc: BaseException,
     *,
@@ -179,8 +186,7 @@ def _exception_record(
         "module": type(exc).__module__,
         "message": _safe_text(exc),
     }
-    if isinstance(exc, DataExceptError):
-        record["failure"] = _failure_record(exc)
+    record.update(_failure_fields(exc))
     if include_attributes:
         attributes = _attributes(exc)
         if attributes:
