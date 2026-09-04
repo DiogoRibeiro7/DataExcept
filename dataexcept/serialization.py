@@ -16,6 +16,11 @@ __all__ = ["exception_to_dict", "exception_to_json"]
 _MAX_VALUE_DEPTH = 8
 _NOT_SCALAR = object()
 _EXCEPTION_GROUP_TYPE = getattr(builtins, "BaseExceptionGroup", None)
+_UNKNOWN_FAILURE = {
+    "kind": "unknown",
+    "retryable": None,
+    "retry_after_seconds": None,
+}
 
 
 def _redact_export_text(text: str) -> str:
@@ -127,6 +132,27 @@ def _group_members(exc: BaseException) -> Sequence[BaseException] | None:
         return None
 
 
+def _failure_record(exc: DataExceptError) -> dict[str, Any]:
+    """Return failure metadata without letting hostile overrides escape."""
+    try:
+        metadata = exc.failure_metadata
+        failure = {
+            "kind": metadata.failure_kind,
+            "retryable": metadata.retryable,
+            "retry_after_seconds": metadata.retry_after_seconds,
+        }
+        json.dumps(failure, allow_nan=False)
+        if failure["kind"] not in {"transient", "permanent", "unknown"}:
+            raise ValueError("invalid failure kind")
+        if failure["retryable"] is not None and not isinstance(
+            failure["retryable"], bool
+        ):
+            raise TypeError("invalid retryable value")
+        return failure
+    except Exception:
+        return dict(_UNKNOWN_FAILURE)
+
+
 def _exception_record(
     exc: BaseException,
     *,
@@ -154,12 +180,7 @@ def _exception_record(
         "message": _safe_text(exc),
     }
     if isinstance(exc, DataExceptError):
-        metadata = exc.failure_metadata
-        record["failure"] = {
-            "kind": metadata.failure_kind,
-            "retryable": metadata.retryable,
-            "retry_after_seconds": metadata.retry_after_seconds,
-        }
+        record["failure"] = _failure_record(exc)
     if include_attributes:
         attributes = _attributes(exc)
         if attributes:
