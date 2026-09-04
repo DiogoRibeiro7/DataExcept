@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from ._causes import resolve_cause
 from .base import DataExceptError
 from .redaction import redact_if_url, redact_url
 
@@ -50,7 +51,7 @@ class StorageError(PipelineError):
         default = f"Storage {operation} failed at location: '{location}'."
         self.location = redact_if_url(location)
         self.operation = operation
-        self.cause = cause
+        self.cause = resolve_cause(cause=cause)
         super().__init__(message or default)
 
 
