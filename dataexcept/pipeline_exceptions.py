@@ -6,6 +6,7 @@ from typing import Any, Optional
 
 from ._causes import resolve_cause
 from .base import DataExceptError
+from .failure_metadata import FailureMetadata
 from .redaction import redact_if_url, redact_url
 
 
@@ -30,8 +31,6 @@ class FeaturePreprocessingError(PreprocessingError):
     """Raised when feature engineering fails."""
 
     def __init__(self, feature: str, reason: Optional[str] = None) -> None:
-        # Assigned before super(): DataExceptError.__init__ sweeps the stored
-        # strings for URLs, and anything set afterwards escapes that.
         self.feature = feature
         self.reason = reason
         super().__init__(step_name=f"feature_{feature}", details=reason)
@@ -108,6 +107,11 @@ class ExternalServiceError(PipelineError):
 class ServiceAuthenticationError(ExternalServiceError):
     """Authentication to an external service failed."""
 
+    _default_failure_metadata = FailureMetadata(
+        failure_kind="permanent",
+        retryable=False,
+    )
+
     def __init__(
         self,
         service_name: str,
@@ -119,6 +123,11 @@ class ServiceAuthenticationError(ExternalServiceError):
 
 class ServiceAuthorizationError(ExternalServiceError):
     """Authorization was denied by an external service."""
+
+    _default_failure_metadata = FailureMetadata(
+        failure_kind="permanent",
+        retryable=False,
+    )
 
     def __init__(
         self,
@@ -154,7 +163,6 @@ class ApiError(PipelineError):
         status_code: Optional[int] = None,
         message: Optional[str] = None,
     ) -> None:
-        # An endpoint URL may authenticate through a query parameter.
         self.endpoint = redact_url(endpoint)
         default = f"API call failed: {self.endpoint}"
         if status_code is not None:

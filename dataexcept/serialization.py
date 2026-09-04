@@ -8,6 +8,7 @@ import math
 from collections.abc import Mapping, Sequence, Set
 from typing import Any
 
+from .base import DataExceptError
 from .redaction import redact_urls_in_text
 
 __all__ = ["exception_to_dict", "exception_to_json"]
@@ -15,16 +16,15 @@ __all__ = ["exception_to_dict", "exception_to_json"]
 _MAX_VALUE_DEPTH = 8
 _NOT_SCALAR = object()
 _EXCEPTION_GROUP_TYPE = getattr(builtins, "BaseExceptionGroup", None)
+_UNKNOWN_FAILURE = {
+    "kind": "unknown",
+    "retryable": None,
+    "retry_after_seconds": None,
+}
 
 
 def _redact_export_text(text: str) -> str:
-    """Scrub URLs for export, including their paths.
-
-    Normal DataExcept messages preserve URL paths because paths are commonly
-    useful debugging context. Structured envelopes have a stricter boundary:
-    third-party errors and arbitrary caller state may put credentials in the
-    path itself, so exported text never preserves URL paths.
-    """
+    """Scrub URLs for export, including their paths."""
     return redact_urls_in_text(text, keep_path=False)
 
 
@@ -132,6 +132,34 @@ def _group_members(exc: BaseException) -> Sequence[BaseException] | None:
         return None
 
 
+def _failure_record(exc: DataExceptError) -> dict[str, Any]:
+    """Return failure metadata without letting hostile overrides escape."""
+    try:
+        metadata = exc.failure_metadata
+        failure = {
+            "kind": metadata.failure_kind,
+            "retryable": metadata.retryable,
+            "retry_after_seconds": metadata.retry_after_seconds,
+        }
+        json.dumps(failure, allow_nan=False)
+        if failure["kind"] not in {"transient", "permanent", "unknown"}:
+            raise ValueError("invalid failure kind")
+        if failure["retryable"] is not None and not isinstance(
+            failure["retryable"], bool
+        ):
+            raise TypeError("invalid retryable value")
+        return failure
+    except Exception:
+        return dict(_UNKNOWN_FAILURE)
+
+
+def _failure_fields(exc: BaseException) -> dict[str, Any]:
+    """Return the optional structured failure field for *exc*."""
+    if not isinstance(exc, DataExceptError):
+        return {}
+    return {"failure": _failure_record(exc)}
+
+
 def _exception_record(
     exc: BaseException,
     *,
@@ -158,6 +186,7 @@ def _exception_record(
         "module": type(exc).__module__,
         "message": _safe_text(exc),
     }
+    record.update(_failure_fields(exc))
     if include_attributes:
         attributes = _attributes(exc)
         if attributes:
@@ -203,13 +232,7 @@ def exception_to_dict(
     include_attributes: bool = True,
     max_depth: int = 8,
 ) -> dict[str, Any]:
-    """Return a strict JSON-safe structured representation of *exc*.
-
-    The representation contains the exception type, module and rendered
-    message, optionally public instance attributes, bounded cause/context
-    chains, and on Python 3.11+ the member tree of exception groups. Traceback
-    frames and private attributes are deliberately excluded.
-    """
+    """Return a strict JSON-safe structured representation of *exc*."""
     if not isinstance(exc, BaseException):
         raise TypeError("exc must be an exception instance")
     if not isinstance(max_depth, int) or isinstance(max_depth, bool):

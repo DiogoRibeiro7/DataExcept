@@ -25,11 +25,10 @@ import inspect
 from typing import Any, Iterator, Tuple, Type, Union
 
 from .base import DataExceptError
+from .failure_metadata import FailureMetadata
 
 __all__ = ["wrap", "wrapping"]
 
-#: Constructor parameter names used across the package for a wrapped
-#: exception. Prefer the canonical keyword and fall back to legacy aliases.
 _CAUSE_PARAMETERS = ("cause", "original", "original_exception")
 
 Catchable = Union[Type[BaseException], Tuple[Type[BaseException], ...]]
@@ -59,32 +58,35 @@ def wrap(
     original: BaseException,
     target: Type[DataExceptError],
     /,
+    *,
+    failure_metadata: FailureMetadata | None = None,
     **kwargs: Any,
 ) -> DataExceptError:
     """Build *target* from *original*, recording it as the cause.
 
-    Extra keyword arguments go to the constructor::
+    Extra keyword arguments are passed through to the target constructor. If
+    the target accepts a cause parameter, *original* is injected unless the
+    caller already supplied ``cause``, ``original`` or ``original_exception``.
+    The resulting exception is always chained to *original* via ``__cause__``.
 
-        raise wrap(exc, DataLoadingError, source=path) from exc
-
-    If *target* accepts a cause parameter, *original* is passed to it. Either
-    way ``__cause__`` is set, so a traceback shows the underlying failure even
-    for a class that records nothing.
-
-    An explicit cause keyword wins, so callers can still say exactly what they
-    mean. Legacy cause aliases remain valid for classes that expose them. The
-    traceback chain still points to *original*, the failure that ``wrap`` was
-    asked to translate.
+    ``failure_metadata`` optionally overrides the target class's conservative
+    default when the integration has backend-specific evidence about whether
+    the failure is transient or retryable.
     """
+    if failure_metadata is not None and not isinstance(
+        failure_metadata, FailureMetadata
+    ):
+        raise TypeError("failure_metadata must be FailureMetadata or None")
+
     if _explicit_cause_parameter(kwargs) is None:
         parameter = _cause_parameter(target)
         if parameter is not None:
             kwargs[parameter] = original
 
     exception = target(**kwargs)
-    # Set unconditionally: the target may record nothing, and the point is that
-    # the traceback shows what actually failed.
     exception.__cause__ = original
+    if failure_metadata is not None:
+        exception.with_failure_metadata(failure_metadata)
     return exception
 
 
@@ -93,22 +95,17 @@ def wrapping(
     catch: Catchable,
     target: Type[DataExceptError],
     /,
+    *,
+    failure_metadata: FailureMetadata | None = None,
     **kwargs: Any,
 ) -> Iterator[None]:
-    """Translate *catch* raised inside the block into *target*.
-
-    ::
-
-        with wrapping(OSError, DataLoadingError, source=path):
-            frame = pd.read_csv(path)
-
-    Only exceptions matching *catch* are translated; everything else propagates
-    untouched, including anything already raised by this package. Because
-    *catch* is given explicitly there is no default broad ``except``, so a
-    ``KeyboardInterrupt`` or a bug in the block is never relabelled as a data
-    error.
-    """
+    """Translate *catch* raised inside the block into *target*."""
     try:
         yield
     except catch as exc:
-        raise wrap(exc, target, **kwargs) from exc
+        raise wrap(
+            exc,
+            target,
+            failure_metadata=failure_metadata,
+            **kwargs,
+        ) from exc

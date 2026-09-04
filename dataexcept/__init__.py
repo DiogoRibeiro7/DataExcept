@@ -111,6 +111,7 @@ from .exceptions import (
     ValidationError,
     WebhookError,
 )
+from .failure_metadata import FailureKind, FailureMetadata
 from .io_exceptions import (
     CustomIOError,
     FileLockError,
@@ -163,13 +164,11 @@ from .serialization import exception_to_dict, exception_to_json
 from .wrapping import wrap, wrapping
 
 __all__ = [
-    # The root of the hierarchy: catches every operational exception the
-    # package raises.
     "DataExceptError",
-    # Placeholders for state that could not survive serialization.
     "UnpicklableCause",
     "UnpicklableValue",
-    # Every exception class the package defines.
+    "FailureKind",
+    "FailureMetadata",
     "ApiError",
     "AuthenticationError",
     "AuthorizationError",
@@ -268,18 +267,14 @@ __all__ = [
     "UnderfittingError",
     "ValidationError",
     "WebhookError",
-    # Turning a third-party exception into one of these.
     "wrap",
     "wrapping",
-    # Structured serialization for APIs, queues and telemetry.
     "exception_to_dict",
     "exception_to_json",
-    # Logging helpers.
     "Context",
     "log_and_raise",
     "log_exception",
     "log_then_raise",
-    # Domain modules, for callers who prefer a qualified import.
     "database_exceptions",
     "dataengineering_exceptions",
     "datascience_exceptions",
