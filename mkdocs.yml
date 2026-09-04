@@ -77,6 +77,7 @@ nav:
   - Command-Line Interface: cli.md
   - Logging Helpers: logging.md
   - Cause-aware Exceptions: causes.md
+  - Failure Metadata: failure_metadata.md
   - Advanced Usage: advanced_usage.md
   - API Reference: api.md
   - API Stability: stability.md
