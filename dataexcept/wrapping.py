@@ -13,9 +13,9 @@ wrong parameter and it is not recorded at all; catch too broadly and a
 ``KeyboardInterrupt`` becomes a data-loading error.
 
 :func:`wrap` and :func:`wrapping` do the same thing with the wiring settled.
-The original is passed to whichever constructor parameter takes a cause --
-``original``, ``original_exception`` or ``cause``, whichever that class uses --
-and set as ``__cause__`` either way, so a traceback always shows both.
+New cause-aware constructors use the canonical keyword ``cause``. Legacy
+``original`` and ``original_exception`` parameters remain supported, and
+``__cause__`` is set either way so a traceback always shows both failures.
 """
 
 from __future__ import annotations
@@ -29,8 +29,8 @@ from .base import DataExceptError
 __all__ = ["wrap", "wrapping"]
 
 #: Constructor parameter names used across the package for a wrapped
-#: exception. Checked in this order; the first the target accepts wins.
-_CAUSE_PARAMETERS = ("original", "original_exception", "cause")
+#: exception. Prefer the canonical keyword and fall back to legacy aliases.
+_CAUSE_PARAMETERS = ("cause", "original", "original_exception")
 
 Catchable = Union[Type[BaseException], Tuple[Type[BaseException], ...]]
 
@@ -43,6 +43,14 @@ def _cause_parameter(target: Type[DataExceptError]) -> str | None:
         return None
     for name in _CAUSE_PARAMETERS:
         if name in parameters:
+            return name
+    return None
+
+
+def _explicit_cause_parameter(kwargs: dict[str, Any]) -> str | None:
+    """Return an explicitly supplied canonical or legacy cause keyword."""
+    for name in _CAUSE_PARAMETERS:
+        if name in kwargs:
             return name
     return None
 
@@ -63,12 +71,15 @@ def wrap(
     way ``__cause__`` is set, so a traceback shows the underlying failure even
     for a class that records nothing.
 
-    An explicit ``original``/``cause`` keyword wins, so a caller can still say
-    exactly what they mean.
+    An explicit cause keyword wins, so callers can still say exactly what they
+    mean. Legacy cause aliases remain valid for classes that expose them. The
+    traceback chain still points to *original*, the failure that ``wrap`` was
+    asked to translate.
     """
-    parameter = _cause_parameter(target)
-    if parameter is not None and parameter not in kwargs:
-        kwargs[parameter] = original
+    if _explicit_cause_parameter(kwargs) is None:
+        parameter = _cause_parameter(target)
+        if parameter is not None:
+            kwargs[parameter] = original
 
     exception = target(**kwargs)
     # Set unconditionally: the target may record nothing, and the point is that
