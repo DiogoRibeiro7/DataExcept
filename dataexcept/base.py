@@ -34,13 +34,11 @@ from __future__ import annotations
 import pickle
 from typing import Any, Dict, Optional, Tuple, Type
 
-from .failure_metadata import FailureMetadata
+from .failure_metadata import FailureKind, FailureMetadata
 from .redaction import redact_urls_in_text
 
 __all__ = ["DataExceptError", "UnpicklableCause", "UnpicklableValue"]
 
-#: Attribute names used across the package to hold the exception that caused
-#: this one. Checked in order; the first that holds an exception wins.
 _CAUSE_ATTRIBUTES = ("original", "original_exception", "cause")
 
 
@@ -131,14 +129,13 @@ class DataExceptError(Exception):
 
     @property
     def failure_metadata(self) -> FailureMetadata:
-        """Return instance override metadata or the class default."""
         override = self.__dict__.get("_failure_metadata_override")
         if isinstance(override, FailureMetadata):
             return override
         return type(self)._default_failure_metadata
 
     @property
-    def failure_kind(self) -> str:
+    def failure_kind(self) -> FailureKind:
         return self.failure_metadata.failure_kind
 
     @property
@@ -173,4 +170,9 @@ class DataExceptError(Exception):
 
 
 class UnpicklableCause(DataExceptError):
-    """Stands in for a cause that could not be serialized."""
+    """Stands in for a cause that could not be serialized.
+
+    ``__cause__`` and ``__context__`` must be exceptions, so the placeholder
+    used for ordinary attributes will not do here. Dropping the chain instead
+    would silently lose the reason for the failure.
+    """
