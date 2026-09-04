@@ -106,6 +106,26 @@ def test_hostile_failure_metadata_accessor_falls_back_to_unknown():
     }
 
 
+def test_malformed_retry_delay_falls_back_to_unknown():
+    class MalformedMetadata:
+        failure_kind = "transient"
+        retryable = True
+        retry_after_seconds = "later"
+
+    class MalformedMetadataError(DataExceptError):
+        @property
+        def failure_metadata(self):
+            return MalformedMetadata()
+
+    envelope = exception_to_dict(MalformedMetadataError("boom"))
+
+    assert envelope["failure"] == {
+        "kind": "unknown",
+        "retryable": None,
+        "retry_after_seconds": None,
+    }
+
+
 def test_wrap_accepts_backend_informed_failure_metadata():
     cause = OSError("temporarily unavailable")
     metadata = FailureMetadata(
