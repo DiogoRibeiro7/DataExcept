@@ -45,6 +45,10 @@ coverage = "*"
 flake8 = "*"
 hypothesis = "*"
 isort = "*"
+# Only the envelope contract tests use this. It stays out of the runtime
+# dependencies deliberately: the package publishes the schema, it does not
+# validate against it.
+jsonschema = "*"
 mypy = "*"
 pre-commit = "*"
 pytest = "*"
