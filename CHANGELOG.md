@@ -25,10 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   every exception class the package defines, and that reject malformed
   envelopes so the schema cannot quietly become vacuous.
 
-The envelope shape itself is unchanged: this release writes down and tests the
-contract that has held since 1.2.0. The schema is versioned separately from the
-package, and DataExcept still takes no runtime dependency on a validator —
-it publishes the contract rather than checking its own output.
+The envelope shape itself is unchanged here: this release writes down and tests
+the payload as it already stands. That payload has been emitted since 1.2.0 and
+reached its current shape in 1.4.0, having gained `exceptions` in 1.3.0 and
+`failure` in 1.4.0; schema 1.0.0 describes that shape. The schema is versioned
+separately from the package, and DataExcept still takes no runtime dependency on
+a validator — it publishes the contract rather than checking its own output.
 
 ## [1.4.0] - 2026-09-04
 

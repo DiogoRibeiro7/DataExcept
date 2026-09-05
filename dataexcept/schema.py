@@ -1,9 +1,11 @@
 """The published, versioned schema for structured exception envelopes.
 
-:func:`dataexcept.exception_to_dict` has produced the same envelope shape since
-1.2.0, but the shape was only ever described in prose. Prose is not something a
-Node.js or Go consumer can test against, and a field whose meaning is implied
-by one implementation drifts the moment that implementation changes.
+:func:`dataexcept.exception_to_dict` has produced envelopes since 1.2.0, and
+they grew: ``exceptions`` for group members in 1.3.0, the ``failure`` object in
+1.4.0. Every one of those fields was described only in prose. Prose is not
+something a Node.js or Go consumer can test against, and a field whose meaning
+is implied by one implementation drifts the moment that implementation
+changes.
 
 The schema shipped here is that contract, written down and versioned
 independently of the package: it describes the payload, not the release that

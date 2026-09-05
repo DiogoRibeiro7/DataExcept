@@ -1,10 +1,11 @@
 # Envelope Schema
 
-`exception_to_dict()` and `exception_to_json()` have produced the same payload
-shape since 1.2.0, but that shape was described only in prose. Prose is not
-something a Node.js, Go or Rust consumer can test against, and a field whose
-meaning is implied by one implementation drifts the moment that implementation
-changes.
+`exception_to_dict()` and `exception_to_json()` have produced envelopes since
+1.2.0, and the payload grew as the library did: `exceptions` for group members
+in 1.3.0, the `failure` object in 1.4.0. All of it was described only in prose.
+Prose is not something a Node.js, Go or Rust consumer can test against, and a
+field whose meaning is implied by one implementation drifts the moment that
+implementation changes.
 
 The envelope is therefore published as a JSON Schema, versioned independently
 of the package: it describes the payload, not the release that emitted it.
@@ -31,8 +32,11 @@ checking belongs to whoever consumes them, in whichever language.
 
 ## The shape
 
-An envelope node is either an **exception record** or the **truncation
-marker** that replaces one past the depth budget.
+An envelope node is one of three kinds, told apart by shape alone: an
+**exception record**, the **cycle record** standing in for an exception already
+on the path from the root, or the **truncation marker** replacing a child past
+the depth budget. Both markers are exact — a validator rejects either one
+carrying anything beyond the fields listed for it.
 
 Field         | Type              | Meaning
 ------------- | ----------------- | ------------------------------------------------------------------------------------------
@@ -44,7 +48,7 @@ Field         | Type              | Meaning
 `cause`       | envelope          | The explicitly chained exception, from `raise ... from ...`.
 `context`     | envelope          | The implicitly chained exception, from raising inside an `except` block. Absent when the context was suppressed.
 `exceptions`  | array of envelopes | Members of an exception group. Absent — rather than empty — for an ordinary exception.
-`cycle`       | `true`            | Set when the record repeats an exception already on the path from the root. Such a record carries identity and message only, so a cyclic chain terminates.
+`cycle`       | `true`            | Marks a cycle record: this exception is already on the path from the root. Such a record carries `type`, `module`, `message` and this field and nothing else — no cause, context, members or attributes — so following a chain always terminates.
 `truncated`   | `true`            | The truncation marker, and the only field it carries. The record it stands for was never rendered.
 
 The `failure` object always carries all three of its fields:
@@ -88,7 +92,8 @@ it is discovered.
 ## What the version promises
 
 The schema version tracks the envelope, not the package. It moves when the
-contract changes, and it did not move in 1.4.0 merely because DataExcept did.
+payload changes, so a later DataExcept release that touches nothing in the
+envelope still serves `envelope-1.0.0.json`.
 
 Within 1.x:
 

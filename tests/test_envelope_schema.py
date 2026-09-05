@@ -1,8 +1,9 @@
 """The envelope is a published contract, not an implementation detail.
 
-``exception_to_dict`` has emitted the same shape since 1.2.0, but the shape was
-described only in prose, and prose cannot be tested against by a consumer in
-another language. These tests hold three things together: the schema document
+``exception_to_dict`` has emitted envelopes since 1.2.0 and gained fields since,
+but the shape was described only in prose, and prose cannot be tested against
+by a consumer in another language. These tests hold three things together: the
+schema document
 the package ships, the fixtures published alongside it, and what the serializer
 actually produces today.
 
@@ -42,9 +43,13 @@ PACKAGED_SCHEMA = (
 SCHEMA = envelope_schema()
 VALIDATOR = Draft202012Validator(SCHEMA)
 
-#: The fields the 1.x envelope contract covers. Adding one is allowed by the
-#: stability policy; adding one silently is not, which is what this pins.
-RECORD_FIELDS = {
+#: The three kinds of envelope node, which a consumer tells apart by shape.
+NODE_KINDS = ("truncationMarker", "cycleRecord", "exceptionRecord")
+
+#: The fields the 1.x envelope contract covers, across all three node kinds.
+#: Adding one is allowed by the stability policy; adding one silently is not,
+#: which is what this pins.
+NODE_FIELDS = {
     "type",
     "module",
     "message",
@@ -54,6 +59,7 @@ RECORD_FIELDS = {
     "context",
     "exceptions",
     "cycle",
+    "truncated",
 }
 
 CLASSES = _probe.all_exception_classes()
@@ -112,20 +118,42 @@ def test_the_schema_is_reachable_from_the_top_level() -> None:
 
 
 def test_the_schema_constrains_exactly_the_documented_fields() -> None:
-    record = SCHEMA["$defs"]["exceptionRecord"]
-    assert set(record["properties"]) == RECORD_FIELDS, (
+    defs = SCHEMA["$defs"]
+    named = set().union(*(defs[kind]["properties"] for kind in NODE_KINDS))
+
+    assert named == NODE_FIELDS, (
         "the envelope gained or lost a field; bump the schema version and say "
         "so in the changelog rather than changing this quietly"
     )
-    assert set(record["required"]) == {"type", "module", "message"}
-    assert set(SCHEMA["$defs"]["truncationMarker"]["properties"]) == {"truncated"}
+    assert set(defs["exceptionRecord"]["required"]) == {"type", "module", "message"}
+    assert set(defs["truncationMarker"]["properties"]) == {"truncated"}
+    assert set(defs["cycleRecord"]["properties"]) == {
+        "type",
+        "module",
+        "message",
+        "cycle",
+    }
+
+
+def test_a_cycle_record_may_not_carry_the_chain_it_terminates() -> None:
+    """Following a cycle record's cause would be following the loop again."""
+    marker = {"type": "E", "module": "b", "message": "x", "cycle": True}
+    child = {"type": "E", "module": "b", "message": "y"}
+
+    assert VALIDATOR.is_valid(marker)
+    assert not VALIDATOR.is_valid({**marker, "cause": child})
+    assert not VALIDATOR.is_valid({**marker, "exceptions": [child]})
+    assert not VALIDATOR.is_valid({**marker, "attributes": {"field": "age"}})
 
 
 @pytest.mark.parametrize("name", sorted(CLASSES))
 def test_every_exception_serializes_to_a_valid_envelope(name: str) -> None:
     exc = _probe.plausible_instance(CLASSES[name])
     if exc is None:
-        pytest.skip(f"{name} cannot be built from its annotations")
+        # Never skip: an unconstructible class is silently outside this
+        # contract. test_contract_coverage.py fails on it separately.
+        assert name in _probe.UNCONSTRUCTIBLE, f"{name} is not covered by this contract"
+        pytest.skip(f"{name} is an explicitly reviewed exclusion")
 
     assert_valid(exception_to_dict(exc), f"the envelope for {name}")
 
@@ -143,7 +171,7 @@ def test_the_serializer_emits_no_field_the_contract_does_not_name() -> None:
     """The record schema accepts unknown fields; this is what would notice one."""
     payload = exception_to_dict(dataexcept.ValidationError("age", -1))
 
-    assert set(payload) <= RECORD_FIELDS
+    assert set(payload) <= NODE_FIELDS
 
 
 @pytest.mark.parametrize(
