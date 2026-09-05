@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A published JSON Schema for the structured envelope.** The payload
+  `exception_to_dict()` and `exception_to_json()` produce is now a versioned,
+  language-neutral contract rather than prose. `envelope_schema()`,
+  `ENVELOPE_SCHEMA_VERSION` and `ENVELOPE_SCHEMA_ID` expose it from the top
+  level; the document ships inside the package and is published at its `$id`,
+  so a consumer in another language can fetch it without installing anything
+  Python.
+- Reference envelope fixtures covering ordinary exceptions, explicit causes,
+  failure metadata, implicit contexts, nested exception groups, redaction,
+  truncation and cycles. Each is produced by running the real serializer over a
+  real exception, and CI fails if a committed fixture stops matching what the
+  serializer emits.
+- Compatibility tests that validate an emitted envelope against the schema for
+  every exception class the package defines, and that reject malformed
+  envelopes so the schema cannot quietly become vacuous.
+
+The envelope shape itself is unchanged: this release writes down and tests the
+contract that has held since 1.2.0. The schema is versioned separately from the
+package, and DataExcept still takes no runtime dependency on a validator —
+it publishes the contract rather than checking its own output.
+
 ## [1.4.0] - 2026-09-04
 
 ### Added
