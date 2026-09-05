@@ -46,8 +46,8 @@
       "type": "object",
       "required": ["type", "module", "message"],
       "not": {
-        "$comment": "A repeat is a cycleRecord, which is stricter about what it may carry.",
-        "required": ["cycle"]
+        "$comment": "A repeat is a cycleRecord and a cut-off child is a truncationMarker. Both are stricter about what they may carry, so neither marker field may appear on a record rendered in full -- otherwise a consumer keying on one of them would misclassify this node.",
+        "anyOf": [{ "required": ["cycle"] }, { "required": ["truncated"] }]
       },
       "properties": {
         "type": { "$ref": "#/$defs/exceptionType" },

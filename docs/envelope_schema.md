@@ -35,8 +35,10 @@ checking belongs to whoever consumes them, in whichever language.
 An envelope node is one of three kinds, told apart by shape alone: an
 **exception record**, the **cycle record** standing in for an exception already
 on the path from the root, or the **truncation marker** replacing a child past
-the depth budget. Both markers are exact — a validator rejects either one
-carrying anything beyond the fields listed for it.
+the depth budget. Both markers are exact, and the exclusion runs both
+ways: a validator rejects either marker carrying anything beyond the fields
+listed for it, and rejects a record rendered in full that carries `cycle` or
+`truncated` at all.
 
 Field         | Type              | Meaning
 ------------- | ----------------- | ------------------------------------------------------------------------------------------

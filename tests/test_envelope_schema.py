@@ -190,6 +190,10 @@ def test_the_serializer_emits_no_field_the_contract_does_not_name() -> None:
             id="cycle-false",
         ),
         pytest.param(
+            {"type": "E", "module": "b", "message": "x", "truncated": True},
+            id="full-record-wearing-a-marker-field",
+        ),
+        pytest.param(
             {"type": "E", "module": "b", "message": "x", "attributes": []},
             id="attributes-not-an-object",
         ),
