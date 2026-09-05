@@ -11,6 +11,24 @@ import importlib.util
 import pathlib
 
 
+def _schema_problem() -> str | None:
+    """Return why the shipped envelope schema is unusable, if it is.
+
+    The schema is a data file inside the package, so it ships only if the build
+    backend was told to carry non-Python files. Loading it proves both that it
+    is present and that it survived the trip intact.
+    """
+    import dataexcept
+
+    try:
+        schema_id = dataexcept.envelope_schema()["$id"]
+    except Exception as exc:
+        return f"the envelope schema does not load from the wheel: {exc}"
+    if schema_id != dataexcept.ENVELOPE_SCHEMA_ID:
+        return f"the shipped schema declares {schema_id!r}"
+    return None
+
+
 def main() -> int:
     spec = importlib.util.find_spec("dataexcept")
     if spec is None or spec.origin is None:
@@ -26,6 +44,10 @@ def main() -> int:
 
     import dataexcept
 
+    schema_problem = _schema_problem()
+    if schema_problem:
+        problems.append(schema_problem)
+
     if len(dataexcept.__all__) < 100:
         problems.append(f"__all__ has only {len(dataexcept.__all__)} names")
     unreachable = [name for name in dataexcept.__all__ if not hasattr(dataexcept, name)]
@@ -39,6 +61,7 @@ def main() -> int:
 
     print(
         f"OK: {len(dataexcept.__all__)} names exported, py.typed present, "
+        f"envelope schema {dataexcept.ENVELOPE_SCHEMA_VERSION} shipped, "
         f"version {dataexcept.__version__}"
     )
     return 0
