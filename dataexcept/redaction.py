@@ -107,7 +107,17 @@ def _is_sensitive(name: str) -> bool:
 # in the step name "feature_https://..." that FeaturePreprocessingError
 # builds. The scheme character class excludes "_", so a match still starts
 # at the scheme rather than mid-word.
-_URL_IN_TEXT = re.compile(r"[a-zA-Z][a-zA-Z0-9+.\-]*://[^\s'\"<>,;)\]}]+")
+#
+# Where the URL ends needs two character classes rather than one. A comma,
+# semicolon, closing bracket or quote never belongs to a URL in prose, so the
+# body simply excludes them. A full stop, colon, exclamation or question mark
+# does belong inside one -- and also ends the sentence it sits in -- so the
+# body runs through them and only the last character is required not to be
+# one. "see https://h/p?token=SECRET: retry" then keeps its separator instead
+# of losing the colon into the redacted URL.
+_URL_BODY = r"[^\s'\"<>,;)\]}]"
+_URL_END = r"[^\s'\"<>,;)\]}.:!?]"
+_URL_IN_TEXT = re.compile(rf"[a-zA-Z][a-zA-Z0-9+.\-]*://{_URL_BODY}*{_URL_END}")
 
 
 def fingerprint(value: str) -> str:

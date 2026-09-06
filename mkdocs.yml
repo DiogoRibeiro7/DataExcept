@@ -76,6 +76,10 @@ nav:
   - Home: index.md
   - Command-Line Interface: cli.md
   - Logging Helpers: logging.md
+  - Cause-aware Exceptions: causes.md
+  - Parsing Context: parsing_context.md
+  - Failure Metadata: failure_metadata.md
+  - Envelope Schema: envelope_schema.md
   - Advanced Usage: advanced_usage.md
   - API Reference: api.md
   - API Stability: stability.md

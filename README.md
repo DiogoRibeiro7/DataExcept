@@ -18,6 +18,7 @@
 - **🏗️ Hierarchical Structure**: Catch one specific error, a whole domain, or every operational error via `DataExceptError`
 - **📦 One Import**: Every exception is available from `dataexcept` directly, or from its domain module — same objects either way
 - **📊 Data Science Focused**: 100 exception classes covering ML pipelines, feature engineering, model training
+- **🧭 Language-neutral envelopes**: exceptions export to strict JSON against a published, versioned schema — so a non-Python consumer can validate what it receives
 - **🔧 Production Ready**: Logging helpers, error context, and exceptions that pickle — so they cross a process boundary with their message, attributes and cause intact
 - **📚 Academic Quality**: Proper documentation, type hints, and citation support
 - **🐍 Python 3.10 – 3.14**: Every supported version tested in CI, with full type safety
@@ -184,6 +185,24 @@ except Exception as exc:
     raise
 ```
 
+### Structured Error Envelopes
+
+```python
+from dataexcept import ValidationError, exception_to_json
+
+try:
+    validate_row(row)
+except ValidationError as exc:
+    # Strict JSON: identity, message, public attributes, failure metadata and
+    # the cause chain, with credential-bearing URLs already redacted.
+    logger.error(exception_to_json(exc, sort_keys=True))
+```
+
+The payload shape is a versioned, language-neutral contract, published as a
+[JSON Schema](https://diogoribeiro7.github.io/DataExcept/envelope_schema/) with
+reference fixtures, so a Node.js or Go consumer can be tested against the same
+document Python emits.
+
 ### Command Line Interface
 
 ```bash
@@ -337,6 +356,7 @@ through [SECURITY.md](SECURITY.md), not the public issue tracker.
 - **API Stability**: [What is public and what may change](https://diogoribeiro7.github.io/DataExcept/stability/)
 - **Upgrading from 0.x**: [Migration guide](https://diogoribeiro7.github.io/DataExcept/migration/)
 - **Advanced Usage**: [Advanced Guide](https://diogoribeiro7.github.io/DataExcept/advanced_usage/)
+- **Envelope Schema**: [The published envelope contract](https://diogoribeiro7.github.io/DataExcept/envelope_schema/)
 - **CLI Reference**: [CLI Guide](https://diogoribeiro7.github.io/DataExcept/cli/)
 - **Changelog**: [CHANGELOG.md](CHANGELOG.md)
 

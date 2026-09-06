@@ -34,22 +34,16 @@ from __future__ import annotations
 import pickle
 from typing import Any, Dict, Optional, Tuple, Type
 
+from .failure_metadata import FailureKind, FailureMetadata
 from .redaction import redact_urls_in_text
 
 __all__ = ["DataExceptError", "UnpicklableCause", "UnpicklableValue"]
 
-#: Attribute names used across the package to hold the exception that caused
-#: this one. Checked in order; the first that holds an exception wins.
 _CAUSE_ATTRIBUTES = ("original", "original_exception", "cause")
 
 
 class UnpicklableValue:
-    """Stands in for state that could not survive serialization.
-
-    An exception carrying a lambda, an open file or a lock would otherwise be
-    unraisable across a process boundary. Keeping a description preserves what
-    the value was for debugging, which is the reason it was attached.
-    """
+    """Stands in for state that could not survive serialization."""
 
     __slots__ = ("description",)
 
@@ -79,7 +73,7 @@ def _safe(value: Any) -> Any:
     except Exception:
         try:
             description = f"{type(value).__name__}: {value!r}"
-        except Exception:  # pragma: no cover - a repr that itself raises
+        except Exception:  # pragma: no cover
             description = type(value).__name__
         return UnpicklableValue(description[:200])
     return value
@@ -104,22 +98,7 @@ def _rebuild(
     context: Optional[BaseException] = None,
     suppress_context: bool = False,
 ) -> "DataExceptError":
-    """Recreate *cls* without replaying its ``__init__``.
-
-    Constructors validate and render a message from their arguments; replaying
-    them would need those arguments, which ``args`` does not carry. Restoring
-    ``args`` and ``__dict__`` directly reproduces the exception exactly.
-
-    The three chain arguments carry defaults so that a payload pickled by an
-    earlier version -- which passed only ``cls``, ``args`` and ``state`` --
-    still loads. An exception can outlive an upgrade: it may sit in a task
-    queue, or be sent by a worker running the previous release.
-
-    ``__cause__``, ``__context__`` and ``__suppress_context__`` live outside
-    ``__dict__`` -- they are special exception state -- so they are restored
-    explicitly. Without this the chain is silently lost, and a traceback
-    rebuilt in another process no longer shows what actually failed.
-    """
+    """Recreate *cls* without replaying its ``__init__``."""
     exc = cls.__new__(cls)
     Exception.__init__(exc, *args)
     exc.__dict__.update(state)
@@ -132,43 +111,50 @@ def _rebuild(
 class DataExceptError(Exception):
     """Base class for every operational exception DataExcept raises."""
 
-    #: Passed to redact_urls_in_text when scrubbing this class's message.
-    #: WebhookError sets it False, because a webhook URL's path *is* the
-    #: credential.
     _keep_url_path = True
+    _default_failure_metadata = FailureMetadata()
 
     def __init__(self, *args: Any) -> None:
-        # One boundary for the whole hierarchy. Whatever built the message -- a
-        # constructor, a caller-supplied `message`, or the text of a wrapped
-        # exception quoting the original URL -- it is scrubbed here, because
-        # redacting only the structured argument leaves all three routes open.
         keep_path = type(self)._keep_url_path
         if args and isinstance(args[0], str):
             args = (redact_urls_in_text(args[0], keep_path=keep_path),) + args[1:]
 
-        # Many classes store the message on self.message and render *that* in
-        # __str__, and 18 interpolate some other attribute -- a field, a
-        # column, a resource -- any of which a caller can fill with a URL. So
-        # every stored string is swept, not just the message.
-        #
-        # redact_urls_in_text rather than redact_if_url: a message has the URL
-        # embedded in prose, and redact_if_url only handles a value that is
-        # wholly a URL. It is a no-op on anything without "://" in it, so
-        # ordinary names and file paths are untouched.
         for name, value in list(self.__dict__.items()):
             if isinstance(value, str) and "://" in value:
                 self.__dict__[name] = redact_urls_in_text(value, keep_path=keep_path)
 
         super().__init__(*args)
-        # Constructors that wrap another exception record it on an attribute.
-        # Mirroring it into __cause__ is what makes a traceback print the
-        # underlying failure, exactly as `raise ... from exc` would; assigning
-        # __cause__ also sets __suppress_context__, as `raise from` does.
         for attribute in _CAUSE_ATTRIBUTES:
             candidate = getattr(self, attribute, None)
             if isinstance(candidate, BaseException):
                 self.__cause__ = candidate
                 break
+
+    @property
+    def failure_metadata(self) -> FailureMetadata:
+        override = self.__dict__.get("_failure_metadata_override")
+        if isinstance(override, FailureMetadata):
+            return override
+        return type(self)._default_failure_metadata
+
+    @property
+    def failure_kind(self) -> FailureKind:
+        return self.failure_metadata.failure_kind
+
+    @property
+    def retryable(self) -> bool | None:
+        return self.failure_metadata.retryable
+
+    @property
+    def retry_after_seconds(self) -> float | None:
+        return self.failure_metadata.retry_after_seconds
+
+    def with_failure_metadata(self, metadata: FailureMetadata) -> "DataExceptError":
+        """Attach backend-informed metadata and return ``self`` for chaining."""
+        if not isinstance(metadata, FailureMetadata):
+            raise TypeError("metadata must be a FailureMetadata instance")
+        self._failure_metadata_override = metadata
+        return self
 
     def __reduce__(self) -> Tuple[Any, Tuple[Any, ...]]:
         args = tuple(_safe(arg) for arg in self.args)

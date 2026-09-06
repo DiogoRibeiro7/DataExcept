@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ._causes import resolve_cause
 from .base import DataExceptError
 from .redaction import redact_url
 
@@ -31,18 +32,27 @@ class DatabaseConnectionError(DatabaseError):
 class QueryExecutionError(DatabaseError):
     """Raised when a database query execution fails."""
 
-    def __init__(self, query: str, original: Exception | None = None) -> None:
+    def __init__(
+        self,
+        query: str,
+        original: Exception | None = None,
+        *,
+        cause: Exception | None = None,
+    ) -> None:
         """Initialize QueryExecutionError.
 
         Args:
             query: SQL query string.
-            original: Optional underlying exception.
+            original: Legacy alias for ``cause``.
+            cause: Optional underlying exception.
         """
+        resolved = resolve_cause(cause=cause, original=original)
         self.query = query
-        self.original = original
+        self.original = resolved
+        self.cause = resolved
         msg = f"Query failed: {query}"
-        if original:
-            msg += f" ({original})"
+        if resolved:
+            msg += f" ({resolved})"
         super().__init__(msg)
 
 
@@ -53,14 +63,18 @@ class TransactionError(DatabaseError):
         self,
         transaction_id: str | None = None,
         message: str | None = None,
+        *,
+        cause: Exception | None = None,
     ) -> None:
         """Initialize TransactionError.
 
         Args:
             transaction_id: Identifier for the transaction.
             message: Optional custom error message.
+            cause: Optional underlying exception.
         """
         self.transaction_id = transaction_id
+        self.cause = cause
         default = "Database transaction failed"
         if transaction_id:
             default += f" (id={transaction_id})"
