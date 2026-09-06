@@ -15,7 +15,6 @@ derived artifact that nothing checks is stale within one release.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import _exception_probe as _probe
 import pytest
@@ -33,11 +32,6 @@ from scripts.generate_envelope_fixtures import (
     build_fixtures,
     buildable,
     serialize,
-)
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PACKAGED_SCHEMA = (
-    PROJECT_ROOT / "dataexcept" / "schemas" / f"envelope-{ENVELOPE_SCHEMA_VERSION}.json"
 )
 
 SCHEMA = envelope_schema()
@@ -267,8 +261,14 @@ def test_published_fixtures_match_what_the_serializer_emits(name: str) -> None:
 
 
 def test_the_published_schema_matches_the_one_the_package_ships() -> None:
-    """The docs copy is what the ``$id`` URL serves; it cannot lag behind."""
+    """The docs copy is what the ``$id`` URL serves; it cannot lag behind.
+
+    The package side is read through ``envelope_schema()`` rather than from a
+    path under the source tree, because "the one the package ships" is only
+    the same file while the source tree is what is installed. The release
+    workflow verifies the built wheel by deleting ``dataexcept/`` and running
+    this suite against the installed distribution, where a source path finds
+    nothing at all.
+    """
     assert PUBLISHED_SCHEMA.is_file(), f"{PUBLISHED_SCHEMA} is not published"
-    assert json.loads(PUBLISHED_SCHEMA.read_text(encoding="utf-8")) == json.loads(
-        PACKAGED_SCHEMA.read_text(encoding="utf-8")
-    )
+    assert json.loads(PUBLISHED_SCHEMA.read_text(encoding="utf-8")) == SCHEMA
