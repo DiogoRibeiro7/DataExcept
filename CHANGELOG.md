@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The documentation home page and the README now link every guide the site
+  publishes. Each release had added its guide to the navigation and stopped
+  there, leaving cause-aware exceptions, failure metadata, parsing context,
+  message brokers and the Pino profile reachable only from the sidebar. A test
+  now fails when a page in the navigation is linked from neither landing page,
+  so the two cannot drift apart again.
+
 ## [1.6.0] - 2026-09-06
 
 ### Added
@@ -21,13 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Structured broker context — `broker`, `topic`, `partition`, `offset`,
   `consumer_group`, `operation` and `timeout_seconds` — with `broker` redacted
   when it is a URL, since a bootstrap address routinely carries credentials.
-  All six take `cause=` on the canonical contract and set `__cause__`.
-
-The hierarchy is about the operation rather than the product, so it fits Kafka,
-RabbitMQ, Pulsar and NATS alike, and the package depends on no broker client.
-Retryability is left unclassified: a rejected publish may be a leader election
-or a missing topic, and the exception cannot tell which.
-
+  The five concrete classes take `cause=` on the canonical contract and set
+  `__cause__`; `MessageBrokerError` itself is a plain base, for catching.
 - **A published Pino profile for the exception envelope.** `exception_to_pino()`
   and `envelope_to_pino()` project an envelope onto the value Pino logs under
   its error key, and `pino_profile_schema()`, `PINO_PROFILE_VERSION` and
@@ -46,21 +50,37 @@ or a missing topic, and the exception cannot tell which.
 - Documented JavaScript and TypeScript usage, including the projection restated
   in JavaScript and a contract test over the fixture pairs.
 
-No Node.js or Pino dependency is added, in either direction: the Python package
-gains a JSON document and a function that renames one field.
+Neither addition brings a dependency. The broker hierarchy describes the
+operation rather than the product, so it fits Kafka, RabbitMQ, Pulsar and NATS
+without any broker client; retryability is left unclassified, because a
+rejected publish may be a leader election or a missing topic and the exception
+cannot tell which. The Pino profile adds a JSON document and a function that
+renames one field — no Node.js or Pino, in either direction.
+
+### Changed
+
+- Pull requests now run the release gate's wheel verification: the built wheel
+  is installed, the source tree is deleted, and the suite runs against the
+  installed distribution. A test that quietly depends on the source tree used
+  to surface only at the last job before publication, which is where it
+  surfaced for 1.5.0.
+- The pre-commit hooks are pinned to the versions `poetry.lock` pins, and a
+  test derives one from the other. They had drifted to isort 8 and ruff 0.16.4
+  against a lock on isort 9 and ruff 0.16.5, which is enough to format a commit
+  differently from what CI then checks.
 
 ## [1.5.0] - 2026-09-06
 
 ### Added
 
 - **Redaction-safe source context for parsing failures.** `ParsingError` and
-  `DeserializationError` accept keyword-only `source`, `format`, `preview` and
-  `cause`, so a failure on untrusted content can be described without keeping
-  the content. `source` is redacted when it is a URL and left alone when it is
-  a file path; `preview` is bounded to 200 characters including its truncation
-  marker, decodes bytes as UTF-8
-  with any undecodable byte shown as `\xNN`, and is redacted like any other
-  public attribute.
+  `DeserializationError` take keyword-only `source`, `preview` and `cause`, and
+  `ParsingError` gains a keyword-only `format` that `DeserializationError`
+  already took positionally — so a failure on untrusted content can be
+  described without keeping the content. `source` is redacted when it is a URL
+  and left alone when it is a file path; `preview` is bounded to 200 characters
+  including its truncation marker, decodes bytes as UTF-8 with any undecodable
+  byte shown as `\xNN`, and is redacted like any other public attribute.
 - `cause=` on both classes, following the canonical 1.4.0 contract: recorded as
   `.cause` and set as `__cause__`.
 - **A published JSON Schema for the structured envelope.** The payload

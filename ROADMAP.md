@@ -148,8 +148,9 @@ The original 0.2–0.5 milestones are done:
 
 ## Shipped in 1.6.0 — Pino interoperability and message brokers
 
-DataExcept envelopes are consumable from Node.js services using Pino, with no
-Node.js dependency in the Python package.
+Two additions, neither of which brings a dependency: DataExcept envelopes are
+consumable from Node.js services using Pino, and broker failures have a
+hierarchy of their own.
 
 - **A projection with one rename in it** — `exceptions` becomes `errors`, which
   is what JavaScript's `AggregateError` calls the same thing. Identity, public
@@ -177,17 +178,25 @@ Node.js dependency in the Python package.
   NATS because it describes the operation rather than the product, and the
   package still depends on no broker client.
 
-## 0.5 — Coverage and correctness
-
-- Raise coverage above the 92% floor, focused on the constructor branches that
-  build messages from partial arguments.
-- Extend the property-based suite to the exception hierarchy's interaction
-  with third-party loggers and handlers.
-
-## Beyond 1.0
+## Ongoing
 
 - Track new stable Python releases promptly; 3.14 is supported as of 0.4.1.
 - Optional integration hooks for error trackers such as Sentry, kept out of the
   runtime dependencies.
 - Prioritise new exception domains by what users actually report reaching for
-  generic exceptions to express.
+  generic exceptions to express. The message-broker family in 1.6.0 arrived
+  that way, and is the shape a new domain should take: named by the operation
+  that failed rather than by the product it failed in.
+
+## Known follow-ups
+
+Small, already identified, and not yet decided on:
+
+- The `wheel` job mirrors the release gate on every pull request but is not in
+  the branch-protection required set, so it reports without blocking.
+- Dependabot documents a `pre-commit` ecosystem that would keep the hook
+  revisions in step with the lock file automatically, which a test currently
+  requires a human to do.
+- `tests/test_envelope_schema.py` carries a code-scanning alert for importing
+  `dataexcept` both ways. Fixing it changes what one test verifies, so it wants
+  a decision rather than a drive-by.
