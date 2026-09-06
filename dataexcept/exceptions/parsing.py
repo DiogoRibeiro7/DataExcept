@@ -29,10 +29,9 @@ from .base import JobError
 def _describe_target(format: str | None, source: str | None) -> str:
     """Name what was being read, from whichever context the caller gave.
 
-    The source goes in brackets rather than trailing the sentence because a
-    URL is redacted wherever it appears, and the matcher stops at a closing
-    bracket but not at a colon -- so `from {source}: {cause}` would lose the
-    separator into the redacted URL.
+    The source goes in brackets rather than trailing the sentence so that
+    what was being read stays visually separate from where it came from once a
+    cause is appended after it.
     """
     if format and source:
         return f"{format} ({source})"

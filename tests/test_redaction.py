@@ -475,3 +475,61 @@ def test_scrubbed_state_stays_scrubbed_across_a_round_trip():
 
     assert "SECRETVALUE" not in repr(restored.__dict__)
     assert "SECRETVALUE" not in str(restored)
+
+
+# ---------------------------------------------------------------------------
+# Fifth pass: a URL that ends a sentence. The matcher ran through whatever
+# punctuation terminated it, so the character was swallowed into the redacted
+# URL -- "...token=***" where the text said "...token=SECRET: reason", losing
+# the separator that made the message readable.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("mark", [".", ":", "!", "?"])
+def test_punctuation_that_ends_a_sentence_is_not_part_of_the_url(mark):
+    """These are legal inside a URL, so they cannot simply be excluded."""
+    from dataexcept.redaction import redact_urls_in_text
+
+    scrubbed = redact_urls_in_text(f"see https://h/p?token=SECRETVALUE{mark} retry")
+
+    assert "SECRETVALUE" not in scrubbed
+    assert scrubbed == f"see https://h/p?token=***{mark} retry"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "at the very end https://h/p?token=SECRETVALUE.",
+        "trailing off https://h/p?token=SECRETVALUE...",
+        "a list https://h/p?token=SECRETVALUE, and more",
+        "in brackets (https://h/p?token=SECRETVALUE)",
+        "quoted 'https://h/p?token=SECRETVALUE'",
+    ],
+)
+def test_a_url_ending_a_phrase_keeps_the_phrase_intact(text):
+    from dataexcept.redaction import redact_urls_in_text
+
+    scrubbed = redact_urls_in_text(text)
+
+    assert "SECRETVALUE" not in scrubbed
+    assert scrubbed == text.replace("SECRETVALUE", "***")
+
+
+def test_a_message_keeps_its_separator_after_a_url():
+    """The case that surfaced this: a URL followed by ': reason'."""
+    error = dataexcept.ValidationError(
+        "endpoint",
+        1,
+        message="fetch https://h/p?token=SECRETVALUE: connection refused",
+    )
+
+    assert str(error) == "fetch https://h/p?token=***: connection refused"
+
+
+def test_a_url_that_is_only_a_scheme_and_host_still_matches():
+    """The end-of-URL rule must not require a path to match against."""
+    from dataexcept.redaction import redact_urls_in_text
+
+    scrubbed = redact_urls_in_text("ping https://user:hunter2@h")
+
+    assert scrubbed == "ping https://***:***@h"
