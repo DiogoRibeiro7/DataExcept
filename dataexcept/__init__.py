@@ -138,6 +138,7 @@ from .pandas_exceptions import (
     PandasError,
     PandasIOError,
 )
+from .pino import envelope_to_pino, exception_to_pino
 from .pipeline_exceptions import (
     ApiError,
     DataFetchError,
@@ -157,7 +158,10 @@ from .pipeline_exceptions import (
 from .schema import (
     ENVELOPE_SCHEMA_ID,
     ENVELOPE_SCHEMA_VERSION,
+    PINO_PROFILE_ID,
+    PINO_PROFILE_VERSION,
     envelope_schema,
+    pino_profile_schema,
 )
 from .security_exceptions import (
     DecryptionError,
@@ -279,6 +283,11 @@ __all__ = [
     "ENVELOPE_SCHEMA_ID",
     "ENVELOPE_SCHEMA_VERSION",
     "envelope_schema",
+    "PINO_PROFILE_ID",
+    "PINO_PROFILE_VERSION",
+    "pino_profile_schema",
+    "envelope_to_pino",
+    "exception_to_pino",
     "Context",
     "log_and_raise",
     "log_exception",

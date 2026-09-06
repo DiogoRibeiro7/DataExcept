@@ -20,12 +20,17 @@ def _schema_problem() -> str | None:
     """
     import dataexcept
 
-    try:
-        schema_id = dataexcept.envelope_schema()["$id"]
-    except Exception as exc:
-        return f"the envelope schema does not load from the wheel: {exc}"
-    if schema_id != dataexcept.ENVELOPE_SCHEMA_ID:
-        return f"the shipped schema declares {schema_id!r}"
+    documents = (
+        ("envelope schema", dataexcept.envelope_schema, dataexcept.ENVELOPE_SCHEMA_ID),
+        ("Pino profile", dataexcept.pino_profile_schema, dataexcept.PINO_PROFILE_ID),
+    )
+    for what, load, expected in documents:
+        try:
+            declared = load()["$id"]
+        except Exception as exc:
+            return f"the {what} does not load from the wheel: {exc}"
+        if declared != expected:
+            return f"the shipped {what} declares {declared!r}"
     return None
 
 
@@ -61,7 +66,8 @@ def main() -> int:
 
     print(
         f"OK: {len(dataexcept.__all__)} names exported, py.typed present, "
-        f"envelope schema {dataexcept.ENVELOPE_SCHEMA_VERSION} shipped, "
+        f"envelope schema {dataexcept.ENVELOPE_SCHEMA_VERSION} and Pino profile "
+        f"{dataexcept.PINO_PROFILE_VERSION} shipped, "
         f"version {dataexcept.__version__}"
     )
     return 0

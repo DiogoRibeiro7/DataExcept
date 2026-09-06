@@ -108,3 +108,10 @@ Within 1.x:
 Consumers must ignore fields they do not recognise. That is what makes the
 first rule safe, and it is the only way a payload from a newer producer stays
 readable by an older reader.
+
+## Consuming this from Node.js
+
+The envelope is the canonical contract, but a logger downstream may want the
+same failure under the names it already keys on. See
+[Pino interoperability](pino.md) for the published projection, its own schema,
+and a fixture pair for every case above.
