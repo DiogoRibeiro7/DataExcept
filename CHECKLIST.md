@@ -1,7 +1,7 @@
 # Package Quality Checklist
 
 An audit of this repository against a general Python packaging checklist,
-current as of 1.5.0 (2026-09-06). Unticked boxes are genuinely not done, not
+current as of 1.6.0 (2026-09-06). Unticked boxes are genuinely not done, not
 oversights.
 
 ---
@@ -62,7 +62,7 @@ oversights.
 
 - [x] Unit tests implemented — the count is asserted in CI rather than
       written here, so it cannot go stale
-- [x] Coverage above 80% — 93% of the package, measured with branch coverage
+- [x] Coverage above 80% — 94% of the package, measured with branch coverage
       and gated at 91% in CI. Until 0.4.0 the figure was measured without
       restricting the source, so tests and examples counted toward it: the
       reported 86% was really 79%.
