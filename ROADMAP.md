@@ -119,7 +119,7 @@ The original 0.2–0.5 milestones are done:
   branches and pull requests; one permanent privileged Release workflow builds,
   verifies and publishes only a reviewed commit on protected `main`.
 
-## Landed for 1.5.0 — Language-neutral error envelope
+## Landed for 1.5.0 — Envelope contract and safer parsing context
 
 The implementation is on `main`; it will become a released feature when the
 1.5.0 release is cut.
@@ -141,6 +141,13 @@ The implementation is on `main`; it will become a released feature when the
   schema is versioned separately from the package, under the 1.x rule that
   fields may be added but an established field does not change meaning
   silently.
+- **Redaction-safe parsing context** — `ParsingError` and
+  `DeserializationError` can describe a failure with `source`, `format`, a
+  bounded `preview` and `cause` instead of retaining the payload that caused
+  it. Both payload arguments still work and still keep what they are given;
+  they are simply no longer the only way to report the failure.
+- **A bounded generated message** for a parsing failure, so a malformed
+  megabyte no longer becomes a log line of the same size.
 
 ## Future — Pino interoperability
 

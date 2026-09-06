@@ -19,7 +19,7 @@ from pathlib import Path
 
 import _exception_probe as _probe
 import pytest
-from hypothesis import HealthCheck, given, settings
+from hypothesis import given, settings
 from hypothesis import strategies as st
 from jsonschema import Draft202012Validator
 
@@ -159,7 +159,7 @@ def test_every_exception_serializes_to_a_valid_envelope(name: str) -> None:
 
 
 @given(text=TEXT)
-@settings(max_examples=25, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(max_examples=25)
 def test_arbitrary_constructor_text_still_produces_a_valid_envelope(text: str) -> None:
     """Text is what reaches these constructors, and it reaches the envelope."""
     exc = dataexcept.ValidationError(text, {"nested": [text, 1.5, None]})
