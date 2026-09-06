@@ -146,28 +146,34 @@ The original 0.2–0.5 milestones are done:
 - **A bounded generated message** for a parsing failure, so a malformed
   megabyte no longer becomes a log line of the same size.
 
-## Future — Pino interoperability
+## Landed for 1.6.0 — Pino interoperability
 
-Make DataExcept envelopes easy to consume from Node.js services using Pino
-without adding a Node.js dependency to the Python package.
+The implementation is on `main`; it will become a released feature when the
+1.6.0 release is cut.
 
-- Define a Pino-compatible projection/profile for DataExcept envelopes, with a
-  natural `err` object and predictable mappings for `type`, `message`, failure
-  metadata, causes, extra attributes and nested group members.
-- Preserve DataExcept's richer `failure`, `cause`, `context` and `exceptions`
-  structure rather than flattening it merely to imitate JavaScript's `Error`
-  object.
-- Never fabricate a Python traceback or JavaScript stack. A stack field is only
-  emitted when a real stack representation exists at the integration boundary.
-- Keep the same redaction and failure-safety guarantees: converting an envelope
-  for Pino must be JSON-safe and must never replace the original error with a
-  serializer failure.
-- Provide documented JavaScript/TypeScript examples showing how a Pino custom
-  serializer or transport can consume the envelope.
-- Add cross-language contract fixtures/tests so a Python-produced DataExcept
-  payload and the Pino-side representation cannot drift independently.
-- Keep Pino support optional and dependency-free for Python users; any Node.js
-  helper package or adapter should live as a separate integration artifact.
+DataExcept envelopes are consumable from Node.js services using Pino, with no
+Node.js dependency in the Python package.
+
+- **A projection with one rename in it** — `exceptions` becomes `errors`, which
+  is what JavaScript's `AggregateError` calls the same thing. Identity, public
+  attributes, failure metadata and the whole cause, context and member tree
+  come through unchanged, as does the redaction already applied to them.
+- **A versioned profile schema**, published beside the envelope schema and
+  versioned apart from it, so either can gain a field without the other moving.
+- **A stack only when there is one** — `include_stack=True` renders the
+  exception's real traceback, redacted like any other exported string, and
+  omits the field rather than inventing one for an exception that was never
+  raised.
+- **Attributes kept nested** rather than spread onto the error, so an attribute
+  called `type` or `stack` cannot overwrite the fields a Pino consumer reads.
+- **Fixture pairs** — every published envelope fixture has its projection
+  beside it, neither written by hand, so an implementation in another language
+  checks itself against files rather than against prose.
+- **Documented JavaScript and TypeScript usage**, with the projection restated
+  in JavaScript and a contract test over those pairs.
+- **No Node.js dependency, in either direction**, and no npm package: an
+  adapter belongs in a separate artifact with its own release cycle, and the
+  profile is what makes one writable.
 
 ## 0.5 — Coverage and correctness
 

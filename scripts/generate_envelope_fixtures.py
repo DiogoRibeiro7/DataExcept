@@ -31,15 +31,23 @@ from dataexcept import (  # noqa: E402
     ValidationError,
     exception_to_dict,
 )
+from dataexcept.pino import envelope_to_pino  # noqa: E402
 from dataexcept.schema import (  # noqa: E402
     ENVELOPE_SCHEMA_VERSION,
+    PINO_PROFILE_VERSION,
     envelope_schema,
+    pino_profile_schema,
 )
 
-PUBLISHED_SCHEMA = (
-    PROJECT_ROOT / "docs" / "schema" / f"envelope-{ENVELOPE_SCHEMA_VERSION}.json"
-)
-FIXTURE_DIRECTORY = PROJECT_ROOT / "docs" / "schema" / "fixtures"
+_SCHEMA_DIRECTORY = PROJECT_ROOT / "docs" / "schema"
+PUBLISHED_SCHEMA = _SCHEMA_DIRECTORY / f"envelope-{ENVELOPE_SCHEMA_VERSION}.json"
+PUBLISHED_PINO_SCHEMA = _SCHEMA_DIRECTORY / f"pino-{PINO_PROFILE_VERSION}.json"
+FIXTURE_DIRECTORY = _SCHEMA_DIRECTORY / "fixtures"
+
+#: The projection of each envelope fixture, published beside it. A reader in
+#: another language checks its own projection against the pair: same name, same
+#: failure, one file for what DataExcept emits and one for what Pino receives.
+PINO_FIXTURE_DIRECTORY = FIXTURE_DIRECTORY / "pino"
 
 #: A URL whose userinfo, query and path all carry something that must not
 #: survive export. It is fixture data, not a credential.
@@ -160,6 +168,18 @@ def build_fixtures() -> Dict[str, Dict[str, Any]]:
     return {name: build() for name, build in BUILDERS.items() if buildable(name)}
 
 
+def build_pino_fixtures() -> Dict[str, Dict[str, Any]]:
+    """Return the Pino projection of every buildable fixture, by name.
+
+    Projected rather than built separately: the point of the profile is that it
+    is derived from the envelope, so a fixture pair written twice by hand would
+    prove nothing about the derivation.
+    """
+    return {
+        name: envelope_to_pino(envelope) for name, envelope in build_fixtures().items()
+    }
+
+
 def serialize(document: Dict[str, Any]) -> str:
     """Render *document* the way the published files are written."""
     return json.dumps(document, indent=2, ensure_ascii=False) + "\n"
@@ -174,16 +194,22 @@ def main() -> int:
         )
         return 1
 
-    FIXTURE_DIRECTORY.mkdir(parents=True, exist_ok=True)
-    PUBLISHED_SCHEMA.write_text(
-        serialize(envelope_schema()), encoding="utf-8", newline="\n"
-    )
-    print(f"wrote {PUBLISHED_SCHEMA.relative_to(PROJECT_ROOT)}")
-
-    for name, payload in build_fixtures().items():
-        path = FIXTURE_DIRECTORY / f"{name}.json"
-        path.write_text(serialize(payload), encoding="utf-8", newline="\n")
+    PINO_FIXTURE_DIRECTORY.mkdir(parents=True, exist_ok=True)
+    for path, document in (
+        (PUBLISHED_SCHEMA, envelope_schema()),
+        (PUBLISHED_PINO_SCHEMA, pino_profile_schema()),
+    ):
+        path.write_text(serialize(document), encoding="utf-8", newline="\n")
         print(f"wrote {path.relative_to(PROJECT_ROOT)}")
+
+    for directory, fixtures in (
+        (FIXTURE_DIRECTORY, build_fixtures()),
+        (PINO_FIXTURE_DIRECTORY, build_pino_fixtures()),
+    ):
+        for name, payload in fixtures.items():
+            path = directory / f"{name}.json"
+            path.write_text(serialize(payload), encoding="utf-8", newline="\n")
+            print(f"wrote {path.relative_to(PROJECT_ROOT)}")
     return 0
 
 

@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A published Pino profile for the exception envelope.** `exception_to_pino()`
+  and `envelope_to_pino()` project an envelope onto the value Pino logs under
+  its error key, and `pino_profile_schema()`, `PINO_PROFILE_VERSION` and
+  `PINO_PROFILE_ID` expose its versioned JSON Schema. The projection renames
+  `exceptions` to `errors`, matching JavaScript's `AggregateError`, and changes
+  nothing else: identity, attributes, failure metadata, the whole cause,
+  context and member tree, and the redaction already applied to them all come
+  through unchanged.
+- An optional `stack` field, emitted only when a real stack representation
+  exists. `include_stack=True` renders the exception's own traceback, redacted
+  like any other exported string, and omits the field rather than inventing one
+  when the exception was never raised.
+- The Pino projection of every published envelope fixture, beside it under
+  `docs/schema/fixtures/pino/`, so an implementation in another language can
+  check itself against a pair of files rather than against prose.
+- Documented JavaScript and TypeScript usage, including the projection restated
+  in JavaScript and a contract test over the fixture pairs.
+
+No Node.js or Pino dependency is added, in either direction: the Python package
+gains a JSON document and a function that renames one field.
+
 ## [1.5.0] - 2026-09-06
 
 ### Added
