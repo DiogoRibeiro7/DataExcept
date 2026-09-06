@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Redaction-safe source context for parsing failures.** `ParsingError` and
+  `DeserializationError` accept keyword-only `source`, `format`, `preview` and
+  `cause`, so a failure on untrusted content can be described without keeping
+  the content. `source` is redacted when it is a URL and left alone when it is
+  a file path; `preview` is bounded to 200 characters including its truncation
+  marker, decodes bytes as UTF-8
+  with any undecodable byte shown as `\xNN`, and is redacted like any other
+  public attribute.
+- `cause=` on both classes, following the canonical 1.4.0 contract: recorded as
+  `.cause` and set as `__cause__`.
 - **A published JSON Schema for the structured envelope.** The payload
   `exception_to_dict()` and `exception_to_json()` produce is now a versioned,
   language-neutral contract rather than prose. `envelope_schema()`,
@@ -31,6 +41,25 @@ reached its current shape in 1.4.0, having gained `exceptions` in 1.3.0 and
 `failure` in 1.4.0; schema 1.0.0 describes that shape. The schema is versioned
 separately from the package, and DataExcept still takes no runtime dependency on
 a validator — it publishes the contract rather than checking its own output.
+
+### Changed
+
+- `ParsingError.text` and `DeserializationError.data` are now optional, so
+  neither class requires the payload that caused the failure. Existing
+  positional calls are unaffected, and a payload that is passed is still kept
+  verbatim.
+- `ParsingError`'s generated message bounds the payload it quotes, so a large
+  malformed input no longer becomes a log line of the same size. The payload
+  itself remains in full on `.text`.
+
+### Fixed
+
+- A URL that ends a sentence no longer swallows the punctuation that ended it.
+  A full stop, colon, exclamation mark or question mark is legal inside a URL,
+  so the matcher ran through it and gave the character to the redacted URL:
+  `"fetch <url>: connection refused"` came back without its separator. The
+  match now runs through such characters but cannot end on one. Commas,
+  semicolons, brackets and quotes already terminated a match and are unchanged.
 
 ## [1.4.0] - 2026-09-04
 
