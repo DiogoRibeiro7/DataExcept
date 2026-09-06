@@ -18,7 +18,7 @@
 - **🏗️ Hierarchical Structure**: Catch one specific error, a whole domain, or every operational error via `DataExceptError`
 - **📦 One Import**: Every exception is available from `dataexcept` directly, or from its domain module — same objects either way
 - **📊 Data Science Focused**: 106 exception classes covering ML pipelines, feature engineering, model training
-- **🧭 Language-neutral envelopes**: exceptions export to strict JSON against a published, versioned schema — so a non-Python consumer can validate what it receives
+- **🧭 Language-neutral envelopes**: exceptions export to strict JSON against a published, versioned schema — so a non-Python consumer can validate what it receives, or read it through the [Pino projection](https://diogoribeiro7.github.io/DataExcept/pino/)
 - **🔧 Production Ready**: Logging helpers, error context, and exceptions that pickle — so they cross a process boundary with their message, attributes and cause intact
 - **📚 Academic Quality**: Proper documentation, type hints, and citation support
 - **🐍 Python 3.10 – 3.14**: Every supported version tested in CI, with full type safety
@@ -367,7 +367,12 @@ through [SECURITY.md](SECURITY.md), not the public issue tracker.
 - **API Stability**: [What is public and what may change](https://diogoribeiro7.github.io/DataExcept/stability/)
 - **Upgrading from 0.x**: [Migration guide](https://diogoribeiro7.github.io/DataExcept/migration/)
 - **Advanced Usage**: [Advanced Guide](https://diogoribeiro7.github.io/DataExcept/advanced_usage/)
+- **Cause-aware Exceptions**: [Wrapping a third-party failure](https://diogoribeiro7.github.io/DataExcept/causes/)
+- **Failure Metadata**: [Transient, permanent, or unclassified](https://diogoribeiro7.github.io/DataExcept/failure_metadata/)
+- **Parsing Context**: [Reporting a failure without keeping the payload](https://diogoribeiro7.github.io/DataExcept/parsing_context/)
+- **Message Brokers**: [Publish, consume and acknowledgement failures](https://diogoribeiro7.github.io/DataExcept/brokers/)
 - **Envelope Schema**: [The published envelope contract](https://diogoribeiro7.github.io/DataExcept/envelope_schema/)
+- **Pino Interoperability**: [Consuming envelopes from Node.js](https://diogoribeiro7.github.io/DataExcept/pino/)
 - **CLI Reference**: [CLI Guide](https://diogoribeiro7.github.io/DataExcept/cli/)
 - **Changelog**: [CHANGELOG.md](CHANGELOG.md)
 

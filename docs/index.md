@@ -34,6 +34,35 @@ pip install DataExcept
 
 </div>
 
+## Describing a failure
+
+<div class="grid cards" markdown>
+
+- **[Cause-aware Exceptions](causes.md)** — wrap a third-party
+  failure so the traceback shows both, without writing the wiring by hand.
+- **[Failure Metadata](failure_metadata.md)** — say whether a
+  failure is transient, permanent or unclassified, and how long to wait.
+- **[Parsing Context](parsing_context.md)** — report a failure on
+  untrusted content without keeping the content.
+- **[Message Brokers](brokers.md)** — publish, consume and
+  acknowledgement failures, with the topic, partition and offset that say where.
+
+</div>
+
+## Crossing a boundary
+
+<div class="grid cards" markdown>
+
+- **[Envelope Schema](envelope_schema.md)** — the versioned,
+  language-neutral JSON contract for an exported exception, with fixtures.
+- **[Pino Interoperability](pino.md)** — the same failure in the
+  shape a Node.js logger reads, projected from the envelope.
+
+</div>
+
+What is guaranteed not to break, and what a version bump means, is written down
+in the [stability policy](stability.md).
+
 ## Local Lambda demo
 
 The repository ships with a `.env.example` and a matching make target, so you
