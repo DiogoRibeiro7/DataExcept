@@ -53,6 +53,28 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
 
+  wheel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - uses: abatilo/actions-poetry@0dd19c9498c3dc8728967849d0d2eae428a8a3d8 # v4
+      # The release workflow runs exactly this against the artifact it is about
+      # to publish. Running it here as well means a test that quietly depends on
+      # the source tree fails on the pull request that introduces it, rather
+      # than at the last gate before PyPI -- which is where it failed for 1.5.0.
+      - name: Test the built wheel with the source tree removed
+        run: |
+          poetry build
+          poetry install --only dev --no-root
+          poetry run pip install dist/*.whl
+          rm -rf dataexcept
+          poetry run pytest -q
+      - name: Check wheel contents
+        run: poetry run python scripts/check_wheel.py
+
   coverage:
     needs: test
     runs-on: ubuntu-latest
