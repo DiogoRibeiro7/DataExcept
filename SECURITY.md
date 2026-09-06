@@ -64,8 +64,10 @@ Beyond those classes, **any URL is redacted wherever it appears**:
 
 - in a `message` you supplied yourself;
 - in the text of a wrapped exception that quotes the original URL;
-- in fields such as `DataLoadingError.source` that may hold a path *or* a URL —
-  ordinary file paths are left untouched.
+- in fields such as `DataLoadingError.source`, `ParsingError.source` and
+  `DeserializationError.source` that may hold a path *or* a URL — ordinary file
+  paths are left untouched;
+- in a bounded `preview` excerpt of content that failed to parse.
 
 A URL keeps its scheme, host, port and non-sensitive parameters, because those
 are what make the error actionable. It loses userinfo, any query or fragment
@@ -144,6 +146,13 @@ a file path — because that is the point of the library.
 values in it. It is not redacted, because a normalised query is often useless
 for debugging. If your queries carry personal data in literals, pass a
 parameterised or normalised statement rather than the interpolated one.
+
+**`ParsingError.text` and `DeserializationError.data` keep the payload you
+hand them.** Text still goes through the ordinary URL redaction; raw bytes do
+not, because the library does not decode or rewrite binary in order to search
+it. Since 1.5.0 neither argument is required: describe an untrusted payload
+with `source`, `format` and a bounded `preview` instead of retaining it. See
+[parsing context](https://diogoribeiro7.github.io/DataExcept/parsing_context/).
 
 Treat all of this as data you control: if you log exceptions where untrusted
 parties can read them, or return exception text in an API response, review what
