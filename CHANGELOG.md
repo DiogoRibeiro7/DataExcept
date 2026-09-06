@@ -52,6 +52,15 @@ a validator — it publishes the contract rather than checking its own output.
   malformed input no longer becomes a log line of the same size. The payload
   itself remains in full on `.text`.
 
+### Fixed
+
+- A URL that ends a sentence no longer swallows the punctuation that ended it.
+  A full stop, colon, exclamation mark or question mark is legal inside a URL,
+  so the matcher ran through it and gave the character to the redacted URL:
+  `"fetch <url>: connection refused"` came back without its separator. The
+  match now runs through such characters but cannot end on one. Commas,
+  semicolons, brackets and quotes already terminated a match and are unchanged.
+
 ## [1.4.0] - 2026-09-04
 
 ### Added
