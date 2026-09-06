@@ -167,6 +167,22 @@ def test_a_huge_binary_preview_is_bounded() -> None:
     assert len(exc.preview) == MAX_PREVIEW_LENGTH
 
 
+def test_a_decode_window_cut_still_leaves_room_for_the_marker() -> None:
+    """The window can cut at exactly the bound, so length alone cannot say.
+
+    Four-byte characters fill the byte window with precisely
+    MAX_PREVIEW_LENGTH of them, so the text needs no further truncating even
+    though the payload was cut -- and the marker would land on top of the
+    bound rather than inside it.
+    """
+    payload = "😀" * (MAX_PREVIEW_LENGTH + 1)
+
+    exc = DeserializationError(preview=payload.encode(), format="json")
+
+    assert len(exc.preview) == MAX_PREVIEW_LENGTH
+    assert exc.preview.endswith(TRUNCATION_MARKER)
+
+
 def test_redaction_may_lengthen_an_excerpt_past_the_bound() -> None:
     """The bound is on the payload, and redaction runs over the result.
 
@@ -184,9 +200,26 @@ def test_redaction_may_lengthen_an_excerpt_past_the_bound() -> None:
     assert len(exc.preview) == MAX_PREVIEW_LENGTH + 2
 
 
-def test_a_preview_of_the_wrong_type_is_a_programming_error() -> None:
-    with pytest.raises(TypeError, match="preview must be str, bytes, or None"):
-        ParsingError(preview=object())
+@pytest.mark.parametrize(
+    ("factory", "expected"),
+    [
+        (lambda: ParsingError(preview=object()), "preview must be str, bytes"),
+        (lambda: DeserializationError(preview=object()), "preview must be str, bytes"),
+        (
+            lambda: ParsingError(source="/in.json", cause="boom"),
+            "cause must be Exception or None",
+        ),
+    ],
+    ids=["parsing-preview", "deserialization-preview", "parsing-cause"],
+)
+def test_an_invalid_argument_is_a_programming_error(factory, expected: str) -> None:
+    """Built through a factory so the call is not a bare instantiation.
+
+    A constructed-and-discarded exception is what `py/unused-exception-object`
+    reports, and code scanning fails a pull request that adds one.
+    """
+    with pytest.raises(TypeError, match=expected):
+        factory()
 
 
 def test_no_preview_means_no_preview() -> None:
@@ -267,11 +300,6 @@ def test_a_cause_is_recorded_and_chained(factory) -> None:
     assert exc.cause is cause
     assert exc.__cause__ is cause
     assert "Expecting value" in str(exc)
-
-
-def test_a_cause_that_is_not_an_exception_is_rejected() -> None:
-    with pytest.raises(TypeError, match="cause must be Exception or None"):
-        ParsingError(source="/in.json", cause="boom")
 
 
 # ---------------------------------------------------------------------------

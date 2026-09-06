@@ -66,9 +66,9 @@ def bounded_preview(value: str | bytes | bytearray | None) -> str | None:
         )
 
     text, truncated = _as_text(value)
-    if len(text) > MAX_PREVIEW_LENGTH:
-        # Cut short enough for the marker to fit inside the bound rather than
-        # on top of it: a documented maximum that the value routinely exceeds
-        # is not a maximum.
-        text, truncated = text[: MAX_PREVIEW_LENGTH - len(TRUNCATION_MARKER)], True
-    return text + TRUNCATION_MARKER if truncated else text
+    if not truncated and len(text) <= MAX_PREVIEW_LENGTH:
+        return text
+    # Something was left out, whether by the decode window or by length. Cut
+    # short enough for the marker to fit inside the bound rather than on top of
+    # it: a documented maximum the value can exceed is not a maximum.
+    return text[: MAX_PREVIEW_LENGTH - len(TRUNCATION_MARKER)] + TRUNCATION_MARKER
