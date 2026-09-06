@@ -84,6 +84,10 @@ Set `include_attributes=False` when the receiving system only needs the error
 identity and chain. Use `max_depth` to put a smaller bound on nested exception
 chains.
 
+The shape itself is a published, versioned contract rather than a detail of
+this implementation. If something outside Python reads these payloads, write it
+against the [envelope schema](envelope_schema.md) and its fixtures.
+
 ### Exception groups
 
 On Python 3.11 and later, `ExceptionGroup` and `BaseExceptionGroup` are kept as

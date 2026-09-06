@@ -119,20 +119,28 @@ The original 0.2–0.5 milestones are done:
   branches and pull requests; one permanent privileged Release workflow builds,
   verifies and publishes only a reviewed commit on protected `main`.
 
-## Future — Language-neutral error envelope
+## Landed for 1.5.0 — Language-neutral error envelope
 
-The structured envelope should become a deliberately language-neutral contract,
-not merely a Python implementation detail.
+The implementation is on `main`; it will become a released feature when the
+1.5.0 release is cut.
 
-- Define and version a JSON Schema for the stable envelope fields, including
-  `type`, `module`, `message`, `attributes`, `failure`, `cause`, `context`,
-  `exceptions`, `cycle` and `truncated`.
-- Publish representative fixtures for ordinary exceptions, explicit causes,
-  failure metadata, implicit contexts, nested exception groups, redaction and
-  truncation.
-- Add compatibility tests that validate emitted payloads against the schema.
-- Preserve the 1.x stability rule: additive fields are allowed, but established
-  field meanings do not change silently.
+- **A versioned JSON Schema** covering the stable envelope fields — `type`,
+  `module`, `message`, `attributes`, `failure`, `cause`, `context`,
+  `exceptions`, `cycle` and `truncated`. It ships inside the package, reachable
+  as `envelope_schema()`, and is published at its own `$id` so a consumer in
+  another language needs nothing from PyPI.
+- **Reference fixtures** for ordinary exceptions, explicit causes, failure
+  metadata, implicit contexts, nested exception groups, redaction, truncation
+  and cycles. Every one is produced by running the serializer over a real
+  exception, so a published payload cannot describe an envelope the library
+  does not emit.
+- **Compatibility tests** that validate an emitted envelope against the schema
+  for every exception class the package defines, and that reject malformed
+  envelopes — a schema that accepts anything documents nothing.
+- **No new runtime dependency and no change to the envelope itself.** The
+  schema is versioned separately from the package, under the 1.x rule that
+  fields may be added but an established field does not change meaning
+  silently.
 
 ## Future — Pino interoperability
 

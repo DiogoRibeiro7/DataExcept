@@ -154,6 +154,11 @@ from .pipeline_exceptions import (
     TimeDeltaTooLargeError,
     TypeCheckError,
 )
+from .schema import (
+    ENVELOPE_SCHEMA_ID,
+    ENVELOPE_SCHEMA_VERSION,
+    envelope_schema,
+)
 from .security_exceptions import (
     DecryptionError,
     EncryptionError,
@@ -271,6 +276,9 @@ __all__ = [
     "wrapping",
     "exception_to_dict",
     "exception_to_json",
+    "ENVELOPE_SCHEMA_ID",
+    "ENVELOPE_SCHEMA_VERSION",
+    "envelope_schema",
     "Context",
     "log_and_raise",
     "log_exception",
