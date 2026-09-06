@@ -6,8 +6,8 @@ Security fixes are applied to the latest released minor series only.
 
 | Version | Supported |
 | --- | --- |
-| 1.4.x | ✅ |
-| < 1.4 | ❌ |
+| 1.5.x | ✅ |
+| < 1.5 | ❌ |
 
 ## Reporting a vulnerability
 
