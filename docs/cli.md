@@ -42,8 +42,11 @@ Use the `--version` flag to check which build you have installed:
 
 ```bash
 $ dataexcept --version
-dataexcept 1.0.0
+dataexcept <installed version>
 ```
+
+The version reported is the installed distribution's, so it is written that way
+here rather than pinned to whichever release this page was last edited in.
 
 This is useful inside CI pipelines where you want to confirm that the workflow
 has downloaded the expected artifacts.
