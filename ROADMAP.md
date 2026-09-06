@@ -146,7 +146,7 @@ The original 0.2–0.5 milestones are done:
 - **A bounded generated message** for a parsing failure, so a malformed
   megabyte no longer becomes a log line of the same size.
 
-## Landed for 1.6.0 — Pino interoperability
+## Landed for 1.6.0 — Pino interoperability and message brokers
 
 The implementation is on `main`; it will become a released feature when the
 1.6.0 release is cut.
@@ -174,6 +174,11 @@ Node.js dependency in the Python package.
 - **No Node.js dependency, in either direction**, and no npm package: an
   adapter belongs in a separate artifact with its own release cycle, and the
   profile is what makes one writable.
+- **A message-broker hierarchy** — `MessageBrokerError` and the five failures
+  beneath it name the operation that failed, and carry the topic, partition,
+  offset and consumer group that say where. It fits Kafka, RabbitMQ, Pulsar and
+  NATS because it describes the operation rather than the product, and the
+  package still depends on no broker client.
 
 ## 0.5 — Coverage and correctness
 

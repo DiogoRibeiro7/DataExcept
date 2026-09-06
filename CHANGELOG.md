@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A first-class message-broker hierarchy.** `MessageBrokerError` is a domain
+  root of its own, with `BrokerConnectionError`, `BrokerTimeoutError`,
+  `MessagePublishError`, `MessageConsumeError` and
+  `MessageAcknowledgementError` beneath it. Broker work was reaching for
+  `ServiceConnectionError` and `OperationTimeoutError`, which catch the failure
+  but lose which operation failed and the topic, partition, offset and consumer
+  group it failed at.
+- Structured broker context — `broker`, `topic`, `partition`, `offset`,
+  `consumer_group`, `operation` and `timeout_seconds` — with `broker` redacted
+  when it is a URL, since a bootstrap address routinely carries credentials.
+  All six take `cause=` on the canonical contract and set `__cause__`.
+
+The hierarchy is about the operation rather than the product, so it fits Kafka,
+RabbitMQ, Pulsar and NATS alike, and the package depends on no broker client.
+Retryability is left unclassified: a rejected publish may be a leader election
+or a missing topic, and the exception cannot tell which.
+
 - **A published Pino profile for the exception envelope.** `exception_to_pino()`
   and `envelope_to_pino()` project an envelope onto the value Pino logs under
   its error key, and `pino_profile_schema()`, `PINO_PROFILE_VERSION` and
