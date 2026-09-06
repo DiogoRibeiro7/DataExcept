@@ -119,10 +119,7 @@ The original 0.2–0.5 milestones are done:
   branches and pull requests; one permanent privileged Release workflow builds,
   verifies and publishes only a reviewed commit on protected `main`.
 
-## Landed for 1.5.0 — Envelope contract and safer parsing context
-
-The implementation is on `main`; it will become a released feature when the
-1.5.0 release is cut.
+## Shipped in 1.5.0 — Envelope contract and safer parsing context
 
 - **A versioned JSON Schema** covering the stable envelope fields — `type`,
   `module`, `message`, `attributes`, `failure`, `cause`, `context`,

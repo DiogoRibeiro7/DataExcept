@@ -1,7 +1,7 @@
 # Package Quality Checklist
 
 An audit of this repository against a general Python packaging checklist,
-current as of 1.4.0 (2026-09-04). Unticked boxes are genuinely not done, not
+current as of 1.5.0 (2026-09-06). Unticked boxes are genuinely not done, not
 oversights.
 
 ---
@@ -45,13 +45,15 @@ oversights.
 - [x] Global state avoided in the package (the Lambda *example* uses module
       globals deliberately, to mirror real handler patterns)
 - [x] Public API defined explicitly via `__all__` in every public module
-- [x] Public API surface settled — all 99 exception classes are importable from
-      the top level, and a test fails if a new one is not exported
+- [x] Public API surface settled — all 100 exception classes are importable
+      from the top level, and a test fails if a new one is not exported
 
 ## 6. Documentation
 
 - [x] `README.md` covers overview, install, usage and contributing
-- [x] All public classes and functions have docstrings — 102 of 102
+- [x] All public classes and functions have docstrings. The count is
+      deliberately not written here: like a test count, it is stale the
+      moment something is added
 - [x] API reference auto-generated, by mkdocstrings
 - [x] `docs/` builds a documentation site, published to GitHub Pages
 - [x] Stability and deprecation policy documented
@@ -60,11 +62,13 @@ oversights.
 
 - [x] Unit tests implemented — the count is asserted in CI rather than
       written here, so it cannot go stale
-- [x] Coverage above 80% — 92% of the package, measured with branch coverage and
-      gated at 91% in CI. Until 0.4.0 the figure was measured without
+- [x] Coverage above 80% — 93% of the package, measured with branch coverage
+      and gated at 91% in CI. Until 0.4.0 the figure was measured without
       restricting the source, so tests and examples counted toward it: the
       reported 86% was really 79%.
-- [x] Tests are fast and deterministic — full suite under two seconds
+- [x] Tests are fast and deterministic — the suite runs in seconds, touches
+      no network or filesystem outside a temporary directory, and sleeps
+      nowhere
 - [x] CI runs tests on every push and pull request
 - [x] Every exception is covered by generated tests over the whole hierarchy:
       pickle round trip, message integrity, and inheritance from the root
