@@ -21,10 +21,12 @@ import _exception_probe as _probe
 import pytest
 from jsonschema import Draft202012Validator
 
-import dataexcept
 from dataexcept import (
+    ENVELOPE_SCHEMA_ID,
     PINO_PROFILE_ID,
     PINO_PROFILE_VERSION,
+    ApiError,
+    ValidationError,
     envelope_to_pino,
     exception_to_dict,
     exception_to_pino,
@@ -55,11 +57,11 @@ def assert_valid(payload: object, description: str) -> None:
     )
 
 
-def _raised(exc: BaseException) -> BaseException:
+def _raised(exc: Exception) -> Exception:
     """Return *exc* with a real traceback attached, by raising it."""
     try:
         raise exc
-    except BaseException as raised:  # noqa: B036 - the point is to catch it
+    except Exception as raised:
         return raised
 
 
@@ -80,7 +82,7 @@ def test_the_profile_id_is_where_it_is_published() -> None:
 
 def test_the_profile_is_versioned_apart_from_the_envelope() -> None:
     """One can gain a field without the other changing; they are two contracts."""
-    assert dataexcept.PINO_PROFILE_ID != dataexcept.ENVELOPE_SCHEMA_ID
+    assert PINO_PROFILE_ID != ENVELOPE_SCHEMA_ID
 
 
 def test_pino_profile_schema_returns_a_private_copy() -> None:
@@ -130,8 +132,8 @@ def test_the_whole_tree_survives_the_projection() -> None:
         try:
             raise KeyError("customer_id")
         except KeyError:
-            raise dataexcept.ValidationError("age", -1, message="bad row")
-    except dataexcept.ValidationError as exc:
+            raise ValidationError("age", -1, message="bad row")
+    except ValidationError as exc:
         # An exception with both a cause and a context has to be built by
         # hand: `raise ... from` sets __suppress_context__, and so does
         # assigning __cause__, so the context has to be un-suppressed again.
@@ -150,7 +152,7 @@ def test_the_whole_tree_survives_the_projection() -> None:
 
 def test_attributes_stay_nested_so_they_cannot_shadow_the_error() -> None:
     """Spreading them is the obvious move, and it is how `type` gets lost."""
-    exc = dataexcept.ValidationError("age", -1)
+    exc = ValidationError("age", -1)
     exc.type = "not-the-exception-type"
     exc.stack = "not-a-stack"
 
@@ -162,8 +164,8 @@ def test_attributes_stay_nested_so_they_cannot_shadow_the_error() -> None:
 
 
 def test_a_cycle_record_survives_as_a_cycle_record() -> None:
-    outer = dataexcept.ValidationError("age", -1, message="outer")
-    inner = dataexcept.ValidationError("age", -1, message="inner")
+    outer = ValidationError("age", -1, message="outer")
+    inner = ValidationError("age", -1, message="inner")
     outer.__cause__, inner.__cause__ = inner, outer
 
     record = exception_to_pino(outer)
@@ -178,8 +180,8 @@ def test_a_cycle_record_survives_as_a_cycle_record() -> None:
 
 def test_a_truncation_marker_survives_as_a_truncation_marker() -> None:
     """Inventing a type and message here would report an error that never was."""
-    root = dataexcept.ValidationError("age", -1)
-    root.__cause__ = dataexcept.ValidationError("age", -1, message="deeper")
+    root = ValidationError("age", -1)
+    root.__cause__ = ValidationError("age", -1, message="deeper")
 
     record = exception_to_pino(root, max_depth=0)
 
@@ -188,7 +190,7 @@ def test_a_truncation_marker_survives_as_a_truncation_marker() -> None:
 
 
 def test_redaction_is_not_undone_by_the_projection() -> None:
-    exc = dataexcept.ApiError(SECRET_URL, status_code=502)
+    exc = ApiError(SECRET_URL, status_code=502)
 
     assert "SECRETVALUE" not in json.dumps(exception_to_pino(exc))
 
