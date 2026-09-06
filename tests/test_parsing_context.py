@@ -175,7 +175,9 @@ def test_a_decode_window_cut_still_leaves_room_for_the_marker() -> None:
     though the payload was cut -- and the marker would land on top of the
     bound rather than inside it.
     """
-    payload = "😀" * (MAX_PREVIEW_LENGTH + 1)
+    # Written as an escape: a literal here makes the source non-ASCII, which
+    # isort 9 cannot read on a console that is not UTF-8.
+    payload = "\U0001f600" * (MAX_PREVIEW_LENGTH + 1)
 
     exc = DeserializationError(preview=payload.encode(), format="json")
 
