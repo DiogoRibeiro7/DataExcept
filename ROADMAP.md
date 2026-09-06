@@ -146,10 +146,7 @@ The original 0.2–0.5 milestones are done:
 - **A bounded generated message** for a parsing failure, so a malformed
   megabyte no longer becomes a log line of the same size.
 
-## Landed for 1.6.0 — Pino interoperability and message brokers
-
-The implementation is on `main`; it will become a released feature when the
-1.6.0 release is cut.
+## Shipped in 1.6.0 — Pino interoperability and message brokers
 
 DataExcept envelopes are consumable from Node.js services using Pino, with no
 Node.js dependency in the Python package.
