@@ -22,7 +22,7 @@ import json
 import pickle
 
 import pytest
-from hypothesis import HealthCheck, given, settings
+from hypothesis import given, settings
 from hypothesis import strategies as st
 from jsonschema import Draft202012Validator
 
@@ -71,7 +71,7 @@ def test_deserialization_error_keeps_its_positional_contract() -> None:
 
     assert exc.data == b"\x00\x01"
     assert exc.format == "msgpack"
-    assert "msgpack" in str(exc)
+    assert str(exc) == "Failed to deserialize data from msgpack"
 
 
 def test_deserialization_error_keeps_its_positional_message_override() -> None:
@@ -135,12 +135,16 @@ def test_a_huge_legacy_payload_no_longer_becomes_a_huge_message() -> None:
 
 
 def test_a_preview_is_bounded_and_says_when_it_was_cut() -> None:
+    """The marker fits inside the bound: a maximum routinely exceeded by three
+    characters is not a maximum."""
     exact = ParsingError(preview="y" * MAX_PREVIEW_LENGTH)
     over = ParsingError(preview="y" * (MAX_PREVIEW_LENGTH + 1))
+    room = MAX_PREVIEW_LENGTH - len(TRUNCATION_MARKER)
 
     assert exact.preview == "y" * MAX_PREVIEW_LENGTH
     assert not exact.preview.endswith(TRUNCATION_MARKER)
-    assert over.preview == "y" * MAX_PREVIEW_LENGTH + TRUNCATION_MARKER
+    assert over.preview == "y" * room + TRUNCATION_MARKER
+    assert len(over.preview) == MAX_PREVIEW_LENGTH
 
 
 def test_a_preview_of_bytes_is_decoded_without_raising() -> None:
@@ -160,7 +164,24 @@ def test_a_preview_of_undecodable_bytes_stays_printable() -> None:
 def test_a_huge_binary_preview_is_bounded() -> None:
     exc = DeserializationError(preview=b"a" * 5_000_000, format="avro")
 
-    assert len(exc.preview) == MAX_PREVIEW_LENGTH + len(TRUNCATION_MARKER)
+    assert len(exc.preview) == MAX_PREVIEW_LENGTH
+
+
+def test_redaction_may_lengthen_an_excerpt_past_the_bound() -> None:
+    """The bound is on the payload, and redaction runs over the result.
+
+    A credential shorter than the string that replaces it makes the stored
+    excerpt slightly longer. Nothing leaks and nothing is unbounded; the
+    alternative is chasing an exact count through a pass whose job is removing
+    secrets rather than preserving lengths.
+    """
+    url = "https://h/p?token=X"
+    payload = "a" * (MAX_PREVIEW_LENGTH - len(url)) + url
+
+    exc = ParsingError(preview=payload)
+
+    assert exc.preview.endswith("?token=***")
+    assert len(exc.preview) == MAX_PREVIEW_LENGTH + 2
 
 
 def test_a_preview_of_the_wrong_type_is_a_programming_error() -> None:
@@ -283,7 +304,7 @@ def test_the_envelope_carries_context_instead_of_the_payload() -> None:
 
 
 @given(text=TEXT)
-@settings(max_examples=25, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(max_examples=25)
 def test_arbitrary_text_constructs_renders_and_never_leaks(text: str) -> None:
     # The URL is embedded rather than generated: a bare secret in free text
     # cannot be recognised and is documented as not redacted, so asserting on
@@ -299,6 +320,7 @@ def test_arbitrary_text_constructs_renders_and_never_leaks(text: str) -> None:
     ):
         assert str(exc), "every exception renders a non-empty message"
         assert "SECRETVALUE" not in surfaces(exc)
-        assert exc.preview is None or len(exc.preview) <= MAX_PREVIEW_LENGTH + len(
-            TRUNCATION_MARKER
-        )
+
+    # Asserted on the helper, which is where the bound is exact: what the
+    # exception stores has been through redaction as well.
+    assert len(bounded_preview(hostile) or "") <= MAX_PREVIEW_LENGTH

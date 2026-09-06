@@ -36,9 +36,12 @@ Field     | Purpose
 
 ## What `preview` guarantees
 
-- **At most 200 characters** (`dataexcept._previews.MAX_PREVIEW_LENGTH`), with
-  `...` appended when — and only when — something was cut. Pass less if you
-  want less; there is deliberately no way to ask for more.
+- **At most 200 characters** (`dataexcept._previews.MAX_PREVIEW_LENGTH`),
+  counting the `...` that is appended when — and only when — something was cut.
+  Pass less if you want less; there is deliberately no way to ask for more.
+  The bound is on the payload: redaction runs over the excerpt afterwards, as
+  over every attribute, so replacing a short credential can add a couple of
+  characters.
 - **Bytes are decoded** as UTF-8, with any undecodable byte rendered as `\xNN`.
   A malformed payload is the case this field exists for, so the excerpt stays
   printable and never fails where the parser already did.

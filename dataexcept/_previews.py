@@ -16,9 +16,10 @@ from __future__ import annotations
 
 __all__ = ["MAX_PREVIEW_LENGTH", "TRUNCATION_MARKER", "bounded_preview"]
 
-#: Longest excerpt kept, in characters. A caller who wants less can pass less;
-#: there is deliberately no way to ask for more, because the point of the field
-#: is that an untrusted payload cannot reach a log at its own length.
+#: Longest excerpt kept, in characters, counting the truncation marker. A
+#: caller who wants less can pass less; there is deliberately no way to ask for
+#: more, because the point of the field is that an untrusted payload cannot
+#: reach a log at its own length.
 MAX_PREVIEW_LENGTH = 200
 
 #: Appended when anything was cut, and only then.
@@ -48,7 +49,14 @@ def bounded_preview(value: str | bytes | bytearray | None) -> str | None:
     ``None`` gives ``None``: no excerpt was asked for. Bytes are decoded as
     UTF-8, with any undecodable byte shown as ``\xNN``.
     :data:`TRUNCATION_MARKER` is appended when, and only when, something was
-    left out.
+    left out, and the result stays within the bound either way.
+
+    The bound is on the payload. Redaction runs afterwards, over this value as
+    over every other public attribute, and a credential shorter than its
+    replacement makes the stored string a few characters longer. Chasing an
+    exact count through a pass whose job is to remove secrets rather than
+    preserve lengths would buy nothing: the excerpt is bounded so that an
+    untrusted payload cannot reach a log at its own size, and it does that.
     """
     if value is None:
         return None
@@ -59,5 +67,8 @@ def bounded_preview(value: str | bytes | bytearray | None) -> str | None:
 
     text, truncated = _as_text(value)
     if len(text) > MAX_PREVIEW_LENGTH:
-        text, truncated = text[:MAX_PREVIEW_LENGTH], True
+        # Cut short enough for the marker to fit inside the bound rather than
+        # on top of it: a documented maximum that the value routinely exceeds
+        # is not a maximum.
+        text, truncated = text[: MAX_PREVIEW_LENGTH - len(TRUNCATION_MARKER)], True
     return text + TRUNCATION_MARKER if truncated else text

@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `DeserializationError` accept keyword-only `source`, `format`, `preview` and
   `cause`, so a failure on untrusted content can be described without keeping
   the content. `source` is redacted when it is a URL and left alone when it is
-  a file path; `preview` is bounded to 200 characters, decodes bytes as UTF-8
+  a file path; `preview` is bounded to 200 characters including its truncation
+  marker, decodes bytes as UTF-8
   with any undecodable byte shown as `\xNN`, and is redacted like any other
   public attribute.
 - `cause=` on both classes, following the canonical 1.4.0 contract: recorded as
@@ -50,8 +51,6 @@ a validator — it publishes the contract rather than checking its own output.
 - `ParsingError`'s generated message bounds the payload it quotes, so a large
   malformed input no longer becomes a log line of the same size. The payload
   itself remains in full on `.text`.
-- `DeserializationError`'s generated message now names the format and source it
-  was given rather than always saying `data from <format>`.
 
 ## [1.4.0] - 2026-09-04
 

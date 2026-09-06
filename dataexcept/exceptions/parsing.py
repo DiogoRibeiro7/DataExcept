@@ -130,7 +130,12 @@ class DeserializationError(JobError):
         super().__init__(self.message)
 
     def _default_message(self) -> str:
-        described = (
-            f"Failed to deserialize {_describe_target(self.format, self.source)}"
-        )
+        if self.data is not None and self.format is not None and self.source is None:
+            # Exactly the call the historical signature accepted, so exactly
+            # the message it produced.
+            described = f"Failed to deserialize data from {self.format}"
+        else:
+            described = (
+                f"Failed to deserialize {_describe_target(self.format, self.source)}"
+            )
         return f"{described}: {self.cause}" if self.cause else described
