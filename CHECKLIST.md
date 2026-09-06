@@ -45,7 +45,7 @@ oversights.
 - [x] Global state avoided in the package (the Lambda *example* uses module
       globals deliberately, to mirror real handler patterns)
 - [x] Public API defined explicitly via `__all__` in every public module
-- [x] Public API surface settled — all 100 exception classes are importable
+- [x] Public API surface settled — all 106 exception classes are importable
       from the top level, and a test fails if a new one is not exported
 
 ## 6. Documentation

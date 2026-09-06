@@ -17,7 +17,7 @@
 
 - **🏗️ Hierarchical Structure**: Catch one specific error, a whole domain, or every operational error via `DataExceptError`
 - **📦 One Import**: Every exception is available from `dataexcept` directly, or from its domain module — same objects either way
-- **📊 Data Science Focused**: 100 exception classes covering ML pipelines, feature engineering, model training
+- **📊 Data Science Focused**: 106 exception classes covering ML pipelines, feature engineering, model training
 - **🧭 Language-neutral envelopes**: exceptions export to strict JSON against a published, versioned schema — so a non-Python consumer can validate what it receives
 - **🔧 Production Ready**: Logging helpers, error context, and exceptions that pickle — so they cross a process boundary with their message, attributes and cause intact
 - **📚 Academic Quality**: Proper documentation, type hints, and citation support
@@ -159,6 +159,17 @@ DatabaseConnectionError("postgresql://prod-db:5432/analytics")
 QueryExecutionError("SELECT * FROM large_table", original=TimeoutError())
 ```
 
+### 📨 Message Brokers
+
+```python
+from dataexcept.broker_exceptions import *
+
+BrokerConnectionError("kafka://broker.internal:9092", cause=OSError("refused"))
+MessagePublishError("orders", partition=3, cause=OSError("leader not available"))
+MessageConsumeError("orders", partition=3, offset=1042, consumer_group="billing")
+MessageAcknowledgementError("orders", partition=3, offset=1042)
+```
+
 ## 🔍 Advanced Features
 
 ### Smart Logging Integration
@@ -206,7 +217,7 @@ document Python emits.
 ### Command Line Interface
 
 ```bash
-# List every exception class the package exports (100 of them, alphabetically)
+# List every exception class the package exports (106 of them, alphabetically)
 $ dataexcept list
 ApiError
 AuthenticationError

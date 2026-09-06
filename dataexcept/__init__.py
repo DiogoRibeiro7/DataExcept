@@ -25,6 +25,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for Python <3.11
 from importlib import metadata
 
 from . import (  # noqa: F401
+    broker_exceptions,
     database_exceptions,
     dataengineering_exceptions,
     datascience_exceptions,
@@ -37,6 +38,14 @@ from . import (  # noqa: F401
     security_exceptions,
 )
 from .base import DataExceptError, UnpicklableCause, UnpicklableValue
+from .broker_exceptions import (
+    BrokerConnectionError,
+    BrokerTimeoutError,
+    MessageAcknowledgementError,
+    MessageBrokerError,
+    MessageConsumeError,
+    MessagePublishError,
+)
 from .database_exceptions import (
     DatabaseConnectionError,
     DatabaseError,
@@ -183,6 +192,8 @@ __all__ = [
     "AuthorizationError",
     "BatchProcessingError",
     "BiasDetectionError",
+    "BrokerConnectionError",
+    "BrokerTimeoutError",
     "ConfigurationError",
     "ConnectionTimeoutError",
     "ConvergenceError",
@@ -234,6 +245,10 @@ __all__ = [
     "JobCancellationError",
     "JobError",
     "MergeKeyError",
+    "MessageAcknowledgementError",
+    "MessageBrokerError",
+    "MessageConsumeError",
+    "MessagePublishError",
     "MissingColumnError",
     "MissingDataError",
     "MissingPartitionError",
@@ -292,6 +307,7 @@ __all__ = [
     "log_and_raise",
     "log_exception",
     "log_then_raise",
+    "broker_exceptions",
     "database_exceptions",
     "dataengineering_exceptions",
     "datascience_exceptions",

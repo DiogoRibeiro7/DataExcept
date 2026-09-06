@@ -31,6 +31,10 @@ submodule.
 
 ::: dataexcept.database_exceptions
 
+## Message broker exceptions
+
+::: dataexcept.broker_exceptions
+
 ## I/O exceptions
 
 ::: dataexcept.io_exceptions

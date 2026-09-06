@@ -17,7 +17,8 @@ Public, and covered by the versioning policy:
   to know which domain module a class lives in.
 - Every name in the `__all__` of a documented submodule, which re-exports the
   *same objects*, so both spellings are interchangeable:
-  `dataexcept.exceptions`, `dataexcept.datascience_exceptions`,
+  `dataexcept.exceptions`, `dataexcept.broker_exceptions`,
+  `dataexcept.datascience_exceptions`,
   `dataexcept.dataengineering_exceptions`, `dataexcept.database_exceptions`,
   `dataexcept.io_exceptions`, `dataexcept.network_exceptions`,
   `dataexcept.pandas_exceptions`, `dataexcept.pipeline_exceptions`,
@@ -73,9 +74,9 @@ Every *operational* exception derives from `DataExceptError`, so one clause
 catches the whole library. Constructors also raise plain `TypeError` when given
 invalid arguments; those are programming errors and deliberately sit outside
 this hierarchy. Beneath it sit the domain roots — `JobError`, `DataScienceError`,
-`PipelineError`, `DataEngineeringError`, `DatabaseError`, `NetworkError`,
-`PandasError`, `CustomIOError` and `SecurityError` — and each catches only its
-own domain. `except JobError:` does **not** catch `ModelTrainingError`; that is
+`PipelineError`, `DataEngineeringError`, `DatabaseError`, `MessageBrokerError`,
+`NetworkError`, `PandasError`, `CustomIOError` and `SecurityError` — and each
+catches only its own domain. `except JobError:` does **not** catch `ModelTrainingError`; that is
 a `DataScienceError`.
 
 New subclasses may be introduced under an existing base in a minor release, so
