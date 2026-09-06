@@ -379,7 +379,9 @@ through [SECURITY.md](SECURITY.md), not the public issue tracker.
 ## 🎓 Citation
 
 If you use DataExcept in your research, please cite the exact release you used.
-The canonical release metadata is maintained in [CITATION.cff](CITATION.cff).
+The canonical release metadata is maintained in [CITATION.cff](CITATION.cff), and
+the [citation guide](https://diogoribeiro7.github.io/DataExcept/citation/)
+explains how to get the APA and BibTeX forms from it.
 
 ## 📄 License
 

@@ -146,3 +146,73 @@ def test_the_migration_guide_does_not_recommend_a_removed_name():
             f"migration guide recommends removed name(s) "
             f"{sorted(recommended & removed)}: {line}"
         )
+
+
+#: Nav pages a reader of the library is not expected to be sent to, each with a
+#: reason. Empty of everything else by design: an entry here means a page is
+#: reachable only by someone already scanning the sidebar for it.
+UNLINKED_PAGES = {
+    "index.md": "the landing page itself",
+    "releasing.md": "a maintainer procedure, not something a user of the library needs",
+}
+
+#: Where the documentation site is published, which is how the README links it.
+DOCS_SITE = "https://diogoribeiro7.github.io/DataExcept/"
+
+
+def _nav_pages() -> dict[str, str]:
+    """Return every markdown page in the mkdocs nav, mapped to its title."""
+    text = (PROJECT_ROOT / "mkdocs.yml").read_text(encoding="utf-8")
+    block = re.search(r"^nav:\n((?:[ \t]+.*\n)+)", text, re.MULTILINE)
+    assert block, "mkdocs.yml has no nav section"
+
+    pages = {}
+    for line in block.group(1).splitlines():
+        entry = re.match(r"\s*-\s*(.+?):\s*(\S+\.md)\s*$", line)
+        if entry:
+            pages[entry.group(2)] = entry.group(1)
+    assert pages, "no pages parsed out of the nav"
+    return pages
+
+
+def _landing_page_links() -> set[str]:
+    """Return every nav page linked from the documentation home page or README."""
+    index = (PROJECT_ROOT / "docs" / "index.md").read_text(encoding="utf-8")
+    linked = set(re.findall(r"\(([\w./-]+\.md)", index))
+
+    readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
+    for page in _nav_pages():
+        slug = "" if page == "index.md" else f"{page[:-3]}/"
+        if f"{DOCS_SITE}{slug}" in readme:
+            linked.add(page)
+    return linked
+
+
+def test_every_documented_page_is_reachable_from_a_landing_page():
+    """A guide in the nav and nowhere else is found only by accident.
+
+    Six releases added guides, and each one added itself to the nav and stopped
+    there. The home page still offered four links, the newest from 1.1.0, so
+    five guides were reachable only by a reader already scanning the sidebar
+    for something they did not know existed. Nothing caught it, because nothing
+    was broken: the pages built, and every link in them resolved.
+    """
+    unreachable = sorted(
+        page
+        for page in _nav_pages()
+        if page not in UNLINKED_PAGES and page not in _landing_page_links()
+    )
+
+    assert not unreachable, (
+        "these pages are in the nav but linked from neither docs/index.md nor "
+        f"README.md: {unreachable}. Link them, or add one to UNLINKED_PAGES "
+        f"with a reason."
+    )
+
+
+def test_the_unlinked_list_names_pages_that_are_in_the_nav():
+    """An entry left behind after a rename would silently excuse nothing."""
+    pages = _nav_pages()
+    unknown = sorted(page for page in UNLINKED_PAGES if page not in pages)
+
+    assert not unknown, f"UNLINKED_PAGES names pages not in the nav: {unknown}"
