@@ -83,7 +83,7 @@ def _normalize_context_value(value: Any) -> Any:
 
 def _build_extra(
     context: Context | None,
-    operation_context: OperationContext | None,
+    operation_context: OperationContext | None = None,
 ) -> dict[str, Any] | None:
     extra: dict[str, Any] = {}
 
