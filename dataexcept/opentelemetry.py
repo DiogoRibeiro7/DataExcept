@@ -63,7 +63,9 @@ def _rendered_stacktrace(exc: BaseException) -> str | None:
     return redact_urls_in_text(rendered, keep_path=False) or None
 
 
-def _failure_attributes(envelope: Mapping[str, object]) -> dict[str, OtelAttributeValue]:
+def _failure_attributes(
+    envelope: Mapping[str, object],
+) -> dict[str, OtelAttributeValue]:
     """Project DataExcept failure metadata onto flat OTel-safe attributes."""
     failure = envelope.get("failure")
     if not isinstance(failure, Mapping):
