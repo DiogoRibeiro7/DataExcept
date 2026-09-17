@@ -1,13 +1,9 @@
 """OpenTelemetry-compatible exception attributes without an OTel dependency.
 
 OpenTelemetry defines stable ``exception.type``, ``exception.message`` and
-``exception.stacktrace`` attributes for exceptions.  DataExcept can supply
-those values from its redacted envelope, plus its recovery metadata, without
-importing ``opentelemetry`` itself.
-
-The mapping is deliberately signal-agnostic.  It can be passed to Python's
-``Span.record_exception(..., attributes=...)`` today and reused by log/event
-instrumentation as OpenTelemetry's exception conventions evolve.
+``exception.stacktrace`` attributes for exceptions. DataExcept can supply those
+values from its redacted envelope, plus its recovery metadata and product-neutral
+operation context, without importing ``opentelemetry`` itself.
 """
 
 from __future__ import annotations
@@ -17,6 +13,7 @@ import traceback
 from collections.abc import Mapping
 from typing import Protocol
 
+from .observability import OperationContext
 from .redaction import redact_urls_in_text
 from .schema import ENVELOPE_SCHEMA_ID
 from .serialization import exception_to_dict
@@ -43,36 +40,30 @@ class ExceptionRecorder(Protocol):
 
 
 def _qualified_type_name(exc: BaseException) -> str:
-    """Return the dynamic exception type as a fully qualified name."""
     cls = type(exc)
     return f"{cls.__module__}.{cls.__qualname__}"
 
 
 def _rendered_stacktrace(exc: BaseException) -> str | None:
-    """Return the real traceback, redacted, or ``None`` when there is none."""
     if exc.__traceback__ is None:
         return None
-
     try:
         rendered = "".join(
             traceback.format_exception(type(exc), exc, exc.__traceback__)
         )
     except Exception:  # pragma: no cover - hostile traceback objects
         return None
-
     return redact_urls_in_text(rendered, keep_path=False) or None
 
 
 def _failure_attributes(
     envelope: Mapping[str, object],
 ) -> dict[str, OtelAttributeValue]:
-    """Project DataExcept failure metadata onto flat OTel-safe attributes."""
     failure = envelope.get("failure")
     if not isinstance(failure, Mapping):
         return {}
 
     attributes: dict[str, OtelAttributeValue] = {}
-
     kind = failure.get("kind")
     if isinstance(kind, str):
         attributes["dataexcept.failure.kind"] = kind
@@ -88,9 +79,35 @@ def _failure_attributes(
     return attributes
 
 
+def _operation_attributes(
+    operation_context: OperationContext | None,
+) -> dict[str, OtelAttributeValue]:
+    """Project operation context without duplicating native trace identifiers."""
+    if operation_context is None:
+        return {}
+    if not isinstance(operation_context, OperationContext):
+        raise TypeError("operation_context must be an OperationContext or None")
+
+    attributes: dict[str, OtelAttributeValue] = {}
+    values = operation_context.to_dict()
+    for key in (
+        "system",
+        "component",
+        "operation",
+        "request_id",
+        "job_id",
+        "correlation_id",
+    ):
+        value = values.get(key)
+        if value is not None:
+            attributes[f"dataexcept.operation.{key}"] = value
+    return attributes
+
+
 def exception_to_otel_attributes(
     exc: BaseException,
     *,
+    operation_context: OperationContext | None = None,
     include_attributes: bool = True,
     max_depth: int = 8,
     include_stacktrace: bool = True,
@@ -98,13 +115,9 @@ def exception_to_otel_attributes(
 ) -> dict[str, OtelAttributeValue]:
     """Return OpenTelemetry-compatible attributes describing *exc*.
 
-    The standard exception attributes use DataExcept's redacted serialization
-    boundary rather than ``str(exc)`` directly.  DataExcept failure metadata is
-    added under the ``dataexcept.failure.*`` namespace.
-
-    ``include_envelope`` additionally includes the complete redacted envelope
-    as compact JSON plus the schema identifier.  It is off by default because
-    telemetry attributes should stay small and filterable.
+    ``trace_id`` and ``span_id`` from :class:`OperationContext` are deliberately
+    not duplicated as custom attributes. OpenTelemetry already carries them in
+    native span context; DataExcept only projects operation and correlation data.
     """
     envelope = exception_to_dict(
         exc,
@@ -123,6 +136,7 @@ def exception_to_otel_attributes(
             attributes["exception.stacktrace"] = stacktrace
 
     attributes.update(_failure_attributes(envelope))
+    attributes.update(_operation_attributes(operation_context))
 
     if include_envelope:
         attributes["dataexcept.envelope.schema"] = ENVELOPE_SCHEMA_ID
@@ -141,19 +155,16 @@ def record_otel_exception(
     span: ExceptionRecorder,
     exc: BaseException,
     *,
+    operation_context: OperationContext | None = None,
     include_attributes: bool = True,
     max_depth: int = 8,
     include_stacktrace: bool = True,
     include_envelope: bool = False,
 ) -> None:
-    """Record *exc* on an OpenTelemetry-compatible span-like object.
-
-    This helper intentionally does not set span status.  Whether an exception
-    makes the operation fail depends on whether it escapes the span's scope,
-    which the caller knows and DataExcept does not.
-    """
+    """Record *exc* on an OpenTelemetry-compatible span-like object."""
     attributes = exception_to_otel_attributes(
         exc,
+        operation_context=operation_context,
         include_attributes=include_attributes,
         max_depth=max_depth,
         include_stacktrace=include_stacktrace,
