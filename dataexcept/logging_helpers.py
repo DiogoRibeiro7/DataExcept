@@ -8,6 +8,7 @@ import logging
 import traceback
 from typing import Any, Iterator, Mapping, Optional
 
+from .observability import OperationContext
 from .redaction import redact_urls_in_text
 
 Context = Mapping[str, Any]
@@ -80,13 +81,25 @@ def _normalize_context_value(value: Any) -> Any:
     return _described(value)
 
 
-def _build_extra(context: Context | None) -> dict[str, Any] | None:
-    if not context:
-        return None
-    serialized = {
-        key: _normalize_context_value(value) for key, value in context.items()
-    }
-    return {"dataexcept_context": serialized}
+def _build_extra(
+    context: Context | None,
+    operation_context: OperationContext | None = None,
+) -> dict[str, Any] | None:
+    extra: dict[str, Any] = {}
+
+    if context:
+        extra["dataexcept_context"] = {
+            key: _normalize_context_value(value) for key, value in context.items()
+        }
+
+    if operation_context is not None:
+        if not isinstance(operation_context, OperationContext):
+            raise TypeError("operation_context must be an OperationContext or None")
+        serialized = operation_context.to_dict()
+        if serialized:
+            extra["dataexcept_operation"] = serialized
+
+    return extra or None
 
 
 def _chain_mentions_a_url(exc: BaseException) -> bool:
@@ -113,10 +126,15 @@ def log_exception(
     logger: Optional[logging.Logger] = None,
     level: int = logging.ERROR,
     context: Context | None = None,
+    operation_context: OperationContext | None = None,
 ) -> None:
     """Log *exc* at the given log *level* using *logger*.
 
     If *logger* is ``None`` a module level logger is used.
+
+    ``context`` remains the free-form application context. ``operation_context``
+    carries the stable request/job/tool-call identifiers shared with tracing and
+    error-tracker integrations.
 
     DataExcept redacts what it renders, but a wrapped third-party exception
     renders itself: an HTTP client's error may quote the credential-bearing URL
@@ -127,7 +145,7 @@ def log_exception(
     """
     if logger is None:
         logger = logging.getLogger(__name__)
-    extra = _build_extra(context)
+    extra = _build_extra(context, operation_context)
 
     if _chain_mentions_a_url(exc):
         formatted = "".join(
@@ -147,12 +165,19 @@ def log_and_raise(
     logger: Optional[logging.Logger] = None,
     level: int = logging.ERROR,
     context: Context | None = None,
+    operation_context: OperationContext | None = None,
 ) -> Iterator[None]:
     """Context manager that logs and re-raises exceptions preserving traceback."""
     try:
         yield
     except Exception as exc:
-        log_exception(exc, logger=logger, level=level, context=context)
+        log_exception(
+            exc,
+            logger=logger,
+            level=level,
+            context=context,
+            operation_context=operation_context,
+        )
         raise
 
 
@@ -161,6 +186,7 @@ def log_then_raise(
     logger: Optional[logging.Logger] = None,
     level: int = logging.ERROR,
     context: Context | None = None,
+    operation_context: OperationContext | None = None,
 ) -> None:
     """Log *exc* and immediately raise it.
 
@@ -168,5 +194,11 @@ def log_then_raise(
     ``with`` block would be too intrusive. Prefer :func:`log_and_raise` whenever
     possible so tracebacks remain untouched.
     """
-    log_exception(exc, logger=logger, level=level, context=context)
+    log_exception(
+        exc,
+        logger=logger,
+        level=level,
+        context=context,
+        operation_context=operation_context,
+    )
     raise exc

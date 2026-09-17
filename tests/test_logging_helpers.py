@@ -2,6 +2,7 @@ import logging
 
 import pytest
 
+from dataexcept import OperationContext
 from dataexcept.logging_helpers import (
     log_and_raise,
     log_exception,
@@ -39,6 +40,36 @@ def test_log_exception_writes_record():
     assert "boom" in rec.getMessage()
     assert rec.exc_info is not None
     assert rec.dataexcept_context == {"job_id": "42"}
+
+
+def test_log_exception_attaches_operation_context_separately():
+    records = []
+    handler = _ListHandler(records)
+    logger = logging.getLogger("test_log_exception_operation")
+    logger.addHandler(handler)
+    try:
+        log_exception(
+            RuntimeError("boom"),
+            logger=logger,
+            context={"tenant": "acme"},
+            operation_context=OperationContext(
+                system="worker",
+                component="billing",
+                operation="settle_invoice",
+                job_id="job-42",
+            ),
+        )
+    finally:
+        logger.removeHandler(handler)
+
+    rec = records[0]
+    assert rec.dataexcept_context == {"tenant": "acme"}
+    assert rec.dataexcept_operation == {
+        "system": "worker",
+        "component": "billing",
+        "operation": "settle_invoice",
+        "job_id": "job-42",
+    }
 
 
 def test_log_and_raise():
