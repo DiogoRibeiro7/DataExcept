@@ -389,7 +389,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🏆 About the Author
 
-**Diogo Ribeiro** is a Lead Data Scientist at Mysense.ai and researcher/instructor at FMAD - UTP. With expertise in machine learning, statistical analysis, and production ML systems, he created DataExcept to solve real-world error handling challenges in data science workflows.
+**Diogo Ribeiro** is a mathematician, data scientist, researcher and instructor at FMAD - UTP. With expertise in statistical modelling, machine learning and production data systems, he created DataExcept to solve real-world error handling challenges in data science workflows.
 
 - 🔗 **ORCID**: [0009-0001-2022-7072](https://orcid.org/0009-0001-2022-7072)
 - 🌐 **Website**: [diogoribeiro7.github.io](https://diogoribeiro7.github.io/)
