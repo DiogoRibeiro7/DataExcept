@@ -31,6 +31,15 @@ def _safe_text(value: object) -> str | None:
     return stripped
 
 
+def _validated_optional_text(value: str | None, field: str) -> str | None:
+    if value is None:
+        return None
+    normalized = _safe_text(value)
+    if normalized is None:
+        raise ValueError(f"{field} must be non-empty single-line text or None")
+    return normalized
+
+
 def _normalized_metadata(metadata: Mapping[str, object]) -> dict[str, object]:
     normalized: dict[str, object] = {}
     for key, value in metadata.items():
@@ -130,15 +139,11 @@ def worker_context_from_task(
         "correlation_id_keys",
     )
 
-    explicit_job_id = _safe_text(job_id)
-    if job_id is not None and explicit_job_id is None:
-        raise ValueError("job_id must be non-empty single-line text or None")
-
-    explicit_correlation_id = _safe_text(correlation_id)
-    if correlation_id is not None and explicit_correlation_id is None:
-        raise ValueError(
-            "correlation_id must be non-empty single-line text or None"
-        )
+    explicit_job_id = _validated_optional_text(job_id, "job_id")
+    explicit_correlation_id = _validated_optional_text(
+        correlation_id,
+        "correlation_id",
+    )
 
     operation_context = OperationContext(
         system=system,
