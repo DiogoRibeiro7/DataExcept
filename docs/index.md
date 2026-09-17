@@ -57,6 +57,9 @@ pip install DataExcept
   language-neutral JSON contract for an exported exception, with fixtures.
 - **[Pino Interoperability](pino.md)** — the same failure in the
   shape a Node.js logger reads, projected from the envelope.
+- **[Sentry Integration](sentry.md)** — enrich Sentry error events with the
+  redacted DataExcept envelope and filterable failure tags, without adding a
+  Sentry runtime dependency.
 
 </div>
 
