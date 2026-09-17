@@ -66,7 +66,7 @@ def test_future_version_keeps_extension_opaque() -> None:
     assert context.to_carrier()["traceparent"] == raw
 
 
-def test_mapping_extraction_is_case_insensitive_and_drops_unsafe_optional_values() -> None:
+def test_mapping_extraction_drops_unsafe_optional_values() -> None:
     context = trace_context_from_mapping(
         {
             "TraceParent": TRACEPARENT,
@@ -85,7 +85,7 @@ def test_missing_or_invalid_traceparent_does_not_generate_provenance() -> None:
     assert trace_context_from_mapping({"traceparent": 42}) is None
 
 
-def test_trace_context_enriches_operation_context_without_inventing_local_span() -> None:
+def test_trace_context_enriches_operation_context_without_local_span() -> None:
     trace = parse_traceparent(TRACEPARENT)
     assert trace is not None
 
