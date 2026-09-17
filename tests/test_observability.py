@@ -37,10 +37,7 @@ def test_operation_context_redacts_url_shaped_values() -> None:
         system="https://user:secret@example.com/private?token=hidden"
     )
 
-    serialized = context.to_dict()["system"]
-    assert "secret" not in serialized
-    assert "hidden" not in serialized
-    assert "example.com" in serialized
+    assert context.to_dict()["system"] == "https://***:***@example.com/***?token=***"
 
 
 def test_operation_context_rejects_empty_and_non_string_values() -> None:
