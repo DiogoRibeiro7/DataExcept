@@ -121,18 +121,8 @@ from .exceptions import (
     WebhookError,
 )
 from .failure_metadata import FailureKind, FailureMetadata
-from .io_exceptions import (
-    CustomIOError,
-    FileLockError,
-    FileReadError,
-    FileWriteError,
-)
-from .logging_helpers import (
-    Context,
-    log_and_raise,
-    log_exception,
-    log_then_raise,
-)
+from .io_exceptions import CustomIOError, FileLockError, FileReadError, FileWriteError
+from .logging_helpers import Context, log_and_raise, log_exception, log_then_raise
 from .network_exceptions import (
     ConnectionTimeoutError,
     HostUnreachableError,
@@ -178,6 +168,7 @@ from .security_exceptions import (
     InvalidTokenError,
     SecurityError,
 )
+from .sentry import enrich_sentry_event
 from .serialization import exception_to_dict, exception_to_json
 from .wrapping import wrap, wrapping
 
@@ -303,6 +294,7 @@ __all__ = [
     "pino_profile_schema",
     "envelope_to_pino",
     "exception_to_pino",
+    "enrich_sentry_event",
     "Context",
     "log_and_raise",
     "log_exception",

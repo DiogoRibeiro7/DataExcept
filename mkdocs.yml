@@ -82,6 +82,7 @@ nav:
   - Failure Metadata: failure_metadata.md
   - Envelope Schema: envelope_schema.md
   - Pino Interoperability: pino.md
+  - Sentry Integration: sentry.md
   - Advanced Usage: advanced_usage.md
   - API Reference: api.md
   - API Stability: stability.md
