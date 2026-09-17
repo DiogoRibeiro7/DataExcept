@@ -6,8 +6,8 @@ Security fixes are applied to the latest released minor series only.
 
 | Version | Supported |
 | --- | --- |
-| 1.6.x | ✅ |
-| < 1.6 | ❌ |
+| 1.7.x | ✅ |
+| < 1.7 | ❌ |
 
 ## Reporting a vulnerability
 
@@ -37,13 +37,14 @@ targets rather than a contractual SLA.
 
 ## Scope
 
-DataExcept is a library of exception classes and logging helpers. It performs
-no network or filesystem I/O and has one conditional runtime dependency
-(`tomli`, on Python < 3.11).
+DataExcept is a dependency-light exception and observability-support library.
+It performs no network or filesystem I/O and has one conditional runtime
+dependency (`tomli`, on Python < 3.11). The observability adapters operate on
+plain mappings and structural interfaces; they do not import framework SDKs.
 
-The realistic issue is **information disclosure through exception messages**.
-These exceptions embed the values that caused a failure, and
-`log_exception` logs `str(exc)`, so a message can reach a log.
+The realistic issue is **information disclosure through exception messages or
+observability metadata**. These exceptions embed the values that caused a
+failure, and `log_exception` logs `str(exc)`, so a message can reach a log.
 
 ### What is redacted
 
