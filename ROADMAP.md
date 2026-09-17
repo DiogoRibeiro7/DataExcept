@@ -189,42 +189,85 @@ hierarchy of their own.
   that way, and is the shape a new domain should take: named by the operation
   that failed rather than by the product it failed in.
 
-## Planned — MCP observability
+## Planned — observability integrations
 
-Target the current MCP `2026-07-28` architecture rather than building new code
-on the protocol's deprecated Logging capability. For new MCP implementations,
-stdio diagnostics belong on `stderr`, while structured observability belongs in
-OpenTelemetry. DataExcept should make that production pattern easy without
-adding an MCP SDK as a runtime dependency.
+MCP is one example of a broader problem. Any system where work crosses an
+execution boundary needs failures to remain identifiable and correlated after
+they leave the frame that raised them. DataExcept should provide one common
+observability model and thin adapters for those environments, rather than a
+separate logging design for each product or protocol.
 
-- **MCP-aware failure context** — add a small adapter that can attach the MCP
-  method and operation name, such as a tool, resource or prompt name, to a
-  redacted DataExcept envelope without importing an MCP implementation.
-- **stdio-safe logging** — document and test a logging path that writes
-  diagnostics to `stderr` and never to `stdout`, because stdout belongs to the
-  MCP protocol stream for stdio transports.
-- **OpenTelemetry first** — reuse the OpenTelemetry exception mapping so MCP
-  spans carry standard `exception.*` attributes together with
-  `dataexcept.failure.*` recovery metadata instead of inventing a second
-  telemetry vocabulary.
-- **Trace continuity** — preserve the W3C trace context MCP defines in `_meta`:
-  `traceparent`, `tracestate` and `baggage`, so a host-to-tool request can stay
-  correlated through the MCP server and downstream services.
-- **Tool-call diagnostics** — make failures filterable by operation while
-  keeping high-cardinality arguments out of tags by default. Full structured
-  context belongs in the bounded, redacted envelope rather than in metric or
-  trace dimensions.
-- **No protocol lock-in** — accept plain mappings and structural interfaces so
-  the same integration works with the official Python SDK, another MCP SDK, or
-  a hand-written server. No MCP package becomes a DataExcept runtime
-  dependency.
-- **Legacy logging only as compatibility** — if support for MCP logging
-  notifications is ever added, keep it as an explicit compatibility adapter
-  during the deprecation window, not as the primary observability path.
-- **Contract tests** — prove that MCP integration never writes to stdout,
-  preserves trace metadata, redacts credential-bearing values, remains strict
-  JSON safe, and never replaces the original failure with an observability
+The common contract is the existing redacted exception envelope plus failure
+metadata. Logs, traces and error trackers should project that contract into the
+shape their ecosystem expects without introducing mandatory runtime
+integrations.
+
+- **Common operation context** — define a small, product-neutral context for
+  `system`, `component`, `operation`, `request_id`, `job_id` and similar
+  identifiers. Adapters can map their own terminology onto it without changing
+  the exception hierarchy.
+- **Structured logging** — make the envelope easy to attach to Python logging,
+  JSON loggers and external structured-log formats while preserving the rule
+  that observability must never replace the original failure with a logging
   failure.
+- **OpenTelemetry as the shared trace vocabulary** — reuse standard
+  `exception.*` attributes and `dataexcept.failure.*` recovery metadata across
+  services instead of inventing product-specific telemetry fields.
+- **Trace and correlation continuity** — accept and propagate trace, request,
+  job and correlation identifiers when a framework exposes them, but do not
+  generate fake provenance when it does not.
+- **Low-cardinality indexing** — keep operation type, failure kind and
+  retryability filterable while keeping payloads, arguments, URLs and other
+  high-cardinality or sensitive values inside the bounded redacted envelope.
+- **No framework lock-in** — use plain mappings and structural interfaces so an
+  adapter can work with a framework or protocol without making its SDK a
+  DataExcept runtime dependency.
+- **Contract tests for every adapter** — verify redaction, strict JSON safety,
+  traceback preservation, correlation metadata and the never-throw
+  observability boundary.
+
+### Candidate environments
+
+Prioritise integrations where an exception routinely crosses a process,
+network, queue or orchestration boundary:
+
+- **Web APIs and RPC services** — request IDs, endpoints/methods, status and
+  trace correlation for HTTP, ASGI/WSGI-style services and RPC frameworks.
+- **Background workers and task queues** — task/job IDs, retries, attempt
+  numbers and worker context for asynchronous execution.
+- **Workflow and data orchestrators** — run, workflow, DAG, step and task
+  identifiers for scheduled or distributed pipelines.
+- **Serverless runtimes** — invocation/request IDs, cold-start/runtime context
+  and stderr-safe diagnostics without coupling to one cloud provider.
+- **Message brokers and stream processors** — correlate broker exceptions with
+  consumer, partition, offset and trace context across producer/consumer
+  boundaries.
+- **Distributed data and ML workloads** — preserve experiment, model, batch,
+  stage and worker context when failures cross executors or remote workers.
+- **Long-running services and daemons** — structured lifecycle and background
+  task failures where stdout/stderr or process supervisors impose logging
+  constraints.
+- **Agent and tool protocols** — attach tool/resource/prompt or other operation
+  context and preserve distributed trace continuity. MCP is the first concrete
+  example here, not a special observability model of its own.
+
+### MCP example
+
+For current MCP implementations, follow the protocol architecture rather than
+building new code around its deprecated Logging capability. Stdio diagnostics
+belong on `stderr`, structured observability belongs in OpenTelemetry, and W3C
+trace context carried through `_meta` should remain correlated across the host,
+MCP server, tool call and downstream services.
+
+- Attach MCP method and operation names such as a tool, resource or prompt name
+  to the generic operation context.
+- Never write diagnostics to stdout on stdio transports, because stdout belongs
+  to the protocol stream.
+- Preserve `traceparent`, `tracestate` and `baggage` when they are present.
+- Keep arguments out of tags by default; the bounded redacted envelope is the
+  place for structured failure context.
+- Keep any legacy MCP logging-notification support as an explicit compatibility
+  adapter during the deprecation window, not as the primary observability path.
 
 ## Known follow-ups
 
