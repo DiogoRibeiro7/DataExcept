@@ -181,12 +181,50 @@ hierarchy of their own.
 ## Ongoing
 
 - Track new stable Python releases promptly; 3.14 is supported as of 0.4.1.
-- Optional integration hooks for error trackers such as Sentry, kept out of the
-  runtime dependencies.
+- Keep observability integrations optional and dependency-free. Sentry event
+  enrichment is available without importing `sentry-sdk`; OpenTelemetry
+  exception attributes follow the same boundary.
 - Prioritise new exception domains by what users actually report reaching for
   generic exceptions to express. The message-broker family in 1.6.0 arrived
   that way, and is the shape a new domain should take: named by the operation
   that failed rather than by the product it failed in.
+
+## Planned — MCP observability
+
+Target the current MCP `2026-07-28` architecture rather than building new code
+on the protocol's deprecated Logging capability. For new MCP implementations,
+stdio diagnostics belong on `stderr`, while structured observability belongs in
+OpenTelemetry. DataExcept should make that production pattern easy without
+adding an MCP SDK as a runtime dependency.
+
+- **MCP-aware failure context** — add a small adapter that can attach the MCP
+  method and operation name, such as a tool, resource or prompt name, to a
+  redacted DataExcept envelope without importing an MCP implementation.
+- **stdio-safe logging** — document and test a logging path that writes
+  diagnostics to `stderr` and never to `stdout`, because stdout belongs to the
+  MCP protocol stream for stdio transports.
+- **OpenTelemetry first** — reuse the OpenTelemetry exception mapping so MCP
+  spans carry standard `exception.*` attributes together with
+  `dataexcept.failure.*` recovery metadata instead of inventing a second
+  telemetry vocabulary.
+- **Trace continuity** — preserve the W3C trace context MCP defines in `_meta`:
+  `traceparent`, `tracestate` and `baggage`, so a host-to-tool request can stay
+  correlated through the MCP server and downstream services.
+- **Tool-call diagnostics** — make failures filterable by operation while
+  keeping high-cardinality arguments out of tags by default. Full structured
+  context belongs in the bounded, redacted envelope rather than in metric or
+  trace dimensions.
+- **No protocol lock-in** — accept plain mappings and structural interfaces so
+  the same integration works with the official Python SDK, another MCP SDK, or
+  a hand-written server. No MCP package becomes a DataExcept runtime
+  dependency.
+- **Legacy logging only as compatibility** — if support for MCP logging
+  notifications is ever added, keep it as an explicit compatibility adapter
+  during the deprecation window, not as the primary observability path.
+- **Contract tests** — prove that MCP integration never writes to stdout,
+  preserves trace metadata, redacts credential-bearing values, remains strict
+  JSON safe, and never replaces the original failure with an observability
+  failure.
 
 ## Known follow-ups
 
