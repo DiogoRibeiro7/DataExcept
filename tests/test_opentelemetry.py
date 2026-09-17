@@ -30,7 +30,9 @@ def test_standard_exception_attributes_use_redacted_envelope_message() -> None:
 
     attributes = exception_to_otel_attributes(exc, include_stacktrace=False)
 
-    assert attributes["exception.type"] == "dataexcept.exceptions.validation.ValidationError"
+    assert attributes["exception.type"] == (
+        "dataexcept.exceptions.validation.ValidationError"
+    )
     assert "secret" not in attributes["exception.message"]
     assert "hidden" not in attributes["exception.message"]
 
