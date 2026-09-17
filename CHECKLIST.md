@@ -1,7 +1,7 @@
 # Package Quality Checklist
 
 An audit of this repository against a general Python packaging checklist,
-current as of 1.6.0 (2026-09-06). Unticked boxes are genuinely not done, not
+current as of 1.7.0 (2026-09-17). Unticked boxes are genuinely not done, not
 oversights.
 
 ---
@@ -39,7 +39,7 @@ oversights.
 
 ## 5. Function & Module Design
 
-- [x] Functions are small and single-responsibility — highest mccabe score is 6,
+- [x] Functions are small and single-responsibility — McCabe complexity is
       capped at 8 in CI
 - [x] Classes follow clear roles
 - [x] Global state avoided in the package (the Lambda *example* uses module
