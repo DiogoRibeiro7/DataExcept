@@ -7,8 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-09-17
+
+### Added
+
+- **A product-neutral observability context.** `OperationContext` carries
+  stable system, component and operation labels separately from request, job,
+  correlation, trace and span identifiers. `exception_to_observability_event()`
+  combines that context with the existing redacted exception envelope without
+  coupling DataExcept to a framework or telemetry SDK.
+- **Dependency-free OpenTelemetry support.** Exception conversion exposes the
+  standard `exception.*` attributes plus `dataexcept.failure.*` recovery
+  metadata and can record an exception through the minimal span interface
+  without importing OpenTelemetry.
+- **Dependency-free Sentry enrichment.** Sentry events can carry the redacted
+  DataExcept envelope and operation context while only low-cardinality fields
+  become tags.
+- **W3C Trace Context continuity.** `traceparent` can be parsed without a
+  tracing runtime, with `tracestate` and `baggage` preserved for forwarding.
+  Invalid or all-zero identifiers are rejected rather than replaced with
+  invented provenance, and an incoming parent span ID is never mislabelled as
+  a local span ID.
+- **Framework-neutral execution-boundary adapters** for HTTP requests,
+  background workers and workflow/orchestrator steps. They map stable operation
+  names and correlation identifiers onto the common context while keeping raw
+  request paths, payloads and task arguments out of indexed telemetry. The
+  adapters depend only on plain mappings and therefore fit ASGI/WSGI services,
+  serverless gateways, Celery/RQ/Arq/Dramatiq-style workers, Airflow/Dagster/
+  Prefect/Argo-style orchestrators and custom runtimes without importing them.
+
 ### Changed
 
+- Logging helpers can attach `OperationContext` separately from free-form
+  application context, keeping filterable operation identity distinct from
+  arbitrary payload-shaped values.
+- OpenTelemetry and Sentry now project the same operation context so logs,
+  traces and error trackers can correlate one failure consistently.
 - The documentation home page and the README now link every guide the site
   publishes. Each release had added its guide to the navigation and stopped
   there, leaving cause-aware exceptions, failure metadata, parsing context,
@@ -728,7 +762,8 @@ First public release.
 - Published to PyPI via OIDC trusted publishing; no long-lived API token is
   involved in a release.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/DiogoRibeiro7/DataExcept/compare/v1.3.0...v1.4.0
