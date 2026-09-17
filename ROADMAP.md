@@ -190,13 +190,7 @@ hierarchy of their own.
 
 ## Known follow-ups
 
-Small, already identified, and not yet decided on:
+One repository-setting follow-up remains:
 
 - The `wheel` job mirrors the release gate on every pull request but is not in
   the branch-protection required set, so it reports without blocking.
-- Dependabot documents a `pre-commit` ecosystem that would keep the hook
-  revisions in step with the lock file automatically, which a test currently
-  requires a human to do.
-- `tests/test_envelope_schema.py` carries a code-scanning alert for importing
-  `dataexcept` both ways. Fixing it changes what one test verifies, so it wants
-  a decision rather than a drive-by.
