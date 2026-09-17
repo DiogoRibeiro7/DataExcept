@@ -129,6 +129,7 @@ from .network_exceptions import (
     NetworkError,
     ProtocolError,
 )
+from .observability import OperationContext, exception_to_observability_event
 from .pandas_exceptions import (
     DtypeMismatchError,
     IndexAlignmentError,
@@ -286,6 +287,8 @@ __all__ = [
     "wrapping",
     "exception_to_dict",
     "exception_to_json",
+    "exception_to_observability_event",
+    "OperationContext",
     "ENVELOPE_SCHEMA_ID",
     "ENVELOPE_SCHEMA_VERSION",
     "envelope_schema",
