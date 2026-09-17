@@ -38,6 +38,34 @@ def _safe_optional_header(value: object) -> str | None:
     return value
 
 
+def _has_valid_separators(value: str) -> bool:
+    """Return whether the mandatory traceparent separators are present."""
+    return value[2] == "-" and value[35] == "-" and value[52] == "-"
+
+
+def _mandatory_fields_are_valid(
+    version: str,
+    trace_id: str,
+    parent_id: str,
+    trace_flags: str,
+) -> bool:
+    """Validate the fixed-width fields shared by all traceparent versions."""
+    if not _is_lower_hex(version, 2) or version == "ff":
+        return False
+    if not _is_lower_hex(trace_id, 32) or trace_id == _ZERO_TRACE_ID:
+        return False
+    if not _is_lower_hex(parent_id, 16) or parent_id == _ZERO_PARENT_ID:
+        return False
+    return _is_lower_hex(trace_flags, 2)
+
+
+def _version_shape_is_valid(value: str, version: str) -> bool:
+    """Validate version-specific length and extension framing rules."""
+    if version == "00":
+        return len(value) == 55
+    return len(value) == 55 or value[55] == "-"
+
+
 @dataclass(frozen=True, slots=True)
 class W3CTraceContext:
     """Parsed W3C ``traceparent`` plus optional propagation companions.
@@ -99,17 +127,16 @@ def parse_traceparent(
 ) -> W3CTraceContext | None:
     """Parse a W3C ``traceparent`` value, returning ``None`` when invalid.
 
-    Version ``00`` uses the exact 55-character format.  Higher versions are
+    Version ``00`` uses the exact 55-character format. Higher versions are
     accepted when their mandatory prefix is parseable; any extension remains
-    opaque and is preserved in ``traceparent`` for forwarding.  No identifiers
+    opaque and is preserved in ``traceparent`` for forwarding. No identifiers
     are generated when parsing fails.
     """
     if not isinstance(value, str):
         raise TypeError("traceparent must be a string")
     if value != value.strip() or len(value) < 55:
         return None
-
-    if value[2] != "-" or value[35] != "-" or value[52] != "-":
+    if not _has_valid_separators(value):
         return None
 
     version = value[:2]
@@ -117,19 +144,9 @@ def parse_traceparent(
     parent_id = value[36:52]
     trace_flags = value[53:55]
 
-    if not _is_lower_hex(version, 2) or version == "ff":
+    if not _mandatory_fields_are_valid(version, trace_id, parent_id, trace_flags):
         return None
-    if not _is_lower_hex(trace_id, 32) or trace_id == _ZERO_TRACE_ID:
-        return None
-    if not _is_lower_hex(parent_id, 16) or parent_id == _ZERO_PARENT_ID:
-        return None
-    if not _is_lower_hex(trace_flags, 2):
-        return None
-
-    if version == "00":
-        if len(value) != 55:
-            return None
-    elif len(value) > 55 and value[55] != "-":
+    if not _version_shape_is_valid(value, version):
         return None
 
     return W3CTraceContext(
@@ -149,7 +166,7 @@ def trace_context_from_mapping(
     """Extract W3C trace context from a case-insensitive mapping-like carrier.
 
     The mapping can represent HTTP headers, RPC metadata, broker properties or
-    protocol metadata such as MCP ``_meta``.  Invalid ``tracestate`` or
+    protocol metadata such as MCP ``_meta``. Invalid ``tracestate`` or
     ``baggage`` values are dropped without invalidating a valid ``traceparent``.
     """
     if not isinstance(carrier, Mapping):
