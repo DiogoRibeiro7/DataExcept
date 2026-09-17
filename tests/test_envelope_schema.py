@@ -104,9 +104,9 @@ def test_envelope_schema_returns_a_private_copy() -> None:
     mutated = dataexcept.envelope_schema()
     mutated["$defs"].clear()
 
-    assert dataexcept.envelope_schema()["$defs"], (
-        "envelope_schema() handed out shared state"
-    )
+    assert dataexcept.envelope_schema()[
+        "$defs"
+    ], "envelope_schema() handed out shared state"
 
 
 def test_the_schema_constrains_exactly_the_documented_fields() -> None:
