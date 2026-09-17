@@ -1,28 +1,17 @@
-"""Enrich Sentry error events with a structured DataExcept envelope.
-
-This module deliberately does not import ``sentry_sdk``.  The public hook has
-Sentry's ``before_send(event, hint)`` shape, so applications that already use
-Sentry can pass it directly to ``sentry_sdk.init`` without making Sentry a
-DataExcept runtime dependency.
-
-Only the DataExcept-owned context is guaranteed to have gone through
-DataExcept's serializer and redaction.  Sentry still captures its native error
-event independently, including whatever request, stack or local-variable data
-the application's Sentry configuration permits.
-"""
+"""Enrich Sentry error events with structured DataExcept metadata."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping
 from typing import Any
 
+from .observability import OperationContext
 from .serialization import exception_to_dict
 
 __all__ = ["enrich_sentry_event"]
 
 
 def _exception_from_hint(hint: Mapping[str, Any]) -> BaseException | None:
-    """Return the exception Sentry placed in ``hint['exc_info']``, if any."""
     try:
         exc_info = hint.get("exc_info")
     except Exception:  # pragma: no cover - hostile mapping implementations
@@ -36,7 +25,6 @@ def _exception_from_hint(hint: Mapping[str, Any]) -> BaseException | None:
 
 
 def _tags_from_envelope(envelope: Mapping[str, Any]) -> dict[str, str]:
-    """Return low-cardinality tags useful for filtering Sentry issues."""
     tags: dict[str, str] = {}
 
     exception_type = envelope.get("type")
@@ -60,28 +48,39 @@ def _tags_from_envelope(envelope: Mapping[str, Any]) -> dict[str, str]:
     return tags
 
 
+def _operation_tags(operation_context: OperationContext | None) -> dict[str, str]:
+    if operation_context is None:
+        return {}
+    if not isinstance(operation_context, OperationContext):
+        raise TypeError("operation_context must be an OperationContext or None")
+    return {
+        f"dataexcept.operation.{key}": value
+        for key, value in operation_context.index_fields().items()
+    }
+
+
 def enrich_sentry_event(
     event: dict[str, Any],
     hint: Mapping[str, Any],
     *,
+    operation_context: OperationContext | None = None,
     include_attributes: bool = True,
     max_depth: int = 8,
 ) -> dict[str, Any]:
-    """Return a Sentry error *event* enriched with DataExcept metadata.
+    """Return a Sentry event enriched with DataExcept failure metadata.
 
-    The function is compatible with Sentry's ``before_send`` callback.  When
-    ``hint`` contains an exception, the event gains a ``dataexcept`` context
-    containing :func:`dataexcept.exception_to_dict` output and a small set of
-    filterable ``dataexcept.*`` tags.  Existing contexts and tags are preserved.
-
-    Events without exception information pass through unchanged.  The input
-    event is not mutated when enrichment occurs, which makes the hook safe to
-    compose with another ``before_send`` callback.
+    Full operation context, including correlation identifiers, is stored under
+    ``contexts.dataexcept_operation``. Only the low-cardinality operation fields
+    become tags so request/job/trace identifiers do not become indexed tags.
     """
     if not isinstance(event, dict):
         raise TypeError("event must be a dictionary")
     if not isinstance(hint, Mapping):
         raise TypeError("hint must be a mapping")
+    if operation_context is not None and not isinstance(
+        operation_context, OperationContext
+    ):
+        raise TypeError("operation_context must be an OperationContext or None")
 
     exc = _exception_from_hint(hint)
     if exc is None:
@@ -97,11 +96,16 @@ def enrich_sentry_event(
     existing_contexts = event.get("contexts")
     contexts = dict(existing_contexts) if isinstance(existing_contexts, Mapping) else {}
     contexts["dataexcept"] = envelope
+    if operation_context is not None:
+        serialized = operation_context.to_dict()
+        if serialized:
+            contexts["dataexcept_operation"] = serialized
     enriched["contexts"] = contexts
 
     existing_tags = event.get("tags")
     tags = dict(existing_tags) if isinstance(existing_tags, Mapping) else {}
     tags.update(_tags_from_envelope(envelope))
+    tags.update(_operation_tags(operation_context))
     enriched["tags"] = tags
 
     return enriched
