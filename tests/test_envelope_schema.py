@@ -23,7 +23,6 @@ from hypothesis import strategies as st
 from jsonschema import Draft202012Validator
 
 import dataexcept
-from dataexcept import ENVELOPE_SCHEMA_ID, ENVELOPE_SCHEMA_VERSION, envelope_schema
 from dataexcept.serialization import exception_to_dict
 from scripts.generate_envelope_fixtures import (
     BUILDERS,
@@ -34,7 +33,7 @@ from scripts.generate_envelope_fixtures import (
     serialize,
 )
 
-SCHEMA = envelope_schema()
+SCHEMA = dataexcept.envelope_schema()
 VALIDATOR = Draft202012Validator(SCHEMA)
 
 #: The three kinds of envelope node, which a consumer tells apart by shape.
@@ -94,21 +93,20 @@ def test_the_shipped_schema_is_a_valid_2020_12_document() -> None:
 
 
 def test_the_schema_id_is_where_the_schema_is_published() -> None:
-    assert SCHEMA["$id"] == ENVELOPE_SCHEMA_ID
-    assert ENVELOPE_SCHEMA_ID.endswith(f"envelope-{ENVELOPE_SCHEMA_VERSION}.json")
+    assert SCHEMA["$id"] == dataexcept.ENVELOPE_SCHEMA_ID
+    assert dataexcept.ENVELOPE_SCHEMA_ID.endswith(
+        f"envelope-{dataexcept.ENVELOPE_SCHEMA_VERSION}.json"
+    )
 
 
 def test_envelope_schema_returns_a_private_copy() -> None:
     """A caller that mutates the schema must not affect the next caller."""
-    mutated = envelope_schema()
+    mutated = dataexcept.envelope_schema()
     mutated["$defs"].clear()
 
-    assert envelope_schema()["$defs"], "envelope_schema() handed out shared state"
-
-
-def test_the_schema_is_reachable_from_the_top_level() -> None:
-    assert dataexcept.envelope_schema() == SCHEMA
-    assert dataexcept.ENVELOPE_SCHEMA_VERSION == ENVELOPE_SCHEMA_VERSION
+    assert dataexcept.envelope_schema()["$defs"], (
+        "envelope_schema() handed out shared state"
+    )
 
 
 def test_the_schema_constrains_exactly_the_documented_fields() -> None:
