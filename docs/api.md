@@ -51,6 +51,34 @@ submodule.
 
 ::: dataexcept.security_exceptions
 
+## Observability model
+
+::: dataexcept.observability
+
+## OpenTelemetry adapter
+
+::: dataexcept.opentelemetry
+
+## Sentry adapter
+
+::: dataexcept.sentry
+
+## W3C Trace Context
+
+::: dataexcept.trace_context
+
+## HTTP request context
+
+::: dataexcept.http_context
+
+## Worker/task context
+
+::: dataexcept.worker_context
+
+## Workflow/orchestrator context
+
+::: dataexcept.orchestrator_context
+
 ## Logging helpers
 
 ::: dataexcept.logging_helpers
