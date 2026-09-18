@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/DiogoRibeiro7/DataExcept/actions/workflows/ci.yml/badge.svg)](https://github.com/DiogoRibeiro7/DataExcept/actions/workflows/ci.yml) [![PyPI version](https://img.shields.io/pypi/v/DataExcept.svg)](https://pypi.org/project/DataExcept/) [![Python Support](https://img.shields.io/pypi/pyversions/DataExcept.svg)](https://pypi.org/project/DataExcept/) [![Coverage](https://diogoribeiro7.github.io/DataExcept/coverage.svg)](https://diogoribeiro7.github.io/DataExcept/htmlcov/) [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://diogoribeiro7.github.io/DataExcept/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 
-**DataExcept** is a production-ready Python library that provides **structured, hierarchical exception classes** specifically designed for **data science**, **machine learning**, and **data engineering** workflows. Stop debugging generic `ValueError`s and `RuntimeError`s -- get meaningful, actionable error messages that help you understand exactly what went wrong in your data pipeline.
+**DataExcept** is a production-ready Python library for **structured exception handling and failure observability** in **data science**, **machine learning**, and **data engineering** systems. Stop debugging generic `ValueError`s and `RuntimeError`s -- carry meaningful failure context across logs, traces, workers, APIs and workflow boundaries.
 
 ## 🚀 Why DataExcept?
 
@@ -19,6 +19,7 @@
 - **📦 One Import**: Every exception is available from `dataexcept` directly, or from its domain module — same objects either way
 - **📊 Data Science Focused**: 106 exception classes covering ML pipelines, feature engineering, model training
 - **🧭 Language-neutral envelopes**: exceptions export to strict JSON against a published, versioned schema — so a non-Python consumer can validate what it receives, or read it through the [Pino projection](https://diogoribeiro7.github.io/DataExcept/pino/)
+- **🔭 Failure observability**: product-neutral operation context, W3C Trace Context continuity, OpenTelemetry attributes, Sentry enrichment, and dependency-free HTTP, worker and orchestrator boundary adapters
 - **🔧 Production Ready**: Logging helpers, error context, and exceptions that pickle — so they cross a process boundary with their message, attributes and cause intact
 - **📚 Academic Quality**: Proper documentation, type hints, and citation support
 - **🐍 Python 3.10 – 3.14**: Every supported version tested in CI, with full type safety
@@ -214,6 +215,39 @@ The payload shape is a versioned, language-neutral contract, published as a
 reference fixtures, so a Node.js or Go consumer can be tested against the same
 document Python emits.
 
+### Failure Observability
+
+DataExcept 1.7 adds a small product-neutral operation model plus thin adapters
+for common execution boundaries. Stable operation labels stay separate from
+request, job, correlation and trace identifiers, so low-cardinality fields can
+be indexed without turning every identifier into a tag.
+
+```python
+from dataexcept import OperationContext
+from dataexcept.opentelemetry import exception_to_otel_attributes
+
+context = OperationContext(
+    system="worker",
+    component="billing",
+    operation="billing.settle_invoice",
+    job_id="job-42",
+)
+
+try:
+    raise RuntimeError("settlement failed")
+except RuntimeError as exc:
+    attributes = exception_to_otel_attributes(
+        exc,
+        operation_context=context,
+    )
+```
+
+The same model is used by dependency-free HTTP, worker and workflow/orchestrator
+adapters, and W3C `traceparent` values are propagated when present without
+inventing trace or span identifiers. See the
+[observability guide](https://diogoribeiro7.github.io/DataExcept/observability/)
+for the complete model and examples.
+
 ### Command Line Interface
 
 ```bash
@@ -373,6 +407,8 @@ through [SECURITY.md](SECURITY.md), not the public issue tracker.
 - **Message Brokers**: [Publish, consume and acknowledgement failures](https://diogoribeiro7.github.io/DataExcept/brokers/)
 - **Envelope Schema**: [The published envelope contract](https://diogoribeiro7.github.io/DataExcept/envelope_schema/)
 - **Pino Interoperability**: [Consuming envelopes from Node.js](https://diogoribeiro7.github.io/DataExcept/pino/)
+- **Observability**: [Operation context, tracing and execution-boundary adapters](https://diogoribeiro7.github.io/DataExcept/observability/)
+- **Sentry Integration**: [Enrich Sentry events without a runtime dependency](https://diogoribeiro7.github.io/DataExcept/sentry/)
 - **CLI Reference**: [CLI Guide](https://diogoribeiro7.github.io/DataExcept/cli/)
 - **Changelog**: [CHANGELOG.md](CHANGELOG.md)
 
