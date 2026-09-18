@@ -178,96 +178,86 @@ hierarchy of their own.
   NATS because it describes the operation rather than the product, and the
   package still depends on no broker client.
 
+## Shipped in 1.7.0 — Observability across execution boundaries
+
+DataExcept now has one dependency-free observability model that can follow a
+failure across APIs, workers and orchestrators without turning any framework or
+telemetry SDK into a runtime dependency.
+
+- **Product-neutral operation context** — `OperationContext` separates stable
+  `system`, `component` and `operation` labels from request, job,
+  correlation, trace and span identifiers.
+- **A canonical observability event** —
+  `exception_to_observability_event()` combines the existing redacted
+  exception envelope with operation metadata without flattening correlation IDs
+  into indexed fields.
+- **OpenTelemetry-compatible exception attributes** — standard
+  `exception.*` fields, DataExcept recovery metadata and operation context can
+  be attached to a span through a small structural interface, with no
+  `opentelemetry` runtime dependency.
+- **Sentry event enrichment** — the full redacted failure and operation context
+  can be attached to a Sentry event while only low-cardinality fields become
+  tags, with no `sentry-sdk` dependency.
+- **W3C Trace Context continuity** — `traceparent` is parsed and propagated,
+  with `tracestate` and `baggage` preserved when present. Invalid provenance
+  is dropped rather than replaced with generated identifiers.
+- **HTTP boundary context** — stable method + route-template operations,
+  request/correlation headers and incoming W3C trace context, using plain
+  mappings rather than a web framework.
+- **Worker/task boundary context** — stable task names, job and correlation IDs,
+  retry attempts and trace continuity without depending on Celery, RQ, Arq,
+  Dramatiq or another queue.
+- **Workflow/orchestrator boundary context** — stable workflow + step identity,
+  run IDs, step-run IDs, retries and trace continuity without depending on
+  Airflow, Dagster, Prefect, Argo or another scheduler.
+- **Low-cardinality by design** — payloads, arguments, URLs and per-run
+  identifiers are kept out of stable indexed operation labels.
+
 ## Ongoing
 
 - Track new stable Python releases promptly; 3.14 is supported as of 0.4.1.
-- Keep observability integrations optional and dependency-free. Sentry event
-  enrichment is available without importing `sentry-sdk`; OpenTelemetry
-  exception attributes follow the same boundary.
+- Keep observability integrations optional and dependency-free. New adapters
+  should reuse the same operation and trace-context model rather than define
+  product-specific telemetry contracts.
 - Prioritise new exception domains by what users actually report reaching for
   generic exceptions to express. The message-broker family in 1.6.0 arrived
   that way, and is the shape a new domain should take: named by the operation
   that failed rather than by the product it failed in.
 
-## Planned — observability integrations
+## Planned — remaining observability environments
 
-MCP is one example of a broader problem. Any system where work crosses an
-execution boundary needs failures to remain identifiable and correlated after
-they leave the frame that raised them. DataExcept should provide one common
-observability model and thin adapters for those environments, rather than a
-separate logging design for each product or protocol.
+The shared model, OpenTelemetry/Sentry projection, W3C propagation and the
+first HTTP, worker and orchestrator boundaries are already shipped. Future work
+is about extending that same contract to additional execution environments, not
+inventing another logging model.
 
-The common contract is the existing redacted exception envelope plus failure
-metadata. Logs, traces and error trackers should project that contract into the
-shape their ecosystem expects without introducing mandatory runtime
-integrations.
-
-- **Common operation context** — define a small, product-neutral context for
-  `system`, `component`, `operation`, `request_id`, `job_id` and similar
-  identifiers. Adapters can map their own terminology onto it without changing
-  the exception hierarchy.
-- **Structured logging** — make the envelope easy to attach to Python logging,
-  JSON loggers and external structured-log formats while preserving the rule
-  that observability must never replace the original failure with a logging
-  failure.
-- **OpenTelemetry as the shared trace vocabulary** — reuse standard
-  `exception.*` attributes and `dataexcept.failure.*` recovery metadata across
-  services instead of inventing product-specific telemetry fields.
-- **Trace and correlation continuity** — accept and propagate trace, request,
-  job and correlation identifiers when a framework exposes them, but do not
-  generate fake provenance when it does not.
-- **Low-cardinality indexing** — keep operation type, failure kind and
-  retryability filterable while keeping payloads, arguments, URLs and other
-  high-cardinality or sensitive values inside the bounded redacted envelope.
-- **No framework lock-in** — use plain mappings and structural interfaces so an
-  adapter can work with a framework or protocol without making its SDK a
-  DataExcept runtime dependency.
-- **Contract tests for every adapter** — verify redaction, strict JSON safety,
-  traceback preservation, correlation metadata and the never-throw
-  observability boundary.
-
-### Candidate environments
-
-Prioritise integrations where an exception routinely crosses a process,
-network, queue or orchestration boundary:
-
-- **Web APIs and RPC services** — request IDs, endpoints/methods, status and
-  trace correlation for HTTP, ASGI/WSGI-style services and RPC frameworks.
-- **Background workers and task queues** — task/job IDs, retries, attempt
-  numbers and worker context for asynchronous execution.
-- **Workflow and data orchestrators** — run, workflow, DAG, step and task
-  identifiers for scheduled or distributed pipelines.
+- **Failure-safe telemetry emission** — observability adapters used while
+  handling an exception must never replace the original failure if logging,
+  recording or context conversion itself fails.
 - **Serverless runtimes** — invocation/request IDs, cold-start/runtime context
   and stderr-safe diagnostics without coupling to one cloud provider.
 - **Message brokers and stream processors** — correlate broker exceptions with
-  consumer, partition, offset and trace context across producer/consumer
-  boundaries.
+  consumer, partition, offset and propagated trace context across
+  producer/consumer boundaries.
 - **Distributed data and ML workloads** — preserve experiment, model, batch,
   stage and worker context when failures cross executors or remote workers.
 - **Long-running services and daemons** — structured lifecycle and background
   task failures where stdout/stderr or process supervisors impose logging
   constraints.
 - **Agent and tool protocols** — attach tool/resource/prompt or other operation
-  context and preserve distributed trace continuity. MCP is the first concrete
-  example here, not a special observability model of its own.
+  context and preserve distributed trace continuity. MCP is one concrete
+  example, not a special observability model of its own.
 
 ### MCP example
 
-For current MCP implementations, follow the protocol architecture rather than
-building new code around its deprecated Logging capability. Stdio diagnostics
-belong on `stderr`, structured observability belongs in OpenTelemetry, and W3C
-trace context carried through `_meta` should remain correlated across the host,
-MCP server, tool call and downstream services.
+For current MCP implementations, use the shared DataExcept observability model
+rather than building around a protocol-specific logging layer:
 
-- Attach MCP method and operation names such as a tool, resource or prompt name
-  to the generic operation context.
-- Never write diagnostics to stdout on stdio transports, because stdout belongs
-  to the protocol stream.
-- Preserve `traceparent`, `tracestate` and `baggage` when they are present.
-- Keep arguments out of tags by default; the bounded redacted envelope is the
-  place for structured failure context.
-- Keep any legacy MCP logging-notification support as an explicit compatibility
-  adapter during the deprecation window, not as the primary observability path.
+- attach MCP method and operation names such as a tool, resource or prompt name
+  to the generic operation context;
+- keep diagnostics off stdout when stdio owns the protocol stream;
+- preserve `traceparent`, `tracestate` and `baggage` when they are present;
+- keep arguments out of indexed tags by default.
 
 ## Known follow-ups
 
