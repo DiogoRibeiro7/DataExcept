@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   incoming W3C Trace Context onto the shared observability model without
   importing a cloud-provider SDK or retaining the event payload.
 
+- **Framework-neutral broker and stream observability context.**
+  `broker_context_from_message()` maps publish, consume and acknowledge
+  boundaries onto stable operation + topic labels while keeping partition,
+  offset, consumer-group and message identifiers as correlation metadata.
+  Incoming W3C Trace Context is preserved from plain message properties and
+  message bodies/payloads are never retained.
+
 ### Fixed
 
 - **Observability emission can no longer mask the failure being reported.**
