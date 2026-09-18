@@ -35,6 +35,10 @@ submodule.
 
 ::: dataexcept.broker_exceptions
 
+## Message broker observability context
+
+::: dataexcept.broker_context
+
 ## I/O exceptions
 
 ::: dataexcept.io_exceptions

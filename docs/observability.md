@@ -150,6 +150,34 @@ The adapter accepts plain metadata, so AWS Lambda, Azure Functions, Google
 Cloud Functions, OpenFaaS and custom runtimes can map their invocation context
 without becoming DataExcept dependencies.
 
+## Message brokers and streams
+
+```python
+from dataexcept.broker_context import broker_context_from_message
+
+message = broker_context_from_message(
+    "consume",
+    "orders",
+    partition=3,
+    offset=1042,
+    consumer_group="billing",
+    message_id="msg-7",
+    correlation_id="corr-9",
+    metadata={
+        "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    },
+)
+```
+
+The stable operation is the operation + topic pair, such as
+`consume orders`. Partition, offset, consumer group and message identifiers
+remain wrapper metadata rather than indexed operation labels. Message bodies and
+application payloads are never captured.
+
+The adapter accepts plain message properties, so Kafka, RabbitMQ, Pulsar, NATS,
+stream processors and custom brokers can preserve correlation and W3C trace
+continuity without becoming DataExcept dependencies.
+
 ## W3C Trace Context
 
 DataExcept parses incoming W3C Trace Context without starting spans or

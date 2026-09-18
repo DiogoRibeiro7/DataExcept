@@ -126,6 +126,37 @@ downstream can back off on the broker's own advice rather than on a guess made
 three services away. See [Failure Metadata](failure_metadata.md) for how those
 values are chosen.
 
+## Observability context
+
+The exception hierarchy tells you **what failed**. The broker observability
+adapter tells you **where the message was in the broker boundary** without
+retaining the message body:
+
+```python
+from dataexcept.broker_context import broker_context_from_message
+
+context = broker_context_from_message(
+    "consume",
+    "orders",
+    partition=3,
+    offset=1042,
+    consumer_group="billing",
+    message_id="msg-7",
+    correlation_id="corr-9",
+    metadata={
+        "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    },
+)
+```
+
+The operation label is stable (`consume orders`), while partition, offset,
+consumer group and message ID stay as correlation metadata on the wrapper.
+Headers/properties can carry W3C Trace Context, but payload/body values are not
+copied into the context.
+
+See [Observability](observability.md) for the common operation model and
+OpenTelemetry/Sentry projections.
+
 ## Catching
 
 ```python
