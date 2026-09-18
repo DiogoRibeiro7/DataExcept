@@ -98,7 +98,6 @@ def test_invalid_input_is_rejected_by_the_existing_serializer_contract() -> None
         exception_to_otel_attributes("not an exception")  # type: ignore[arg-type]
 
 
-
 def test_record_helper_swallows_recorder_failure() -> None:
     record_otel_exception(
         FailingRecorder(),
