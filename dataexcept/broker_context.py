@@ -102,9 +102,7 @@ def broker_context_from_message(
         raise TypeError("operation must be a string")
     normalized_operation = operation.strip().lower()
     if normalized_operation not in _VALID_OPERATIONS:
-        raise ValueError(
-            "operation must be one of publish, consume or acknowledge"
-        )
+        raise ValueError("operation must be one of publish, consume or acknowledge")
 
     topic_name = _single_line(topic, "topic")
     correlation_identifier = _optional_single_line(
