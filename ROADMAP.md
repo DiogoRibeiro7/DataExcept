@@ -231,9 +231,6 @@ first HTTP, worker and orchestrator boundaries are already shipped. Future work
 is about extending that same contract to additional execution environments, not
 inventing another logging model.
 
-- **Failure-safe telemetry emission** — observability adapters used while
-  handling an exception must never replace the original failure if logging,
-  recording or context conversion itself fails.
 - **Serverless runtimes** — invocation/request IDs, cold-start/runtime context
   and stderr-safe diagnostics without coupling to one cloud provider.
 - **Message brokers and stream processors** — correlate broker exceptions with
