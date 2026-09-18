@@ -231,9 +231,6 @@ first HTTP, worker and orchestrator boundaries are already shipped. Future work
 is about extending that same contract to additional execution environments, not
 inventing another logging model.
 
-- **Message brokers and stream processors** — correlate broker exceptions with
-  consumer, partition, offset and propagated trace context across
-  producer/consumer boundaries.
 - **Distributed data and ML workloads** — preserve experiment, model, batch,
   stage and worker context when failures cross executors or remote workers.
 - **Long-running services and daemons** — structured lifecycle and background
