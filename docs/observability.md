@@ -38,11 +38,7 @@ does not provide it.
 ## A shared failure event
 
 ```python
-from dataexcept import (
-    OperationContext,
-    ValidationError,
-    exception_to_observability_event,
-)
+from dataexcept import OperationContext, ValidationError, exception_to_observability_event
 
 context = OperationContext(
     system="http",
