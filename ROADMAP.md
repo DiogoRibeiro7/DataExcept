@@ -231,8 +231,6 @@ first HTTP, worker and orchestrator boundaries are already shipped. Future work
 is about extending that same contract to additional execution environments, not
 inventing another logging model.
 
-- **Serverless runtimes** — invocation/request IDs, cold-start/runtime context
-  and stderr-safe diagnostics without coupling to one cloud provider.
 - **Message brokers and stream processors** — correlate broker exceptions with
   consumer, partition, offset and propagated trace context across
   producer/consumer boundaries.
