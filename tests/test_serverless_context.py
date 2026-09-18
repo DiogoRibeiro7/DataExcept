@@ -4,9 +4,7 @@ import pytest
 
 from dataexcept.serverless_context import serverless_context_from_invocation
 
-TRACEPARENT = (
-    "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
-)
+TRACEPARENT = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
 
 
 def test_serverless_context_uses_stable_function_identity() -> None:
@@ -67,10 +65,7 @@ def test_serverless_context_propagates_w3c_trace_without_inventing_span() -> Non
     )
 
     assert context.trace_context is not None
-    assert (
-        context.operation_context.trace_id
-        == "4bf92f3577b34da6a3ce929d0e0e4736"
-    )
+    assert context.operation_context.trace_id == "4bf92f3577b34da6a3ce929d0e0e4736"
     assert context.operation_context.span_id is None
     assert context.trace_context.to_carrier() == {
         "traceparent": TRACEPARENT,
