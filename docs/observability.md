@@ -225,3 +225,7 @@ The observability layer follows a few rules across every adapter:
    exception envelope used by structured serialization.
 5. **Correlation is separate from indexing.** IDs remain available for tracing
    a specific execution without becoming metric dimensions.
+6. **Emission is fail-open.** `log_exception()` and
+   `record_otel_exception()` swallow telemetry-side failures so they cannot
+   replace the exception already being handled. Pure conversion functions stay
+   strict so configuration errors remain visible outside an error path.

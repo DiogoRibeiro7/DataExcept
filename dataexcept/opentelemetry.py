@@ -161,13 +161,22 @@ def record_otel_exception(
     include_stacktrace: bool = True,
     include_envelope: bool = False,
 ) -> None:
-    """Record *exc* on an OpenTelemetry-compatible span-like object."""
-    attributes = exception_to_otel_attributes(
-        exc,
-        operation_context=operation_context,
-        include_attributes=include_attributes,
-        max_depth=max_depth,
-        include_stacktrace=include_stacktrace,
-        include_envelope=include_envelope,
-    )
-    span.record_exception(exc, attributes=attributes)
+    """Record *exc* without allowing telemetry failure to escape.
+
+    Attribute conversion remains strict through
+    :func:`exception_to_otel_attributes`. This emission helper is different:
+    it is intended for use while handling an existing failure, so conversion or
+    recorder errors are swallowed rather than replacing that failure.
+    """
+    try:
+        attributes = exception_to_otel_attributes(
+            exc,
+            operation_context=operation_context,
+            include_attributes=include_attributes,
+            max_depth=max_depth,
+            include_stacktrace=include_stacktrace,
+            include_envelope=include_envelope,
+        )
+        span.record_exception(exc, attributes=attributes)
+    except Exception:
+        return

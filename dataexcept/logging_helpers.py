@@ -142,22 +142,29 @@ def log_exception(
     When the chain contains a URL the traceback is formatted and scrubbed here;
     otherwise the structured ``exc_info`` path is used unchanged, so ordinary
     exceptions keep the shape log aggregators expect.
+
+    Logging is fail-open: context conversion, traceback rendering or the logger
+    itself may fail, but that failure is swallowed so observability can never
+    replace the exception the caller was already handling.
     """
-    if logger is None:
-        logger = logging.getLogger(__name__)
-    extra = _build_extra(context, operation_context)
+    try:
+        if logger is None:
+            logger = logging.getLogger(__name__)
+        extra = _build_extra(context, operation_context)
 
-    if _chain_mentions_a_url(exc):
-        formatted = "".join(
-            traceback.format_exception(type(exc), exc, exc.__traceback__)
-        )
-        keep_path = getattr(type(exc), "_keep_url_path", True)
-        scrubbed = redact_urls_in_text(formatted, keep_path=keep_path).rstrip()
-        logger.log(level, "%s\n%s", exc, scrubbed, extra=extra)
+        if _chain_mentions_a_url(exc):
+            formatted = "".join(
+                traceback.format_exception(type(exc), exc, exc.__traceback__)
+            )
+            keep_path = getattr(type(exc), "_keep_url_path", True)
+            scrubbed = redact_urls_in_text(formatted, keep_path=keep_path).rstrip()
+            logger.log(level, "%s\n%s", exc, scrubbed, extra=extra)
+            return
+
+        exc_info = (type(exc), exc, exc.__traceback__)
+        logger.log(level, "%s", exc, exc_info=exc_info, extra=extra)
+    except Exception:
         return
-
-    exc_info = (type(exc), exc, exc.__traceback__)
-    logger.log(level, "%s", exc, exc_info=exc_info, extra=extra)
 
 
 @contextlib.contextmanager
