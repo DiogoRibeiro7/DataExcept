@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Framework-neutral serverless invocation context.**
+  `serverless_context_from_invocation()` maps a stable function name,
+  invocation/request ID, correlation ID, cold-start/runtime metadata and
+  incoming W3C Trace Context onto the shared observability model without
+  importing a cloud-provider SDK or retaining the event payload.
+
 ### Fixed
 
 - **Observability emission can no longer mask the failure being reported.**

@@ -79,6 +79,10 @@ submodule.
 
 ::: dataexcept.orchestrator_context
 
+## Serverless invocation context
+
+::: dataexcept.serverless_context
+
 ## Logging helpers
 
 ::: dataexcept.logging_helpers

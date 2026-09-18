@@ -124,6 +124,32 @@ The operation is the stable `workflow:step` pair. Per-run identifiers stay
 separate so Airflow, Dagster, Prefect, Argo and custom schedulers do not create
 high-cardinality operation names.
 
+## Serverless functions
+
+```python
+from dataexcept.serverless_context import serverless_context_from_invocation
+
+invocation = serverless_context_from_invocation(
+    "billing-handler",
+    invocation_id="req-42",
+    correlation_id="corr-9",
+    cold_start=True,
+    runtime="python3.12",
+    metadata={
+        "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    },
+)
+```
+
+The deployed function name is the stable operation. Invocation/request IDs stay
+correlation metadata, while cold-start and runtime information live on the
+wrapper instead of becoming indexed operation labels. Event payloads are never
+captured.
+
+The adapter accepts plain metadata, so AWS Lambda, Azure Functions, Google
+Cloud Functions, OpenFaaS and custom runtimes can map their invocation context
+without becoming DataExcept dependencies.
+
 ## W3C Trace Context
 
 DataExcept parses incoming W3C Trace Context without starting spans or

@@ -19,7 +19,7 @@
 - **📦 One Import**: Every exception is available from `dataexcept` directly, or from its domain module — same objects either way
 - **📊 Data Science Focused**: 106 exception classes covering ML pipelines, feature engineering, model training
 - **🧭 Language-neutral envelopes**: exceptions export to strict JSON against a published, versioned schema — so a non-Python consumer can validate what it receives, or read it through the [Pino projection](https://diogoribeiro7.github.io/DataExcept/pino/)
-- **🔭 Failure observability**: product-neutral operation context, W3C Trace Context continuity, OpenTelemetry attributes, Sentry enrichment, and dependency-free HTTP, worker and orchestrator boundary adapters
+- **🔭 Failure observability**: product-neutral operation context, W3C Trace Context continuity, OpenTelemetry attributes, Sentry enrichment, and dependency-free HTTP, worker, orchestrator and serverless boundary adapters
 - **🔧 Production Ready**: Logging helpers, error context, and exceptions that pickle — so they cross a process boundary with their message, attributes and cause intact
 - **📚 Academic Quality**: Proper documentation, type hints, and citation support
 - **🐍 Python 3.10 – 3.14**: Every supported version tested in CI, with full type safety
