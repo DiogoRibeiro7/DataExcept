@@ -154,8 +154,7 @@ def serverless_context_from_invocation(
         component=component,
         operation=operation,
         request_id=(
-            explicit_invocation_id
-            or _first_metadata_value(normalized, invocation_keys)
+            explicit_invocation_id or _first_metadata_value(normalized, invocation_keys)
         ),
         correlation_id=(
             explicit_correlation_id
