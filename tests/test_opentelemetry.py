@@ -25,6 +25,15 @@ class Recorder:
         self.attributes = attributes
 
 
+class FailingRecorder:
+    def record_exception(
+        self,
+        exception: BaseException,
+        attributes: dict[str, str | bool | int | float] | None = None,
+    ) -> None:
+        raise RuntimeError("telemetry backend unavailable")
+
+
 def test_standard_exception_attributes_use_redacted_envelope_message() -> None:
     exc = ValidationError("https://user:secret@example.com/private?token=hidden", -1)
 
@@ -87,3 +96,34 @@ def test_record_helper_uses_only_the_span_record_exception_contract() -> None:
 def test_invalid_input_is_rejected_by_the_existing_serializer_contract() -> None:
     with pytest.raises(TypeError, match="exc must be an exception instance"):
         exception_to_otel_attributes("not an exception")  # type: ignore[arg-type]
+
+
+
+def test_record_helper_swallows_recorder_failure() -> None:
+    record_otel_exception(
+        FailingRecorder(),
+        ValidationError("age", -1),
+        include_stacktrace=False,
+    )
+
+
+def test_record_helper_swallows_conversion_failure() -> None:
+    recorder = Recorder()
+
+    record_otel_exception(
+        recorder,
+        ValidationError("age", -1),
+        operation_context=object(),  # type: ignore[arg-type]
+        include_stacktrace=False,
+    )
+
+    assert recorder.exception is None
+
+
+def test_attribute_conversion_remains_strict() -> None:
+    with pytest.raises(TypeError, match="operation_context"):
+        exception_to_otel_attributes(
+            ValidationError("age", -1),
+            operation_context=object(),  # type: ignore[arg-type]
+            include_stacktrace=False,
+        )
