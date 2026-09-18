@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Observability emission can no longer mask the failure being reported.**
+  `log_exception()` now fails open if context conversion, traceback rendering or
+  the logger itself raises, so `log_and_raise()` and `log_then_raise()` still
+  propagate the original exception. `record_otel_exception()` applies the same
+  rule to attribute conversion and span recording, while the pure
+  `exception_to_otel_attributes()` conversion API remains strict.
+
 ## [1.7.0] - 2026-09-17
 
 ### Added
