@@ -345,3 +345,48 @@ def test_log_exception_survives_a_hostile_context():
     )
 
     assert "the real failure" in stream.getvalue()
+
+
+class _FailingLogger:
+    def log(self, *args, **kwargs):
+        raise RuntimeError("logger exploded")
+
+
+def test_log_exception_survives_a_failing_logger():
+    dataexcept.log_exception(
+        ValueError("the real failure"),
+        logger=_FailingLogger(),  # type: ignore[arg-type]
+    )
+
+
+def test_log_exception_survives_invalid_operation_context():
+    dataexcept.log_exception(
+        ValueError("the real failure"),
+        operation_context=object(),  # type: ignore[arg-type]
+    )
+
+
+def test_log_and_raise_survives_a_failing_logger():
+    original = ValueError("the real failure")
+
+    with pytest.raises(ValueError) as caught:
+        with dataexcept.log_and_raise(
+            logger=_FailingLogger(),  # type: ignore[arg-type]
+            operation_context=object(),  # type: ignore[arg-type]
+        ):
+            raise original
+
+    assert caught.value is original
+
+
+def test_log_then_raise_survives_a_failing_logger():
+    original = ValueError("the real failure")
+
+    with pytest.raises(ValueError) as caught:
+        dataexcept.log_then_raise(
+            original,
+            logger=_FailingLogger(),  # type: ignore[arg-type]
+            operation_context=object(),  # type: ignore[arg-type]
+        )
+
+    assert caught.value is original
