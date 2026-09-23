@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: DiogoRibeiro7/git-actions-collection/.github/actions/setup-poetry@7bae67e9d8c369e06a9c4f9c48f462a724b10e46
+      - uses: DiogoRibeiro7/git-actions-collection/.github/actions/setup-poetry@7bae67e9d8c369e06a9c4f9c48f462a724b10e46 # v1.0.0
         with:
           python-version: '3.12'
           install-deps: 'false'
@@ -36,7 +36,7 @@ jobs:
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: DiogoRibeiro7/git-actions-collection/.github/actions/setup-poetry@7bae67e9d8c369e06a9c4f9c48f462a724b10e46
+      - uses: DiogoRibeiro7/git-actions-collection/.github/actions/setup-poetry@7bae67e9d8c369e06a9c4f9c48f462a724b10e46 # v1.0.0
         with:
           python-version: ${{ matrix.python-version }}
           install-deps: 'false'
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: DiogoRibeiro7/git-actions-collection/.github/actions/setup-poetry@7bae67e9d8c369e06a9c4f9c48f462a724b10e46
+      - uses: DiogoRibeiro7/git-actions-collection/.github/actions/setup-poetry@7bae67e9d8c369e06a9c4f9c48f462a724b10e46 # v1.0.0
         with:
           python-version: '3.12'
           install-deps: 'false'
@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: DiogoRibeiro7/git-actions-collection/.github/actions/setup-poetry@7bae67e9d8c369e06a9c4f9c48f462a724b10e46
+      - uses: DiogoRibeiro7/git-actions-collection/.github/actions/setup-poetry@7bae67e9d8c369e06a9c4f9c48f462a724b10e46 # v1.0.0
         with:
           python-version: '3.12'
           install-deps: 'false'
