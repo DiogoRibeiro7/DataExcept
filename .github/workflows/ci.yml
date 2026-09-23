@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+      - uses: DiogoRibeiro7/git-actions-collection/.github/actions/setup-poetry@v1
         with:
           python-version: '3.12'
-      - uses: abatilo/actions-poetry@0dd19c9498c3dc8728967849d0d2eae428a8a3d8 # v4
+          install-deps: 'false'
       - name: Verify the lock file matches pyproject.toml
         run: poetry check --lock
       - name: Install quality tools
@@ -36,10 +36,10 @@ jobs:
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+      - uses: DiogoRibeiro7/git-actions-collection/.github/actions/setup-poetry@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: abatilo/actions-poetry@0dd19c9498c3dc8728967849d0d2eae428a8a3d8 # v4
+          install-deps: 'false'
       - name: Install dependencies
         run: poetry install --with dev
       - name: Test with coverage
@@ -57,10 +57,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+      - uses: DiogoRibeiro7/git-actions-collection/.github/actions/setup-poetry@v1
         with:
           python-version: '3.12'
-      - uses: abatilo/actions-poetry@0dd19c9498c3dc8728967849d0d2eae428a8a3d8 # v4
+          install-deps: 'false'
       # The release workflow runs exactly this against the artifact it is about
       # to publish. Running it here as well means a test that quietly depends on
       # the source tree fails on the pull request that introduces it, rather
@@ -80,15 +80,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+      - uses: DiogoRibeiro7/git-actions-collection/.github/actions/setup-poetry@v1
         with:
           python-version: '3.12'
+          install-deps: 'false'
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: coverage-*
           path: coverage_files
           merge-multiple: true
-      - uses: abatilo/actions-poetry@0dd19c9498c3dc8728967849d0d2eae428a8a3d8 # v4
       - name: Install coverage tooling
         run: poetry install --only dev --no-root
       - name: Combine coverage
