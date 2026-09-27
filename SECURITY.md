@@ -19,7 +19,7 @@ Use GitHub's private vulnerability reporting instead:
 2. Choose **Report a vulnerability**.
 
 That opens a private advisory visible only to you and the maintainers. If you
-cannot use it, email <diogo.debastos.ribeiro@gmail.com> instead.
+cannot use it, email <dfr@esmad.ipp.pt> instead.
 
 Please include enough detail to reproduce the issue: the affected version, a
 minimal example, and what an attacker could achieve.
