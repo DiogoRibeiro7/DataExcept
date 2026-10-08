@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/project-avatar.png" alt="DataExcept project logo" width="160" height="160">
+</p>
+
 # DataExcept
 
 [![CI](https://github.com/DiogoRibeiro7/DataExcept/actions/workflows/ci.yml/badge.svg)](https://github.com/DiogoRibeiro7/DataExcept/actions/workflows/ci.yml) [![PyPI version](https://img.shields.io/pypi/v/DataExcept.svg)](https://pypi.org/project/DataExcept/) [![Python Support](https://img.shields.io/pypi/pyversions/DataExcept.svg)](https://pypi.org/project/DataExcept/) [![Coverage](https://diogoribeiro7.github.io/DataExcept/coverage.svg)](https://diogoribeiro7.github.io/DataExcept/htmlcov/) [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://diogoribeiro7.github.io/DataExcept/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
