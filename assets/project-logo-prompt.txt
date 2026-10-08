@@ -1,0 +1,7 @@
+Tool: built-in image generation
+
+Use case: logo-brand.
+Asset type: square project logo for DataExcept.
+Project purpose: A comprehensive Python library providing structured, hierarchical exception classes for data science, data engineering, and ML pipeline workflows. Features 40+ specialized exceptions, logging helpers, and production-ready error handling for robust data processing systems.
+Design direction: A playful custom software mascot: a small vermilion bracket-shaped creature catches a tumbling mint data cube in its cupped arms. Expressive black dot eyes, elastic cartoon silhouette, bold ink outlines and a little squash-and-stretch energy. Flat coral-pink backdrop. Modern independent animation style, no shield, no exclamation mark, no 3D metal, no words.
+Composition: one finished square image, visually distinctive and readable at 160 pixels, with enough margin for README display. Produce the actual artwork, not a mockup sheet or brand presentation. No watermark. Do not use a navy-and-gold metallic badge aesthetic.
